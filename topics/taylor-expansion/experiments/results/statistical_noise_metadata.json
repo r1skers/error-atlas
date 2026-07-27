@@ -1,0 +1,22 @@
+{
+  "experiment": "Monte Carlo error model for noisy central differences",
+  "target": "derivative of exp(x) at x = 0",
+  "exact_derivative": 1.0,
+  "noise_model": "additive paired Gaussian function-value noise",
+  "sigma": 0.001,
+  "rho": 0.0,
+  "n_samples_per_estimate": 100,
+  "n_trials_per_h": 2000,
+  "base_seed": 20260728,
+  "configuration_seed": "base_seed + h_index",
+  "h_min": 0.001,
+  "h_max": 1.0,
+  "h_count": 41,
+  "h_spacing": "logarithmic",
+  "theoretical_bias": "sinh(h) / h - 1",
+  "theoretical_variance": "sigma^2 * (1-rho) / (2*N*h^2)",
+  "float_format": "Python float (IEEE 754 binary64)",
+  "machine_epsilon": 2.220446049250313e-16,
+  "python_version": "3.13.12",
+  "matplotlib_version": "3.10.8"
+}

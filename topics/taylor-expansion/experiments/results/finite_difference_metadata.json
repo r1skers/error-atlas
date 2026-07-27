@@ -1,0 +1,34 @@
+{
+  "experiment": "finite-difference error comparison",
+  "target": "derivative of exp(x) at x = 0",
+  "exact_derivative": 1.0,
+  "float_format": "Python float (IEEE 754 binary64)",
+  "machine_epsilon": 2.220446049250313e-16,
+  "k_values": [
+    1,
+    55
+  ],
+  "h_coarse": "2**(-k)",
+  "h_fine": "h_coarse / 4",
+  "methods": {
+    "forward_naive": {
+      "label": "Forward, naive",
+      "theoretical_order": 1
+    },
+    "forward_stable": {
+      "label": "Forward, stable",
+      "theoretical_order": 1
+    },
+    "central_naive": {
+      "label": "Central, naive",
+      "theoretical_order": 2
+    },
+    "central_stable": {
+      "label": "Central, stable",
+      "theoretical_order": 2
+    }
+  },
+  "zero_error_policy": "kept in CSV; omitted from logarithmic plot",
+  "python_version": "3.13.12",
+  "matplotlib_version": "3.10.8"
+}

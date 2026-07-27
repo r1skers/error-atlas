@@ -1,0 +1,41 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Packaging and build output
+build/
+dist/
+*.egg-info/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local Codex/workspace state
+.agents/
+.codex/
+
+# Scratch files
+*.tmp
+*.bak
+*.log
+
+# Research artifacts under topics/**/experiments/results are intentionally
+# versioned: CSV preserves evidence, JSON preserves provenance, and PNG makes
+# the main findings directly inspectable.
