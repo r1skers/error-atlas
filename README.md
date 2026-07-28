@@ -2,7 +2,7 @@
 
 > An experiment-driven study of approximation error, propagation, numerical stability, and error control.
 
-Error Atlas 是一个按研究主题组织的个人研究项目。它不把“误差”当成公式末尾的一项，而是持续追问：
+Error Atlas 是一个按研究主题组织的个人研究项目。它关注“误差”，并持续追问：
 
 \[
 \text{误差如何定义}
