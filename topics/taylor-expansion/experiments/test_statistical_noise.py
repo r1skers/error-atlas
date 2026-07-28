@@ -1,7 +1,9 @@
 import math
 import random
+import statistics
 import unittest
 
+from rewrite_correlated_noise import correlated_noise_pair as rewritten_noise_pair
 from statistical_noise import (
     correlated_noise_pair,
     empirical_metrics,
@@ -23,6 +25,59 @@ class CorrelatedNoiseTests(unittest.TestCase):
         for _ in range(20):
             epsilon_plus, epsilon_minus = correlated_noise_pair(0.3, -1.0, rng)
             self.assertEqual(epsilon_plus, -epsilon_minus)
+
+
+class ClosedBookRewriteTests(unittest.TestCase):
+    def test_boundary_invariants(self) -> None:
+        for rho in (-1.0, 1.0):
+            rng = random.Random(21)
+            for _ in range(20):
+                epsilon_plus, epsilon_minus = rewritten_noise_pair(0.3, rho, rng)
+                expected_minus = epsilon_plus if rho == 1.0 else -epsilon_plus
+                self.assertEqual(epsilon_minus, expected_minus)
+
+        self.assertEqual(
+            rewritten_noise_pair(0.0, 0.4, random.Random(22)),
+            (0.0, 0.0),
+        )
+
+    def test_invalid_input_does_not_advance_rng(self) -> None:
+        for sigma, rho in ((-1.0, 0.0), (1.0, 1.1)):
+            rng = random.Random(23)
+            state_before = rng.getstate()
+            with self.assertRaises(ValueError):
+                rewritten_noise_pair(sigma, rho, rng)
+            self.assertEqual(rng.getstate(), state_before)
+
+    def test_valid_call_consumes_two_gaussian_draws(self) -> None:
+        actual_rng = random.Random(24)
+        reference_rng = random.Random(24)
+
+        rewritten_noise_pair(0.3, 0.4, actual_rng)
+        reference_rng.gauss(0.0, 1.0)
+        reference_rng.gauss(0.0, 1.0)
+
+        self.assertEqual(actual_rng.getstate(), reference_rng.getstate())
+
+    def test_empirical_marginals_and_correlation(self) -> None:
+        sigma = 0.3
+        rho = 0.6
+        rng = random.Random(20260728)
+        pairs = [rewritten_noise_pair(sigma, rho, rng) for _ in range(20_000)]
+        epsilon_plus, epsilon_minus = zip(*pairs)
+
+        self.assertLess(
+            abs(statistics.pvariance(epsilon_plus) / sigma**2 - 1.0),
+            0.03,
+        )
+        self.assertLess(
+            abs(statistics.pvariance(epsilon_minus) / sigma**2 - 1.0),
+            0.03,
+        )
+        self.assertLess(
+            abs(statistics.correlation(epsilon_plus, epsilon_minus) - rho),
+            0.02,
+        )
 
 
 class EstimatorTests(unittest.TestCase):

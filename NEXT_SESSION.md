@@ -4,43 +4,53 @@
 
 ## Resume point
 
-- Active topic：Taylor expansion
-- Current checkpoint：CP06 — Error Control and Optimization
-- Entry file：topics/taylor-expansion/CP06_control_and_optimization.md
-- Code file：topics/taylor-expansion/experiments/statistical_noise.py
+- Completed topic：Taylor expansion — first pass
+- Completed checkpoint：CP06 — Error Control and Optimization
+- Summary：topics/taylor-expansion/CP06_control_and_optimization.md
+- Registry：TOPICS.md
 
 ## 已建立的核心结论
 
 - Taylor remainder 的表示、渐近阶、上界和 bound tightness 已完成第一轮；
 - 数值微分中的截断误差、舍入误差与稳定表示已经连接；
-- 中心差分的确定性偏差为 \(h^2/6+O(h^4)\)；
-- 相关观测噪声经过差分和 \(N\) 次平均后的方差为
+- Richardson extrapolation 利用跨尺度误差的主导结构消除首项；
+- 中心差分利用对称性把截断误差提高到二阶；
+- 相关噪声经过差分和 \(N\) 次平均后的方差为
 
 \[
 \frac{\sigma^2(1-\rho)}{2Nh^2};
 \]
 
-- 总 MSE 可写成偏差平方与随机方差之和；
-- 最优步长来自两项斜率抵消，而不是两项数值相等；
-- Monte Carlo 实验验证了 \(h^{-1}\) 与 \(h^2\) 两个主导区及最优步长；
-- \(\rho=1\) 时观察到的微小残余来自浮点求值顺序，而不是相关噪声模型失败。
+- MSE 的偏差—方差分解解释了 U 形误差曲线和最优步长；
+- Monte Carlo 实验验证了 \(h^{-1}\) 与 \(h^2\) 两个主导区；
+- 浮点求值顺序可以在理论精确抵消后留下机器误差；
+- closed-book rewrite 成功恢复相关 Gaussian 噪声构造，并补上非法调用不得推进 RNG 的实现约束。
 
-## 下次从这里开始
+## 下一阶段
 
-完成一次 closed-book rewrite：
+从标量局部传播
 
-1. 不查看原实现；
-2. 从空白写出 correlated_noise_pair 或 theoretical_metrics；
-3. 说明函数必须保持的 invariant；
-4. 用 experiments/test_statistical_noise.py 与原实现比较；
-5. 将差异与经验写回 CP06。
+\[
+\Delta y\approx f'(x)\Delta x
+\]
 
-完成后将 CP06 标为完成，并正式关闭 Taylor expansion 第一轮。下一阶段从向量扰动、Jacobian 与方向性放大进入 Softmax。
+推广到向量映射
 
-## 验证命令
+\[
+\Delta\mathbf y\approx J_f(\mathbf x)\Delta\mathbf x.
+\]
+
+第一组问题：
+
+1. 为什么相同范数的输入误差会因方向不同而被放大或压缩？
+2. Jacobian 的 operator norm 与 singular values 分别提供什么信息？
+3. Softmax 为什么会完全消掉共同平移方向？
+4. 这种方向性如何连接到 finite precision、subtract-max 与后续 loss？
+
+在正式建立 Softmax topic 目录前，先完成一个二维线性映射的最小案例和 explain-back。
+
+## Taylor 验证命令
 
     python -m unittest discover -s topics/taylor-expansion/experiments -p "test_*.py" -v
-
-## Workflow reminder
-
-closed-book rewrite 前保留当前工作副本，避免覆盖唯一实现。建议在独立 rewrite 文件中完成，再比较差异。
+    python topics/taylor-expansion/experiments/finite_difference.py
+    python topics/taylor-expansion/experiments/statistical_noise.py

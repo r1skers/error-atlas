@@ -55,6 +55,10 @@
 
 测试覆盖相关噪声的极端情形、固定种子可复现性、无噪声极限、MSE 分解、经验—理论方差一致性和非法输入。
 
+## Closed-book rewrite
+
+rewrite_correlated_noise.py 是不查看原实现完成的独立重写。它保留两个边际方差、目标相关系数、极端相关性和每次两次 Gaussian 抽样等 invariant。测试还要求非法输入在抛出异常前不得推进 RNG 状态。
+
 ## Provenance policy
 
 results 目录中的 CSV、JSON 和 PNG 是研究证据的一部分，默认提交到版本控制。Python cache、虚拟环境和本机工具状态由根目录 .gitignore 排除。

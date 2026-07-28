@@ -14,8 +14,8 @@ topic 之间可以共享工具和结论，但不预设必须存在一条线性�
 
 | Topic | 当前问题 | 状态 |
 | --- | --- | --- |
-| Taylor expansion | remainder、bound quality、传播、稳定性与 bias–variance 优化 | Active — first-round closure |
-| Softmax | 输入扰动与有限精度误差如何经过 normalization 传播 | Candidate |
+| Taylor expansion | remainder、bound quality、传播、稳定性与 bias–variance 优化 | Completed — first pass |
+| Softmax | 输入扰动与有限精度误差如何经过 normalization 传播 | Next candidate |
 
 ## Active：Taylor expansion
 
@@ -32,7 +32,7 @@ topic 之间可以共享工具和结论，但不预设必须存在一条线性�
 
 详细计划见 `topics/taylor-expansion/README.md`。
 
-当前理论、实验、数据与测试已经归档，只剩一次 closed-book rewrite。完成后该 topic 第一轮转为 Completed，后续高级内容按新问题重新开启。
+当前理论、实验、数据、测试与 closed-book rewrite 均已归档。该 topic 第一轮已经 Completed，后续高级内容按新问题重新开启。
 
 ## Candidate：Softmax
 

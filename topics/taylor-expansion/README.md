@@ -59,7 +59,7 @@ R_n(x)=f(x)-P_n(x).
 - 复合函数中的扰动传播；
 - 计算链中的下游放大、抵消与相关误差。
 
-### CP06 — 控制与优化（实验完成，闭卷重写待完成）
+### CP06 — 控制与优化（完成）
 
 - 用阶数 \(n\)、步长 \(h\) 和展开点控制 truncation error；
 - 加入 floating-point roundoff 与 cancellation；
@@ -116,13 +116,12 @@ E(h)\approx C_1h+C_2\frac{u}{h}.
 
 ## 当前状态（2026-07-28）
 
-- CP00–CP05 已完成并归档；
-- CP06 的理论、实现、运行前预测、Monte Carlo 验证和误差归因已完成；
+- CP00–CP06 已完成并归档；
+- 理论、实现、运行前预测、Monte Carlo 验证和误差归因已完成；
 - 两个实验均保留原始 CSV、metadata 和图像；
-- 持久化统计噪声测试已加入；
-- 当前入口：CP06_control_and_optimization.md；
-- 唯一必做项：闭卷重写一个核心函数并运行测试；
-- 完成后本 topic 第一轮正式收口，下一阶段进入向量误差传播与 Softmax。
+- 持久化测试与 closed-book rewrite 已完成；
+- 本 topic 第一轮正式收口；
+- 下一阶段入口：向量误差传播、Jacobian 与 Softmax。
 
 ## 2026-07-22 历史状态
 

@@ -1,6 +1,6 @@
 # CP06 — Error Control and Optimization
 
-状态：实验完成；closed-book rewrite 待完成
+状态：完成（2026-07-28）
 
 ## 实践问题
 
@@ -203,6 +203,7 @@ h_*\approx0.06694.
 ## 产物
 
 - experiments/statistical_noise.py：用户实现研究核心，agent 补实验编排；
+- experiments/rewrite_correlated_noise.py：独立 closed-book rewrite；
 - experiments/results/statistical_noise_comparison.csv：逐步长原始指标；
 - experiments/results/statistical_noise_metadata.json：参数与运行环境；
 - experiments/results/statistical_noise_error.png：理论与经验误差曲线；
@@ -216,6 +217,33 @@ h_*\approx0.06694.
 - 理论统计模型不单独描述浮点舍入，实际实现会叠加机器误差；
 - 经验偏差远小于随机标准差时，需要更大的 \(M\) 才能精确测量。
 
-## 退出前最后一步
+## Closed-book rewrite
 
-闭卷重写 correlated_noise_pair 或 theoretical_metrics 中至少一个函数，并用持久化测试与原实现比较。完成后 CP06 和本 topic 第一轮可正式收口。
+在不查看原实现的情况下，于 rewrite_correlated_noise.py 中重新实现相关 Gaussian 噪声构造。重写成功恢复了三个核心 invariant：
+
+\[
+\operatorname{Var}(\varepsilon_+)
+=
+\operatorname{Var}(\varepsilon_-)
+=\sigma^2,
+\qquad
+\operatorname{Corr}(\varepsilon_+,\varepsilon_-)=\rho.
+\]
+
+第一次 review 发现参数验证发生在随机抽样之后：非法调用虽然抛出异常，却会推进 RNG 状态。将验证移动到抽样之前后，失败调用不再具有随机副作用。
+
+最终验证覆盖：
+
+- \(\rho=1\) 时 common-mode noise；
+- \(\rho=-1\) 时 opposite noise；
+- \(\sigma=0\) 时零噪声；
+- 非法输入不推进 RNG；
+- 每次有效调用恰好消耗两个 Gaussian draws；
+- 经验边际方差和相关系数符合理论；
+- 重写版与原版具有一致的分布结构。
+
+这次重写说明掌握的不只是公式表面，而是“两个独立变量如何构造指定协方差结构”及其可复现性要求。
+
+## 检查点结论
+
+CP06 和 Taylor expansion 第一轮的退出标准已满足：理论模型、运行前预测、用户主写实现、实验验证、误差归因、持久化测试与闭卷恢复均已完成。
