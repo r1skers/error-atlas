@@ -1,6 +1,6 @@
 # Topic Registry
 
-更新时间：2026-07-28
+更新时间：2026-07-29
 
 ## 组织原则
 
@@ -15,7 +15,7 @@ topic 之间可以共享工具和结论，但不预设必须存在一条线性�
 | Topic | 当前问题 | 状态 |
 | --- | --- | --- |
 | Taylor expansion | remainder、bound quality、传播、稳定性与 bias–variance 优化 | Completed — first pass |
-| Softmax | 输入扰动与有限精度误差如何经过 normalization 传播 | Next candidate |
+| Softmax | 输入扰动与有限精度误差如何经过 normalization 传播 | Active — first FP32 probe verified |
 
 ## Active：Taylor expansion
 
@@ -34,18 +34,18 @@ topic 之间可以共享工具和结论，但不预设必须存在一条线性�
 
 当前理论、实验、数据、测试与 closed-book rewrite 均已归档。该 topic 第一轮已经 Completed，后续高级内容按新问题重新开启。
 
-## Candidate：Softmax
+## Active：Softmax
 
-softmax 暂时只登记研究动机，不提前建立 topic 目录。它可能包含：
+Softmax 已从二维线性映射的方向性误差进入正式研究。当前已完成：
 
 - 数学参考值与 finite-precision implementation 之间的误差；
 - logit perturbation 通过 softmax Jacobian 的传播；
-- `exp` approximation、overflow、underflow、求和与除法误差；
-- subtract-max 如何利用 shift invariance 改善数值范围；
-- 误差继续传播到 cross-entropy、attention output 或 sampling；
-- FP32、FP16、BF16 与 mixed-precision accumulation 的误差—成本权衡。
+- subtract-max 对 overflow 的控制及其输入量化边界；
+- FP32 在 \(2^{24}\) 附近丢失单位 logit difference 的可复现实验；
+- 原实现、边界测试、CSV、metadata 与 closed-book rewrite。
 
-真正启动该 topic 时，再明确 reference、metric、问题边界与第一组实验。
+下一步将方向性结论推广到多分类 Softmax，再研究更多 finite-precision
+source、后续 loss 传播和精度—成本权衡。
 
 ## 新 Topic 的最小模板
 

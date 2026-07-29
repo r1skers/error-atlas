@@ -1,0 +1,28 @@
+{
+  "generated_at_utc": "2026-07-29T14:22:49.026207+00:00",
+  "command": "python topics/softmax/experiments/fp32_shift_resolution.py",
+  "python_version": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "numpy_version": "2.4.6",
+  "dtype": "float32",
+  "float32": {
+    "precision_bits_including_hidden_bit": 24,
+    "eps": 1.1920928955078125e-07,
+    "tiny": 1.1754943508222875e-38,
+    "max": 3.4028234663852886e+38
+  },
+  "numpy_error_settings": {
+    "divide": "warn",
+    "over": "warn",
+    "under": "ignore",
+    "invalid": "warn"
+  },
+  "common_offsets": [
+    8388608,
+    16777216,
+    33554432
+  ],
+  "reference_difference": 1.0,
+  "reference_first_probability": 0.7310585786300049,
+  "source_sha256": "5e56a9af7dde4dc97817050936aaaa69d03ec8b8b6542687653db40e18bf0112"
+}

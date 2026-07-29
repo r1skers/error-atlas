@@ -1,0 +1,4 @@
+common_offset,log2_common_offset,ulp_at_common_offset,reference_difference,stored_difference,absolute_difference_error,reference_first_probability,computed_first_probability,absolute_probability_error
+8388608,23,1.0,1.0,1.0,0.0,0.7310585786300049,0.7310585975646973,1.8934692369576567e-08
+16777216,24,2.0,1.0,0.0,1.0,0.7310585786300049,0.5,0.2310585786300049
+33554432,25,4.0,1.0,0.0,1.0,0.7310585786300049,0.5,0.2310585786300049

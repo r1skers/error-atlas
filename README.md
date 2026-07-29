@@ -34,7 +34,10 @@ Taylor expansion 第一轮已经完成主要推导与实验，覆盖：
 
 图中左侧由随机噪声的 \(h^{-1}\) 放大主导，右侧由中心差分的 \(h^2\) 截断偏差主导；理论与 Monte Carlo 结果在最优步长附近吻合。
 
-闭卷重写已经验证核心相关噪声构造可以从空白恢复，Taylor expansion 第一轮正式完成。下一候选主题是 Softmax 的扰动传播与有限精度稳定性。
+闭卷重写已经验证核心相关噪声构造可以从空白恢复，Taylor expansion
+第一轮正式完成。Softmax 研究已经启动：二分类方向性、稳定
+cross-entropy、FP32 输入量化边界和第一轮 closed-book rewrite 已形成
+可复现证据。
 
 ## 仓库结构
 
@@ -47,7 +50,7 @@ Taylor expansion 第一轮已经完成主要推导与实验，覆盖：
     │   ├── error_analysis_protocol.md
     │   └── implementation_learning_protocol.md
     └── topics/
-        └── taylor-expansion/
+        ├── taylor-expansion/
             ├── README.md
             ├── CP00_orientation.md
             ├── ...
@@ -58,11 +61,20 @@ Taylor expansion 第一轮已经完成主要推导与实验，覆盖：
                 ├── statistical_noise.py
                 ├── test_statistical_noise.py
                 └── results/
+        └── softmax/
+            ├── README.md
+            └── experiments/
+                ├── README.md
+                ├── fp32_shift_resolution.py
+                ├── rewrite_fp32_shift_resolution.py
+                ├── test_fp32_shift_resolution.py
+                └── results/
 
 - [TOPICS.md](TOPICS.md)：主题注册表与候选方向；
 - [error analysis protocol](framework/error_analysis_protocol.md)：每个案例共用的研究循环；
 - [implementation learning protocol](framework/implementation_learning_protocol.md)：核心算法由学习者主写的协作规则；
-- [Taylor expansion](topics/taylor-expansion/README.md)：当前主题的完整检查点；
+- [Taylor expansion](topics/taylor-expansion/README.md)：已完成第一轮的主题检查点；
+- [Softmax](topics/softmax/README.md)：当前活跃主题及第一组有限精度证据；
 - [current resume point](NEXT_SESSION.md)：下一次从哪里继续。
 
 ## 快速复现
@@ -73,8 +85,11 @@ Taylor expansion 第一轮已经完成主要推导与实验，覆盖：
     python topics/taylor-expansion/experiments/finite_difference.py
     python topics/taylor-expansion/experiments/statistical_noise.py
     python -m unittest discover -s topics/taylor-expansion/experiments -p "test_*.py" -v
+    python topics/softmax/experiments/fp32_shift_resolution.py
+    python -m unittest discover -s topics/softmax/experiments -p "test_*.py" -v
 
-两个实验都会把 CSV、metadata 和 PNG 写入 topics/taylor-expansion/experiments/results。
+Taylor 实验把 CSV、metadata 和 PNG 写入对应 results 目录；当前 Softmax
+实验写入 CSV 与 metadata。
 
 ## 研究约定
 
