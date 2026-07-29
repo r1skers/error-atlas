@@ -17,7 +17,7 @@ topic 之间可以共享工具和结论，但不预设必须存在一条线性�
 | Taylor expansion | remainder、bound quality、传播、稳定性与 bias–variance 优化 | Completed — first pass |
 | Softmax | 输入扰动与有限精度误差如何经过 normalization 传播 | Active — first FP32 probe verified |
 
-## Active：Taylor expansion
+## Completed：Taylor expansion
 
 当前从 Taylor remainder 切入，依次研究：
 

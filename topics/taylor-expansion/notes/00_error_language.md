@@ -1,4 +1,4 @@
-# CP00 — Orientation
+# 00 — Error Language and Orientation
 
 状态：完成（2026-07-16）
 
@@ -22,7 +22,7 @@ R_n(x)=f(x)-P_n(x).
 
 这一定义本身没有声称 \(R_n\) 很小。要得到“小”、阶数或数值上界，必须继续加入关于 \(f\)、区间和 \(x-a\) 的条件。
 
-## CP00 必须分开的四件事
+## 必须分开的四件事
 
 1. **Actual error**：给定 \(f,a,n,x\) 后的真实 \(R_n(x)\)。
 2. **Representation**：用导数、积分或某个中间点表达同一个 \(R_n(x)\)。
@@ -41,7 +41,7 @@ f(x)=P_n(x)+O((x-a)^{n+1}),
 
 下一步用 \(R_2(x)=\sin x-x\) 比较 \(O(x^3)\)、\(O(x^2)\) 与 \(o(x^2)\)。
 
-## Checkpoint conclusion
+## 阶段结论
 
 - \(R_n=f-P_n\) 是带符号的精确余项函数，absolute error 是 \(|R_n|\)；
 - \(R=O(g)\) 表示 \(|R|/|g|\) 在目标极限附近有界；

@@ -1,4 +1,4 @@
-# CP03 — Peano Remainder
+# 03 — Peano Remainder
 
 状态：完成（2026-07-17）
 
@@ -109,7 +109,7 @@ r_n(h)=r_n'(c_h)h.
 r_n(h)=h\,o(h^{n-1})=o(h^n).
 \]
 
-## Checkpoint conclusion
+## 阶段结论
 
 - 一阶 Peano form 就是 differentiability 的等价写法；
 - 一般形式通过对 \(f'\) 使用低一阶结论和中值定理归纳得到；

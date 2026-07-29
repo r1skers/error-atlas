@@ -1,4 +1,4 @@
-# CP02 — Integral Remainder
+# 02 — Integral Remainder
 
 状态：完成（2026-07-16）
 
@@ -50,7 +50,7 @@ R_2(x)
 
 下一步将从 \(f(x)-f(a)=\int_a^x f'(t)\,dt\) 出发，通过分部积分推导一般公式。
 
-## Checkpoint conclusion
+## 阶段结论
 
 - integral remainder 把 \(f^{(n+1)}\) 在区间上的局部贡献通过 kernel \((x-t)^n/n!\) 累积起来；
 - 被积函数的符号可以判断 Taylor polynomial 是高估还是低估；

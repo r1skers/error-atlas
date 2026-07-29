@@ -52,9 +52,10 @@ cross-entropy、FP32 输入量化边界和第一轮 closed-book rewrite 已形�
     └── topics/
         ├── taylor-expansion/
             ├── README.md
-            ├── CP00_orientation.md
-            ├── ...
-            ├── CP06_control_and_optimization.md
+            ├── notes/
+            │   ├── 00_error_language.md
+            │   ├── ...
+            │   └── 06_control_and_optimization.md
             └── experiments/
                 ├── README.md
                 ├── finite_difference.py
@@ -73,7 +74,7 @@ cross-entropy、FP32 输入量化边界和第一轮 closed-book rewrite 已形�
 - [TOPICS.md](TOPICS.md)：主题注册表与候选方向；
 - [error analysis protocol](framework/error_analysis_protocol.md)：每个案例共用的研究循环；
 - [implementation learning protocol](framework/implementation_learning_protocol.md)：核心算法由学习者主写的协作规则；
-- [Taylor expansion](topics/taylor-expansion/README.md)：已完成第一轮的主题检查点；
+- [Taylor expansion](topics/taylor-expansion/README.md)：已完成第一轮的理论笔记与数值实验；
 - [Softmax](topics/softmax/README.md)：当前活跃主题及第一组有限精度证据；
 - [current resume point](NEXT_SESSION.md)：下一次从哪里继续。
 

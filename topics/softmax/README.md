@@ -95,7 +95,7 @@ evidence 统一保存在 experiments 目录。
 
 ## Research workflow
 
-本 topic 不复制 Taylor 的教程式 checkpoint 结构，只复用同一研究纪律：
+本 topic 不复制 Taylor 的线性学习笔记结构，只复用同一研究纪律：
 
 - framework/error_analysis_protocol.md 规定研究循环与 evidence level；
 - framework/implementation_learning_protocol.md 规定主动输出和代码

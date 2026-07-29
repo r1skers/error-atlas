@@ -1,4 +1,4 @@
-# CP01 — Lagrange Remainder
+# 01 — Lagrange Remainder
 
 状态：完成（2026-07-16）
 
@@ -110,7 +110,7 @@ f^{(n+1)}(\xi)-K(n+1)!=0,
 
 代回 \(K\) 即得到 Lagrange remainder。
 
-## Checkpoint conclusion
+## 阶段结论
 
 - \(\xi\) 是 Rolle theorem 保证存在的点，并不是直接计算出的参数；
 - 对每个 \(x\)，对应的 \(\xi_x\) 可能不同，但总位于 \(a\) 与 \(x\) 之间；

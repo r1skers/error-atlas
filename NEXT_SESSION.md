@@ -5,7 +5,7 @@
 ## Resume point
 
 - Active topic：Softmax
-- Completed checkpoint：binary directionality and FP32 shift-resolution probe
+- Completed milestone：binary directionality and FP32 shift-resolution probe
 - Topic summary：topics/softmax/README.md
 - Experiment：topics/softmax/experiments/fp32_shift_resolution.py
 - Registry：TOPICS.md
