@@ -1,0 +1,22 @@
+{
+  "generated_at_utc": "2026-08-07T17:13:37.474977+00:00",
+  "command": "python topics/softmax/experiments/fp32_softmax_summation.py",
+  "python_version": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "numpy_version": "2.4.6",
+  "dtype": "float32",
+  "unit_roundoff": 5.960464477539063e-08,
+  "ideal_tail_logit": -16.635532333438686,
+  "ideal_tail_exponential": 5.960464477539063e-08,
+  "ideal_denominator": 1.0000001192092896,
+  "registered_datasets": [
+    "favorable_0_tail_tail",
+    "unfavorable_tail_0_tail"
+  ],
+  "methods": [
+    "sequential",
+    "pairwise",
+    "compensated"
+  ],
+  "source_sha256": "e7b6f5277c17b03a5f9a774e89aabd37da0da840348ae1fe8a6d7baf2522e575"
+}

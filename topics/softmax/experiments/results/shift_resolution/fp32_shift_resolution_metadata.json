@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-07-29T14:22:49.026207+00:00",
+  "generated_at_utc": "2026-08-07T17:13:37.027135+00:00",
   "command": "python topics/softmax/experiments/fp32_shift_resolution.py",
   "python_version": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
   "platform": "Windows-10-10.0.19045-SP0",
@@ -24,5 +24,5 @@
   ],
   "reference_difference": 1.0,
   "reference_first_probability": 0.7310585786300049,
-  "source_sha256": "5e56a9af7dde4dc97817050936aaaa69d03ec8b8b6542687653db40e18bf0112"
+  "source_sha256": "986907f6f98ffd2c99045714de044e89cb2251ae6f0257da582b3edc5dc806f6"
 }

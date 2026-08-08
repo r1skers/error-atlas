@@ -35,9 +35,11 @@ Taylor expansion 第一轮已经完成主要推导与实验，覆盖：
 图中左侧由随机噪声的 \(h^{-1}\) 放大主导，右侧由中心差分的 \(h^2\) 截断偏差主导；理论与 Monte Carlo 结果在最优步长附近吻合。
 
 闭卷重写已经验证核心相关噪声构造可以从空白恢复，Taylor expansion
-第一轮正式完成。Softmax 研究已经启动：二分类方向性、稳定
-cross-entropy、FP32 输入量化边界和第一轮 closed-book rewrite 已形成
-可复现证据。
+第一轮正式完成。Softmax 第一轮误差机理也已完成：从多分类 Jacobian、
+概率单纯形切空间和全局 \(1/2\) 界，推进到 exp、求和、除法的一阶浮点
+误差预算，并区分问题条件性、求值算法稳定性与输入表示误差。FP32 输入
+量化边界和第一轮 closed-book rewrite 已形成可复现证据；故障—指标—
+consumer policy—处置链及首个分层求和压力实验也已形成 raw/summary 证据。
 
 ## 仓库结构
 
@@ -67,15 +69,23 @@ cross-entropy、FP32 输入量化边界和第一轮 closed-book rewrite 已形�
             └── experiments/
                 ├── README.md
                 ├── fp32_shift_resolution.py
+                ├── fp32_summation_stress.py
+                ├── fp32_softmax_summation.py
+                ├── softmax_failure_triage.py
+                ├── softmax_failure_triage_runner.py
                 ├── rewrite_fp32_shift_resolution.py
-                ├── test_fp32_shift_resolution.py
+                ├── test_*.py
                 └── results/
+                    ├── shift_resolution/
+                    ├── summation_permutation/
+                    ├── softmax_summation/
+                    └── failure_triage/
 
 - [TOPICS.md](TOPICS.md)：主题注册表与候选方向；
 - [error analysis protocol](framework/error_analysis_protocol.md)：每个案例共用的研究循环；
 - [implementation learning protocol](framework/implementation_learning_protocol.md)：核心算法由学习者主写的协作规则；
 - [Taylor expansion](topics/taylor-expansion/README.md)：已完成第一轮的理论笔记与数值实验；
-- [Softmax](topics/softmax/README.md)：当前活跃主题及第一组有限精度证据；
+- [Softmax](topics/softmax/README.md)：当前活跃主题、条件性结论与第一组有限精度证据；
 - [current resume point](NEXT_SESSION.md)：下一次从哪里继续。
 
 ## 快速复现
@@ -87,6 +97,7 @@ cross-entropy、FP32 输入量化边界和第一轮 closed-book rewrite 已形�
     python topics/taylor-expansion/experiments/statistical_noise.py
     python -m unittest discover -s topics/taylor-expansion/experiments -p "test_*.py" -v
     python topics/softmax/experiments/fp32_shift_resolution.py
+    python topics/softmax/experiments/softmax_failure_triage_runner.py --include-stress
     python -m unittest discover -s topics/softmax/experiments -p "test_*.py" -v
 
 Taylor 实验把 CSV、metadata 和 PNG 写入对应 results 目录；当前 Softmax

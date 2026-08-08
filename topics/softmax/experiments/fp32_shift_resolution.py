@@ -22,7 +22,7 @@ COMMON_OFFSETS = (2**23, 2**24, 2**25)
 REFERENCE_DIFFERENCE = 1.0
 REFERENCE_FIRST_PROBABILITY = 1.0 / (1.0 + math.exp(-REFERENCE_DIFFERENCE))
 
-RESULTS_DIR = Path(__file__).resolve().parent / "results"
+RESULTS_DIR = Path(__file__).resolve().parent / "results" / "shift_resolution"
 CSV_PATH = RESULTS_DIR / "fp32_shift_resolution.csv"
 METADATA_PATH = RESULTS_DIR / "fp32_shift_resolution_metadata.json"
 CSV_FIELDS = (

@@ -1,0 +1,19 @@
+{
+  "generated_at_utc": "2026-08-07T17:16:36.171777+00:00",
+  "command": "python topics/softmax/experiments/fp32_summation_stress.py",
+  "python_version": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "numpy_version": "2.4.6",
+  "dtype": "float32",
+  "unit_roundoff": 5.960464477539063e-08,
+  "registered_datasets": [
+    "favorable_1_u_u",
+    "unfavorable_u_1_u"
+  ],
+  "methods": [
+    "sequential",
+    "pairwise",
+    "compensated"
+  ],
+  "source_sha256": "b83a354f7daec9453f034e161a4387968972186a9d20218291b99c6363b80882"
+}

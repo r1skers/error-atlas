@@ -1,6 +1,6 @@
 # Topic Registry
 
-更新时间：2026-07-29
+更新时间：2026-08-04
 
 ## 组织原则
 
@@ -15,7 +15,7 @@ topic 之间可以共享工具和结论，但不预设必须存在一条线性�
 | Topic | 当前问题 | 状态 |
 | --- | --- | --- |
 | Taylor expansion | remainder、bound quality、传播、稳定性与 bias–variance 优化 | Completed — first pass |
-| Softmax | 输入扰动与有限精度误差如何经过 normalization 传播 | Active — first FP32 probe verified |
+| Softmax | 输入扰动、有限精度故障与 consumer-specific 处置 | Active — failure triage and summation stress established |
 
 ## Completed：Taylor expansion
 
@@ -40,12 +40,21 @@ Softmax 已从二维线性映射的方向性误差进入正式研究。当前已
 
 - 数学参考值与 finite-precision implementation 之间的误差；
 - logit perturbation 通过 softmax Jacobian 的传播；
+- 多分类 Jacobian 的切空间、概率加权方差表示与方向相关谱；
+- 三分类均匀／非均匀点的可手算谱，以及局部 \(3/8\) 与全局 \(1/2\)
+  operator-norm 界的区别；
 - subtract-max 对 overflow 的控制及其输入量化边界；
+- exp、求和与除法误差的一阶传播预算及下溢边界；
+- 问题条件性、求值算法稳定性和输入表示误差的拆分；
 - FP32 在 \(2^{24}\) 附近丢失单位 logit difference 的可复现实验；
+- 顺序、固定平衡树、补偿求和与 FP64 accumulator 的受控处置矩阵；
+- raw observation、repeatability/accuracy summary、consumer policy 与
+  failure/warning code 分层；
 - 原实现、边界测试、CSV、metadata 与 closed-book rewrite。
 
-下一步将方向性结论推广到多分类 Softmax，再研究更多 finite-precision
-source、后续 loss 传播和精度—成本权衡。
+下一步扩大病态输入族并在目标硬件记录性能与资源成本；GPU reduction、
+mixed precision、fast exp 与 kernel fusion 继续留到 GPU 实现阶段，复用
+相同 recipe、input hash 与 consumer policy 做控制变量对照。
 
 ## 新 Topic 的最小模板
 

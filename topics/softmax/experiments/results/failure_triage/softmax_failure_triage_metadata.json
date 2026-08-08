@@ -1,0 +1,162 @@
+{
+  "artifacts": {
+    "softmax_failure_triage_runs.csv": "9878caad480dd8c786aa55952e29dbe923a70010e29463ab4eca8628718d7c81",
+    "softmax_failure_triage_summary.csv": "ef29ad6f87cfe3155bfbad266685c41789f5b4a711c69d76d979259c365d3335"
+  },
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "config": {
+        "accumulator_dtype": "float32",
+        "deterministic": true,
+        "implementation_name": "explicit_left_to_right_loop",
+        "implementation_version": "1",
+        "method_parameters": {
+          "rounding": "nearest_even"
+        },
+        "output_dtype": "float32",
+        "reduction_method": "sequential"
+      },
+      "config_id": "2a11fd5acaf1f6c66c3aea2c40879562356e3a555acec85310f8c20d92f891a4",
+      "implementation_hash": "b83a354f7daec9453f034e161a4387968972186a9d20218291b99c6363b80882",
+      "implementation_source": "fp32_summation_stress.py",
+      "name": "sequential_fp32"
+    },
+    {
+      "config": {
+        "accumulator_dtype": "float32",
+        "deterministic": true,
+        "implementation_name": "fixed_balanced_binary_tree",
+        "implementation_version": "1",
+        "method_parameters": {
+          "split": "first_length_floor_half"
+        },
+        "output_dtype": "float32",
+        "reduction_method": "pairwise"
+      },
+      "config_id": "43748248779cbbee3abf965100dcc10cf127f9613d0d1a5eb254ff0a4ce343f7",
+      "implementation_hash": "b83a354f7daec9453f034e161a4387968972186a9d20218291b99c6363b80882",
+      "implementation_source": "fp32_summation_stress.py",
+      "name": "pairwise_fp32"
+    },
+    {
+      "config": {
+        "accumulator_dtype": "float32",
+        "deterministic": true,
+        "implementation_name": "standard_kahan_loop",
+        "implementation_version": "1",
+        "method_parameters": {
+          "compensation": "kahan"
+        },
+        "output_dtype": "float32",
+        "reduction_method": "compensated"
+      },
+      "config_id": "2b26c1fa5ab2e58a0088839c1d8c96022418d584df475d67c2af423953931d5b",
+      "implementation_hash": "b83a354f7daec9453f034e161a4387968972186a9d20218291b99c6363b80882",
+      "implementation_source": "fp32_summation_stress.py",
+      "name": "compensated_fp32"
+    },
+    {
+      "config": {
+        "accumulator_dtype": "float64",
+        "deterministic": true,
+        "implementation_name": "explicit_left_to_right_loop",
+        "implementation_version": "1",
+        "method_parameters": {
+          "final_cast": "float32"
+        },
+        "output_dtype": "float32",
+        "reduction_method": "sequential"
+      },
+      "config_id": "54b7fa46da672967a9a6599ce5284661c5fde38bbdcd9d700e4b1d84abf54b2d",
+      "implementation_hash": "ce26cf71c0f88e889f994fdfbae733eec38760c43ecb010776ce35df495de9fb",
+      "implementation_source": "softmax_failure_triage_runner.py",
+      "name": "sequential_fp64_accumulator"
+    }
+  ],
+  "case_count": 3,
+  "cases": [
+    {
+      "recipe": {
+        "dtype": "float32",
+        "generator_name": "head_then_power_tail",
+        "generator_version": "1",
+        "layout": "head_then_tail",
+        "parameters": {
+          "head_power_of_two_exponent": 0,
+          "tail_count": 2,
+          "tail_power_of_two_exponent": -24
+        },
+        "seeds": [],
+        "shape": [
+          3
+        ]
+      },
+      "suite_tier": "smoke"
+    },
+    {
+      "recipe": {
+        "dtype": "float32",
+        "generator_name": "head_then_power_tail",
+        "generator_version": "1",
+        "layout": "head_then_tail",
+        "parameters": {
+          "head_power_of_two_exponent": 0,
+          "tail_count": 1024,
+          "tail_power_of_two_exponent": -24
+        },
+        "seeds": [],
+        "shape": [
+          1025
+        ]
+      },
+      "suite_tier": "smoke"
+    },
+    {
+      "recipe": {
+        "dtype": "float32",
+        "generator_name": "head_then_power_tail",
+        "generator_version": "1",
+        "layout": "head_then_tail",
+        "parameters": {
+          "head_power_of_two_exponent": 0,
+          "tail_count": 1048576,
+          "tail_power_of_two_exponent": -24
+        },
+        "seeds": [],
+        "shape": [
+          1048577
+        ]
+      },
+      "suite_tier": "stress"
+    }
+  ],
+  "environment": {
+    "backend": "numpy_cpu",
+    "device": "AMD64:AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "numpy_version": "2.4.6",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "python_version": "3.13.12",
+    "runtime_versions": {
+      "python_implementation": "CPython"
+    }
+  },
+  "environment_id": "a4c6a61a2e3e1b0f4b1118e22802004f7a587b9658b1bb7c2861a6a7032182d6",
+  "generated_at_utc": "2026-08-07T17:16:46.091844+00:00",
+  "include_stress": true,
+  "pipeline_sources": {
+    "softmax_failure_triage.py": "ea42966a5f7729740b3ca3bf3b98df2f980f4e541be78cdd522259bf7f33a572",
+    "softmax_failure_triage_runner.py": "ce26cf71c0f88e889f994fdfbae733eec38760c43ecb010776ce35df495de9fb"
+  },
+  "policy": {
+    "max_absolute_relative_error_tolerance": 1e-06,
+    "require_bitwise_repeatability": true
+  },
+  "raw_row_count": 36,
+  "reference_method": "fp64_sum_certified_against_exact_fraction",
+  "repeat_count": 3,
+  "schema_version": "1",
+  "suite_name": "power_tail_summation_mitigation",
+  "suite_version": "1",
+  "summary_row_count": 12
+}
