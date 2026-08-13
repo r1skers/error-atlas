@@ -1,0 +1,147 @@
+{
+  "schema_version": "1",
+  "experiment_id": "depth_margin_risk_v1",
+  "status": "preregistered_not_executed",
+  "preregistration_date": "2026-08-12",
+  "purpose": "Freeze a pre-run depth-and-margin screening score and one held-out nonuniform FP32 input family before exact-oracle or candidate execution.",
+  "evidence_boundary": {
+    "accepted_claim": "None. This file records predictions, not validation evidence.",
+    "forbidden_reinterpretation": "The score is not a probability, a SAFE/FAIL threshold, an error bound, or a correct-rounding certificate."
+  },
+  "label": {
+    "name": "correct_rounding_failure",
+    "formula": "F_G(x) = 0 if y_G == RN32(S_leaf), else 1",
+    "source": "exact semantic graph oracle after preregistration"
+  },
+  "proxy": {
+    "name": "depth_margin_ratio_v1",
+    "role": "experiment_screening_rank_only",
+    "leaf_depth_formula": "D_G(x) = sum_i d_i * abs(x_i)",
+    "first_order_exposure_formula": "B_G^(1) = epsilon32 * D_G(x)",
+    "score_formula": "R_G(x) = B_G^(1) / M(x)",
+    "epsilon32_fraction": "1/16777216",
+    "margin_formula": "M(x) is the exact distance from S_leaf to the nearest binary32 RN-even decision boundary",
+    "zero_margin_policy": "R_G is positive infinity when M(x) is zero"
+  },
+  "domain": {
+    "leaves": "nonnegative finite stored binary32 values",
+    "graph": "proper pure binary-addition tree with one binary32 RN-even rounding per internal node",
+    "sum": "normal finite exact stored-leaf sum near 1 with no overflow",
+    "source_values": "out of scope"
+  },
+  "fixed_geometry": {
+    "q_fraction": "1/536870912",
+    "q_power_of_two_exponent": -29,
+    "ulp_at_one_fraction": "1/8388608",
+    "midpoint_offset_fraction": "1/16777216",
+    "midpoint_offset_in_q": 32,
+    "tail_sum_fraction": "33/536870912",
+    "tail_sum_in_q": 33,
+    "exact_stored_leaf_sum_fraction": "536870945/536870912",
+    "margin_fraction": "1/536870912",
+    "correctly_rounded_target_bits": "0x3f800001"
+  },
+  "stored_leaf_multiset_in_q": [
+    536870912,
+    16,
+    8,
+    4,
+    2,
+    1,
+    1,
+    1
+  ],
+  "graphs": {
+    "sequential_left_to_right": {
+      "leaf_count": 8,
+      "nodes": [
+        {"index": 8, "left": 0, "right": 1},
+        {"index": 9, "left": 8, "right": 2},
+        {"index": 10, "left": 9, "right": 3},
+        {"index": 11, "left": 10, "right": 4},
+        {"index": 12, "left": 11, "right": 5},
+        {"index": 13, "left": 12, "right": 6},
+        {"index": 14, "left": 13, "right": 7}
+      ],
+      "root": 14,
+      "leaf_depths": [7, 7, 6, 5, 4, 3, 2, 1]
+    },
+    "balanced_contiguous_floor_half": {
+      "leaf_count": 8,
+      "nodes": [
+        {"index": 8, "left": 0, "right": 1},
+        {"index": 9, "left": 2, "right": 3},
+        {"index": 10, "left": 8, "right": 9},
+        {"index": 11, "left": 4, "right": 5},
+        {"index": 12, "left": 6, "right": 7},
+        {"index": 13, "left": 11, "right": 12},
+        {"index": 14, "left": 10, "right": 13}
+      ],
+      "root": 14,
+      "leaf_depths": [3, 3, 3, 3, 3, 3, 3, 3]
+    }
+  },
+  "layouts": [
+    {
+      "layout_id": "head_last",
+      "stored_leaves_in_q": [16, 8, 4, 2, 1, 1, 1, 536870912],
+      "predictions": {
+        "sequential_left_to_right": {
+          "D_fraction": "536871123/536870912",
+          "D_symbolic": "1 + 211*q",
+          "R_fraction": "536871123/16777216",
+          "R_approximation": 32.00001257658005
+        },
+        "balanced_contiguous_floor_half": {
+          "D_fraction": "1610612835/536870912",
+          "D_symbolic": "3 + 99*q",
+          "R_fraction": "1610612835/16777216",
+          "R_approximation": 96.00000590085983
+        }
+      },
+      "predicted_risk_order_high_to_low": [
+        "balanced_contiguous_floor_half",
+        "sequential_left_to_right"
+      ]
+    },
+    {
+      "layout_id": "head_first",
+      "stored_leaves_in_q": [536870912, 16, 8, 4, 2, 1, 1, 1],
+      "predictions": {
+        "sequential_left_to_right": {
+          "D_fraction": "1879048289/268435456",
+          "D_symbolic": "7 + 194*q",
+          "R_fraction": "1879048289/8388608",
+          "R_approximation": 224.0000115633011
+        },
+        "balanced_contiguous_floor_half": {
+          "D_fraction": "1610612835/536870912",
+          "D_symbolic": "3 + 99*q",
+          "R_fraction": "1610612835/16777216",
+          "R_approximation": 96.00000590085983
+        }
+      },
+      "predicted_risk_order_high_to_low": [
+        "sequential_left_to_right",
+        "balanced_contiguous_floor_half"
+      ]
+    }
+  ],
+  "validation_rule": {
+    "matched_pair": "the two registered graphs evaluated on the same ordered stored leaves",
+    "informative": "exact-oracle labels differ between the two graphs",
+    "concordant": "R_failure > R_correct",
+    "inverted": "R_failure < R_correct",
+    "tie": "R_failure == R_correct",
+    "same_label": "same_label_uninformative",
+    "strong_hypothesis": "Every informative matched pair is concordant.",
+    "falsifier": "Any inverted or tied informative pair falsifies the strong hypothesis.",
+    "inconclusive_condition": "No informative matched pair exists in the registered family.",
+    "retention_policy": "Retain and report every registered pair, including same-label pairs."
+  },
+  "execution_policy": {
+    "exact_oracle_executed_before_this_file": false,
+    "candidate_executed_before_this_file": false,
+    "next_step": "Hash this immutable preregistration, independently recompute its proxy quantities, and only then obtain exact-oracle labels."
+  }
+}

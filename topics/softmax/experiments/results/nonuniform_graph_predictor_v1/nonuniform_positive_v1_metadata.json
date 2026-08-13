@@ -1,0 +1,27 @@
+{
+  "all_correct_rounding_predictions_matched": true,
+  "all_predictions_matched_observation": true,
+  "artifacts": {
+    "nonuniform_positive_v1_observations.csv": "226769c9615a7e855eb18b6b8c8314e5f64837b9a28db87b3c91634f46354beb"
+  },
+  "case_name": "nonuniform_positive_v1",
+  "command": "python topics/softmax/experiments/nonuniform_graph_predictor_v1_runner.py",
+  "evidence_status": "single_preregistered_case_observed",
+  "generated_at_utc": "2026-08-11T08:42:36.047789+00:00",
+  "input_hash": "ad503c1c937d0abcd77e7342f084173d658b1f090813f2f2b336c82cc9285dbc",
+  "numpy_version": "2.4.6",
+  "observation_row_count": 2,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "preregistration": {
+    "path": "nonuniform_positive_v1_preregistration.json",
+    "sha256": "0c8047f38363c02ef6a6995bcc58a3f890dfebe7395aa5eb62a5cb671d6e47a6"
+  },
+  "python_version": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "schema_version": "1",
+  "sources": {
+    "fp32_summation_stress.py": "b83a354f7daec9453f034e161a4387968972186a9d20218291b99c6363b80882",
+    "nonuniform_graph_predictor_v1_runner.py": "5be09e1f8c055f686c1686178216e0e63bd29de4de388044ea4990bf3609de48",
+    "softmax_failure_triage.py": "7717b10501fa36892816bd7a9b633b6a97f8eabe98391a86b859801d42b577a1",
+    "summation_graph_predictor.py": "88fac7b05ed319ae157d939b72f344d9d81e0b0fc054234abddc3be03776cc7a"
+  }
+}

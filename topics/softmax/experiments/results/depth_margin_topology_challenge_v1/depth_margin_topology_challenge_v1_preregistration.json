@@ -1,0 +1,106 @@
+{
+  "schema_version": "1",
+  "experiment_id": "depth_margin_topology_challenge_v1",
+  "status": "preregistered_not_executed",
+  "preregistration_date": "2026-08-12",
+  "classification": "adversarial_counterexample_conjecture",
+  "purpose": "Test information discarded by the depth-margin proxy by holding S_leaf, M, every leaf depth, D_G, and R_G fixed while changing only explicit sibling grouping.",
+  "evidence_boundary": {
+    "accepted_claim": "None. The graph labels below are hand-derived conjectures awaiting exact-oracle and candidate checks.",
+    "not_population_validation": "This is a constructed topology challenge, not an unbiased estimate of screening performance over an input population.",
+    "forbidden_reinterpretation": "A confirmed counterexample falsifies the registered universal matched-pair ordering claim; it does not measure an average ranking rate."
+  },
+  "domain": {
+    "leaves": "nonnegative finite stored binary32 values",
+    "graphs": "proper pure binary-addition trees with one binary32 RN-even rounding per internal node",
+    "sum": "normal finite exact stored-leaf sum near 1 with no overflow",
+    "source_values": "out of scope"
+  },
+  "fixed_geometry": {
+    "q_fraction": "1/536870912",
+    "q_power_of_two_exponent": -29,
+    "epsilon32_fraction": "1/16777216",
+    "epsilon32_in_q": 32,
+    "ulp_at_one_in_q": 64,
+    "midpoint_offset_in_q": 32,
+    "stored_leaves_fraction": [
+      "1",
+      "1/16777216",
+      "1/1073741824",
+      "1/1073741824"
+    ],
+    "stored_leaves_in_q": [
+      "536870912",
+      "32",
+      "1/2",
+      "1/2"
+    ],
+    "exact_stored_leaf_sum_fraction": "536870945/536870912",
+    "exact_stored_leaf_sum_symbolic": "1 + 33*q",
+    "margin_fraction": "1/536870912",
+    "margin_symbolic": "q",
+    "correctly_rounded_target_bits": "0x3f800001"
+  },
+  "proxy": {
+    "name": "depth_margin_ratio_v1",
+    "leaf_depth_formula": "D_G(x) = sum_i d_i * abs(x_i)",
+    "score_formula": "R_G(x) = epsilon32 * D_G(x) / M(x)",
+    "shared_leaf_depths": [2, 2, 2, 2],
+    "shared_D_fraction": "536870945/268435456",
+    "shared_D_symbolic": "2 * (1 + 33*q)",
+    "shared_R_fraction": "536870945/8388608",
+    "shared_R_symbolic": "64 + 2112*q",
+    "predicted_comparison": "tie"
+  },
+  "graphs": [
+    {
+      "graph_id": "midpoint_then_remainder",
+      "expression": "RN32(RN32(x0 + x1) + RN32(x2 + x3))",
+      "nodes": [
+        {"index": 4, "left": 0, "right": 1},
+        {"index": 5, "left": 2, "right": 3},
+        {"index": 6, "left": 4, "right": 5}
+      ],
+      "root": 6,
+      "hand_conjecture": {
+        "node_4_rounded_fraction": "1",
+        "node_5_rounded_fraction": "1/536870912",
+        "root_rounded_fraction": "1",
+        "root_bits": "0x3f800000",
+        "signed_graph_error_fraction": "-33/536870912",
+        "correct_rounding_failure": 1
+      }
+    },
+    {
+      "graph_id": "half_q_then_midpoint_plus_half_q",
+      "expression": "RN32(RN32(x0 + x2) + RN32(x1 + x3))",
+      "nodes": [
+        {"index": 4, "left": 0, "right": 2},
+        {"index": 5, "left": 1, "right": 3},
+        {"index": 6, "left": 4, "right": 5}
+      ],
+      "root": 6,
+      "hand_conjecture": {
+        "node_4_rounded_fraction": "1",
+        "node_5_rounded_fraction": "65/1073741824",
+        "root_rounded_fraction": "8388609/8388608",
+        "root_bits": "0x3f800001",
+        "signed_graph_error_fraction": "31/536870912",
+        "correct_rounding_failure": 0
+      }
+    }
+  ],
+  "falsification_rule": {
+    "registered_strong_hypothesis": "For every informative matched pair, R_failure > R_correct.",
+    "pair_is_informative_if": "the exact-oracle correct_rounding_failure labels differ",
+    "challenge_prediction": "The proxy scores tie while the hand-conjectured labels differ.",
+    "falsifier": "If the exact oracle confirms both registered labels and the shared proxy score, the strong hypothesis is falsified by a tied informative pair.",
+    "inconclusive_or_broken_setup": "If the oracle labels are equal, or S_leaf, M, depths, D_G, or R_G differ between graphs, this registered counterexample is not confirmed."
+  },
+  "execution_policy": {
+    "machine_proxy_calculator_executed_before_this_file": false,
+    "exact_oracle_executed_before_this_file": false,
+    "candidate_executed_before_this_file": false,
+    "next_step": "Hash this immutable preregistration, independently recompute the shared proxy quantities, then obtain exact-oracle labels before any candidate execution."
+  }
+}

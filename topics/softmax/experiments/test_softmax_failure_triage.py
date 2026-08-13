@@ -9,7 +9,11 @@ from pathlib import Path
 
 import numpy as np
 
-from fp32_summation_stress import pairwise_sum_fp32, sequential_sum_fp32
+from fp32_summation_stress import (
+    compensated_sum_fp32,
+    pairwise_sum_fp32,
+    sequential_sum_fp32,
+)
 
 from softmax_failure_triage import (
     CaseRecipe,
@@ -20,18 +24,29 @@ from softmax_failure_triage import (
     RunObservation,
     RunSummary,
     assess_run_summary,
+    canonical_policy_bytes,
     case_id,
     config_id,
     environment_id,
     exact_power_tail_sum,
+    exact_uniform_decimal_tail_sums,
+    fraction_to_exact_binary64,
     fp32_bits_hex,
     head_then_power_tail_recipe,
     input_hash,
     materialize_head_then_power_tail,
+    materialize_uniform_decimal_tail,
     observe_fp32_sum,
     observe_power_tail_summation,
+    observe_uniform_decimal_tail_summation,
+    policy_id,
     source_file_sha256,
     summarize_runs,
+    uniform_decimal_tail_recipe,
+)
+from softmax_failure_triage_runner import (
+    registered_candidates,
+    sequential_fp64_accumulator_to_fp32,
 )
 
 
@@ -126,6 +141,50 @@ class ExecutionConfigIdentityTests(unittest.TestCase):
         for variant in variants:
             with self.subTest(variant=variant):
                 self.assertNotEqual(original_id, config_id(variant))
+
+
+class PolicyIdentityTests(unittest.TestCase):
+    def test_same_policy_has_the_same_canonical_identity(self) -> None:
+        first = RunAcceptancePolicy(
+            max_absolute_relative_error_tolerance=1e-6,
+            require_bitwise_repeatability=True,
+            require_correct_rounding=False,
+        )
+        repeated = RunAcceptancePolicy(
+            max_absolute_relative_error_tolerance=1e-6,
+            require_bitwise_repeatability=True,
+            require_correct_rounding=False,
+        )
+
+        self.assertEqual(
+            canonical_policy_bytes(first),
+            canonical_policy_bytes(repeated),
+        )
+        self.assertEqual(policy_id(first), policy_id(repeated))
+        self.assertEqual(
+            policy_id(first),
+            hashlib.sha256(canonical_policy_bytes(first)).hexdigest(),
+        )
+
+    def test_each_policy_change_changes_policy_id(self) -> None:
+        policy = RunAcceptancePolicy(
+            max_absolute_relative_error_tolerance=1e-6,
+            require_bitwise_repeatability=False,
+            require_correct_rounding=False,
+        )
+        variants = (
+            replace(
+                policy,
+                max_absolute_relative_error_tolerance=1e-7,
+            ),
+            replace(policy, require_bitwise_repeatability=True),
+            replace(policy, require_correct_rounding=True),
+        )
+
+        original_id = policy_id(policy)
+        for variant in variants:
+            with self.subTest(variant=variant):
+                self.assertNotEqual(original_id, policy_id(variant))
 
 
 class EnvironmentIdentityTests(unittest.TestCase):
@@ -348,6 +407,263 @@ class HeadThenPowerTailGeneratorTests(unittest.TestCase):
                 tail_power_of_two_exponent=-24,
             )
 
+    def test_layout_changes_order_and_identity_but_not_multiset(self) -> None:
+        tail_count = 2
+        head_recipe = head_then_power_tail_recipe(
+            tail_count=tail_count,
+            layout="head_then_tail",
+        )
+        tail_recipe = head_then_power_tail_recipe(
+            tail_count=tail_count,
+            layout="tail_then_head",
+        )
+        head_values = materialize_head_then_power_tail(head_recipe)
+        tail_values = materialize_head_then_power_tail(tail_recipe)
+        u = np.float32(2.0**-24)
+        expected_head = np.array([1.0, u, u], dtype=np.float32)
+        np.testing.assert_array_equal(expected_head, head_values, strict=True)
+
+        expected_tail = np.array([u, u, 1.0], dtype=np.float32)
+        np.testing.assert_array_equal(expected_tail, tail_values, strict=True)
+
+        self.assertEqual(
+            head_then_power_tail_recipe(tail_count=2),
+            head_recipe,
+        )
+        np.testing.assert_array_equal(
+            np.sort(head_values),
+            np.sort(tail_values),
+        )
+        self.assertNotEqual(case_id(head_recipe), case_id(tail_recipe))
+        self.assertNotEqual(input_hash(head_values), input_hash(tail_values))
+
+
+class UniformDecimalTailRecipeTests(unittest.TestCase):
+    def test_binary64_conversion_is_certified_by_exact_round_trip(self) -> None:
+        exact = Fraction(562_949_987_198_309, 562_949_953_421_312)
+
+        candidate = fraction_to_exact_binary64(exact)
+
+        self.assertEqual(Fraction.from_float(candidate), exact)
+
+    def test_binary64_conversion_rejects_uncertified_values(self) -> None:
+        uncertified = (
+            Fraction(1, 10),
+            Fraction(2**53 + 1, 2**53),
+            Fraction(2**2000, 1),
+        )
+
+        for value in uncertified:
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    fraction_to_exact_binary64(value)
+
+    def test_exact_sums_separate_source_and_stored_tail_values(self) -> None:
+        references = exact_uniform_decimal_tail_sums(
+            tail_count=6,
+            tail_source_decimal="0.0000000100",
+        )
+
+        self.assertEqual(
+            references.source_sum,
+            Fraction(50_000_003, 50_000_000),
+        )
+        self.assertEqual(
+            references.stored_sum,
+            Fraction(562_949_987_198_309, 562_949_953_421_312),
+        )
+        self.assertLess(references.stored_sum, references.source_sum)
+        self.assertEqual(
+            references.correctly_rounded_stored_sum,
+            float(np.float32(1.0 + 2.0**-23)),
+        )
+        self.assertEqual(
+            references.correctly_rounded_stored_sum_bits,
+            "0x3f800001",
+        )
+        self.assertNotEqual(
+            Fraction.from_float(references.correctly_rounded_stored_sum),
+            references.stored_sum,
+        )
+
+    def test_equivalent_decimal_text_has_one_recipe_identity(self) -> None:
+        scientific = uniform_decimal_tail_recipe(
+            tail_count=6,
+            tail_source_decimal="1e-8",
+        )
+        fixed_point = uniform_decimal_tail_recipe(
+            tail_count=6,
+            tail_source_decimal="0.0000000100",
+        )
+
+        self.assertEqual(scientific, fixed_point)
+        self.assertEqual(case_id(scientific), case_id(fixed_point))
+        self.assertEqual(
+            scientific.parameters["tail_source_decimal"],
+            "1E-8",
+        )
+        self.assertEqual(
+            scientific.parameters["tail_stored_fp32_bits"],
+            fp32_bits_hex(np.float32("1e-8")),
+        )
+        self.assertEqual(scientific.shape, (7,))
+        self.assertEqual(scientific.layout, "head_then_tail")
+
+    def test_materializer_uses_frozen_bits_and_selected_layout(self) -> None:
+        head_recipe = uniform_decimal_tail_recipe(
+            tail_count=6,
+            tail_source_decimal="1e-8",
+        )
+        tail_recipe = uniform_decimal_tail_recipe(
+            tail_count=6,
+            tail_source_decimal="1e-8",
+            layout="tail_then_head",
+        )
+        head_values = materialize_uniform_decimal_tail(head_recipe)
+        tail_values = materialize_uniform_decimal_tail(tail_recipe)
+        stored_tail = np.uint32(
+            int(head_recipe.parameters["tail_stored_fp32_bits"], 16)
+        ).view(np.float32)
+
+        np.testing.assert_array_equal(
+            head_values,
+            np.array([1.0, *([stored_tail] * 6)], dtype=np.float32),
+            strict=True,
+        )
+        np.testing.assert_array_equal(
+            tail_values,
+            np.array([*([stored_tail] * 6), 1.0], dtype=np.float32),
+            strict=True,
+        )
+        np.testing.assert_array_equal(
+            np.sort(head_values),
+            np.sort(tail_values),
+        )
+        self.assertNotEqual(input_hash(head_values), input_hash(tail_values))
+        self.assertIsNot(
+            head_values,
+            materialize_uniform_decimal_tail(head_recipe),
+        )
+
+    def test_materializer_rejects_recipe_drift(self) -> None:
+        recipe = uniform_decimal_tail_recipe(
+            tail_count=6,
+            tail_source_decimal="1e-8",
+        )
+        wrong_bits = dict(recipe.parameters)
+        wrong_bits["tail_stored_fp32_bits"] = "0x00000001"
+
+        for changed in (
+            replace(recipe, parameters=wrong_bits),
+            replace(recipe, shape=(6,)),
+        ):
+            with self.subTest(recipe=changed):
+                with self.assertRaises(ValueError):
+                    materialize_uniform_decimal_tail(changed)
+
+    def test_invalid_decimal_recipe_inputs_are_rejected(self) -> None:
+        invalid = (
+            {"tail_count": -1, "tail_source_decimal": "1e-8"},
+            {"tail_count": True, "tail_source_decimal": "1e-8"},
+            {"tail_count": 6, "tail_source_decimal": 1e-8},
+            {"tail_count": 6, "tail_source_decimal": "not-a-number"},
+            {"tail_count": 6, "tail_source_decimal": "NaN"},
+            {"tail_count": 6, "tail_source_decimal": "Infinity"},
+            {"tail_count": 6, "tail_source_decimal": "0"},
+            {"tail_count": 6, "tail_source_decimal": "-1e-8"},
+            {"tail_count": 6, "tail_source_decimal": "1.00000001"},
+            {"tail_count": 6, "tail_source_decimal": "1e-1000"},
+            {
+                "tail_count": 6,
+                "tail_source_decimal": "1e-8",
+                "layout": "middle",
+            },
+        )
+
+        for arguments in invalid:
+            with self.subTest(arguments=arguments):
+                with self.assertRaises((TypeError, ValueError)):
+                    uniform_decimal_tail_recipe(
+                        **arguments  # type: ignore[arg-type]
+                    )
+
+
+class UniformDecimalTailSummationIntegrationTests(unittest.TestCase):
+    def test_candidate_layout_matrix_matches_preregistered_predictions(
+        self,
+    ) -> None:
+        expected_computed_bits = {
+            ("sequential_fp32", "head_then_tail"): "0x3f800000",
+            ("sequential_fp32", "tail_then_head"): "0x3f800001",
+            ("pairwise_fp32", "head_then_tail"): "0x3f800000",
+            ("pairwise_fp32", "tail_then_head"): "0x3f800000",
+            ("compensated_fp32", "head_then_tail"): "0x3f800001",
+            ("compensated_fp32", "tail_then_head"): "0x3f800001",
+            (
+                "sequential_fp64_accumulator",
+                "head_then_tail",
+            ): "0x3f800001",
+            (
+                "sequential_fp64_accumulator",
+                "tail_then_head",
+            ): "0x3f800001",
+        }
+        observations: dict[tuple[str, str], RunObservation] = {}
+
+        for candidate in registered_candidates():
+            for layout in ("head_then_tail", "tail_then_head"):
+                key = (candidate.name, layout)
+                recipe = uniform_decimal_tail_recipe(
+                    tail_count=6,
+                    tail_source_decimal="1e-8",
+                    layout=layout,
+                )
+                observation = observe_uniform_decimal_tail_summation(
+                    recipe=recipe,
+                    config=candidate.config,
+                    environment=base_environment(),
+                    implementation_hash=candidate.implementation_hash,
+                    run_index=0,
+                    summation=candidate.summation,
+                )
+                observations[key] = observation
+
+                expected_bits = expected_computed_bits[key]
+                self.assertEqual(observation.computed_sum_bits, expected_bits)
+                self.assertEqual(
+                    observation.correctly_rounded_reference_bits,
+                    "0x3f800001",
+                )
+                self.assertEqual(
+                    observation.computed_sum_bits
+                    == observation.correctly_rounded_reference_bits,
+                    expected_bits == "0x3f800001",
+                )
+                self.assertEqual(
+                    Fraction.from_float(observation.reference_sum),
+                    Fraction(
+                        562_949_987_198_309,
+                        562_949_953_421_312,
+                    ),
+                )
+                self.assertEqual(
+                    observation.config_id,
+                    config_id(candidate.config),
+                )
+
+        self.assertEqual(
+            len({obs.reference_sum for obs in observations.values()}),
+            1,
+        )
+        self.assertLess(
+            observations[("sequential_fp32", "head_then_tail")].signed_error,
+            0.0,
+        )
+        self.assertGreater(
+            observations[("sequential_fp32", "tail_then_head")].signed_error,
+            0.0,
+        )
+
 
 class PowerTailSummationIntegrationTests(unittest.TestCase):
     def test_direct_q_pipeline_attributes_only_sequential_summation_error(
@@ -411,6 +727,7 @@ def summary_observation(
     run_index: int,
     computed_sum: np.float32,
     case_identity: str = "case-a",
+    reference_sum: float = 1.0,
 ) -> RunObservation:
     return observe_fp32_sum(
         case_identity=case_identity,
@@ -420,7 +737,7 @@ def summary_observation(
         environment_identity="environment-a",
         run_index=run_index,
         computed_sum=computed_sum,
-        reference_sum=1.0,
+        reference_sum=reference_sum,
     )
 
 
@@ -434,6 +751,11 @@ class RunSummaryTests(unittest.TestCase):
         summary = summarize_runs(observations)
 
         self.assertIsInstance(summary, RunSummary)
+        self.assertEqual(summary.reference_sum, 1.0)
+        self.assertEqual(
+            summary.correctly_rounded_reference_bits,
+            "0x3f800000",
+        )
         self.assertEqual(summary.run_count, 3)
         self.assertEqual(summary.finite_output_count, 0)
         self.assertEqual(summary.nan_output_count, 3)
@@ -501,6 +823,35 @@ class RunSummaryTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     summarize_runs(group)
 
+    def test_mixed_reference_sum_is_rejected(self) -> None:
+        first = summary_observation(
+            run_index=0,
+            computed_sum=np.float32(1.0),
+            reference_sum=1.0,
+        )
+        changed_reference = summary_observation(
+            run_index=1,
+            computed_sum=np.float32(1.0),
+            reference_sum=2.0,
+        )
+
+        with self.assertRaises(ValueError):
+            summarize_runs([first, changed_reference])
+
+    def test_mixed_correctly_rounded_reference_bits_are_rejected(self) -> None:
+        first = summary_observation(
+            run_index=0,
+            computed_sum=np.float32(1.0),
+        )
+        changed_target = replace(
+            first,
+            run_index=1,
+            correctly_rounded_reference_bits="0x3f800001",
+        )
+
+        with self.assertRaises(ValueError):
+            summarize_runs([first, changed_target])
+
 
 class RunAssessmentTests(unittest.TestCase):
     def test_policy_rejects_invalid_tolerance_at_construction(self) -> None:
@@ -532,6 +883,18 @@ class RunAssessmentTests(unittest.TestCase):
                         require_bitwise_repeatability=requirement,
                     )
 
+    def test_policy_rejects_non_boolean_correct_rounding_requirement(
+        self,
+    ) -> None:
+        for requirement in ("false", 0, 1, None):
+            with self.subTest(requirement=requirement):
+                with self.assertRaises(TypeError):
+                    RunAcceptancePolicy(
+                        max_absolute_relative_error_tolerance=1e-6,
+                        require_bitwise_repeatability=False,
+                        require_correct_rounding=requirement,  # type: ignore[arg-type]
+                    )
+
     def test_nonrequired_bitwise_equality_does_not_block_accuracy(self) -> None:
         values = (
             np.float32(1.0),
@@ -557,7 +920,7 @@ class RunAssessmentTests(unittest.TestCase):
         self.assertEqual(assessment.failure_reason_codes, ())
         self.assertEqual(
             assessment.warning_reason_codes,
-            ("bitwise_nonrepeatable",),
+            ("bitwise_nonrepeatable", "not_correctly_rounded"),
         )
         self.assertFalse(summary.all_runs_bitwise_equal)
 
@@ -606,7 +969,10 @@ class RunAssessmentTests(unittest.TestCase):
             repeatability_failure.failure_reason_codes,
             ("bitwise_repeatability_required",),
         )
-        self.assertEqual(repeatability_failure.warning_reason_codes, ())
+        self.assertEqual(
+            repeatability_failure.warning_reason_codes,
+            ("not_correctly_rounded",),
+        )
         self.assertFalse(accuracy_failure.accuracy_requirement_passed)
         self.assertTrue(accuracy_failure.repeatability_requirement_passed)
         self.assertFalse(accuracy_failure.overall_passed)
@@ -614,7 +980,10 @@ class RunAssessmentTests(unittest.TestCase):
             accuracy_failure.failure_reason_codes,
             ("accuracy_tolerance_exceeded",),
         )
-        self.assertEqual(accuracy_failure.warning_reason_codes, ())
+        self.assertEqual(
+            accuracy_failure.warning_reason_codes,
+            ("not_correctly_rounded",),
+        )
 
     def test_nonfinite_output_has_a_cause_neutral_failure_code(self) -> None:
         summary = summarize_runs(
@@ -638,20 +1007,100 @@ class RunAssessmentTests(unittest.TestCase):
             assessment.failure_reason_codes,
             ("nonfinite_output",),
         )
-        self.assertEqual(assessment.warning_reason_codes, ())
+        self.assertEqual(
+            assessment.warning_reason_codes,
+            ("not_correctly_rounded",),
+        )
+
+    def test_correct_rounding_gate_requires_every_output_to_match(self) -> None:
+        target = np.float32(1.0)
+        wrong = np.nextafter(target, np.float32(np.inf))
+        summaries = {
+            "all_target": summarize_runs(
+                [
+                    summary_observation(run_index=index, computed_sum=target)
+                    for index in range(2)
+                ]
+            ),
+            "all_wrong": summarize_runs(
+                [
+                    summary_observation(run_index=index, computed_sum=wrong)
+                    for index in range(2)
+                ]
+            ),
+            "mixed": summarize_runs(
+                [
+                    summary_observation(run_index=0, computed_sum=target),
+                    summary_observation(run_index=1, computed_sum=wrong),
+                ]
+            ),
+        }
+        required = RunAcceptancePolicy(
+            max_absolute_relative_error_tolerance=1e-6,
+            require_bitwise_repeatability=False,
+            require_correct_rounding=True,
+        )
+
+        assessments = {
+            name: assess_run_summary(summary, required)
+            for name, summary in summaries.items()
+        }
+
+        self.assertTrue(
+            assessments["all_target"].correct_rounding_requirement_passed
+        )
+        self.assertTrue(assessments["all_target"].overall_passed)
+        for name in ("all_wrong", "mixed"):
+            with self.subTest(name=name):
+                self.assertFalse(
+                    assessments[name].correct_rounding_requirement_passed
+                )
+                self.assertFalse(assessments[name].overall_passed)
+                self.assertIn(
+                    "correct_rounding_required",
+                    assessments[name].failure_reason_codes,
+                )
+
+    def test_nonrequired_incorrect_rounding_warns_without_blocking(self) -> None:
+        summary = summarize_runs(
+            [
+                summary_observation(
+                    run_index=0,
+                    computed_sum=np.nextafter(
+                        np.float32(1.0),
+                        np.float32(np.inf),
+                    ),
+                )
+            ]
+        )
+        policy = RunAcceptancePolicy(
+            max_absolute_relative_error_tolerance=1e-6,
+            require_bitwise_repeatability=False,
+            require_correct_rounding=False,
+        )
+
+        assessment = assess_run_summary(summary, policy)
+
+        self.assertTrue(assessment.correct_rounding_requirement_passed)
+        self.assertTrue(assessment.overall_passed)
+        self.assertEqual(assessment.failure_reason_codes, ())
+        self.assertEqual(
+            assessment.warning_reason_codes,
+            ("not_correctly_rounded",),
+        )
 
 
 class SummationMitigationMatrixTests(unittest.TestCase):
-    def test_one_u_u_case_filters_only_the_inaccurate_candidate(self) -> None:
-        def sequential_fp64_accumulator_to_fp32(
-            values: np.ndarray,
-        ) -> np.float32:
-            total = 0.0
-            for value in values:
-                total += float(value)
-            return np.float32(total)
-
-        recipe = head_then_power_tail_recipe(tail_count=2)
+    def test_layout_and_reduction_graph_exchange_the_inaccurate_candidate(
+        self,
+    ) -> None:
+        recipes = {
+            "head_then_tail": head_then_power_tail_recipe(tail_count=2),
+            "tail_then_head": head_then_power_tail_recipe(
+                tail_count=2,
+                layout="tail_then_head",
+            ),
+        }
         policy = RunAcceptancePolicy(
             max_absolute_relative_error_tolerance=0.0,
             require_bitwise_repeatability=False,
@@ -659,37 +1108,64 @@ class SummationMitigationMatrixTests(unittest.TestCase):
         candidates = {
             "sequential_fp32": sequential_sum_fp32,
             "pairwise_fp32": pairwise_sum_fp32,
+            "compensated_fp32": compensated_sum_fp32,
             "sequential_fp64_accumulator": (
                 sequential_fp64_accumulator_to_fp32
             ),
         }
 
-        assessments = {}
-        for name, summation in candidates.items():
-            config = replace(
-                base_config(),
-                implementation_name=name,
-                reduction_method=name.split("_fp", maxsplit=1)[0],
-                accumulator_dtype=("float64" if "fp64" in name else "float32"),
-            )
-            observation = observe_power_tail_summation(
-                recipe=recipe,
-                config=config,
-                environment=base_environment(),
-                implementation_hash=f"test-{name}",
-                run_index=0,
-                summation=summation,
-            )
-            assessments[name] = assess_run_summary(
-                summarize_runs([observation]),
-                policy,
-            )
+        observations: dict[tuple[str, str], RunObservation] = {}
+        assessments: dict[tuple[str, str], RunAssessment] = {}
+        for layout, recipe in recipes.items():
+            for name, summation in candidates.items():
+                config = replace(
+                    base_config(),
+                    implementation_name=name,
+                    reduction_method=name.split("_fp", maxsplit=1)[0],
+                    accumulator_dtype=(
+                        "float64" if "fp64" in name else "float32"
+                    ),
+                )
+                observation = observe_power_tail_summation(
+                    recipe=recipe,
+                    config=config,
+                    environment=base_environment(),
+                    implementation_hash=f"test-{name}",
+                    run_index=0,
+                    summation=summation,
+                )
+                key = (layout, name)
+                observations[key] = observation
+                assessments[key] = assess_run_summary(
+                    summarize_runs([observation]),
+                    policy,
+                )
 
-        self.assertFalse(assessments["sequential_fp32"].overall_passed)
-        self.assertTrue(assessments["pairwise_fp32"].overall_passed)
-        self.assertTrue(
-            assessments["sequential_fp64_accumulator"].overall_passed
-        )
+        one = 1.0
+        exact = 1.0 + 2.0 * float(np.float32(2.0**-24))
+        expected_sums = {
+            ("head_then_tail", "sequential_fp32"): one,
+            ("head_then_tail", "pairwise_fp32"): exact,
+            ("head_then_tail", "compensated_fp32"): exact,
+            ("head_then_tail", "sequential_fp64_accumulator"): exact,
+            ("tail_then_head", "sequential_fp32"): exact,
+            ("tail_then_head", "pairwise_fp32"): one,
+            ("tail_then_head", "compensated_fp32"): exact,
+            ("tail_then_head", "sequential_fp64_accumulator"): exact,
+        }
+        for key, expected_sum in expected_sums.items():
+            with self.subTest(layout=key[0], candidate=key[1]):
+                self.assertEqual(observations[key].computed_sum, expected_sum)
+                self.assertEqual(
+                    assessments[key].overall_passed,
+                    expected_sum == exact,
+                )
+
+        for name in candidates:
+            self.assertEqual(
+                observations[("head_then_tail", name)].config_id,
+                observations[("tail_then_head", name)].config_id,
+            )
 
 
 if __name__ == "__main__":

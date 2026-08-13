@@ -1,0 +1,28 @@
+{
+  "all_hand_conjectures_matched_oracle": true,
+  "all_proxy_values_matched_preregistration": true,
+  "artifacts": {
+    "depth_margin_topology_challenge_v1_oracle_observations.csv": "52c7b57398810fa9d44e9f6a5f6dbeff150ae33f793acd9d357cf469813e765d"
+  },
+  "candidate_executed": false,
+  "command": "python topics/softmax/experiments/depth_margin_topology_challenge_v1_runner.py",
+  "conclusion": "Equal depth-margin scores do not universally rank binary32 correct-rounding failure when sibling grouping changes.",
+  "evidence_status": "confirmed_adversarial_counterexample",
+  "experiment_id": "depth_margin_topology_challenge_v1",
+  "generated_at_utc": "2026-08-11T18:21:45.119187+00:00",
+  "observation_row_count": 2,
+  "pair_is_informative": true,
+  "pair_outcome": "tie",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "preregistration": {
+    "path": "depth_margin_topology_challenge_v1_preregistration.json",
+    "sha256": "63fbe76d7af9f5df128c1fdfade6ca49fc1d4e26c472ea9914888a3ee28f9949"
+  },
+  "python_version": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "schema_version": "1",
+  "sources": {
+    "depth_margin_topology_challenge_v1_runner.py": "296b402858c62cb3f83e46e840165fec1ac3b7c3c35fed717f4a11a85b7480c2",
+    "summation_graph_predictor.py": "88fac7b05ed319ae157d939b72f344d9d81e0b0fc054234abddc3be03776cc7a"
+  },
+  "strong_hypothesis_falsified": true
+}

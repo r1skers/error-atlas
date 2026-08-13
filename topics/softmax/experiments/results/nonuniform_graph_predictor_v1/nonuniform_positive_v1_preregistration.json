@@ -1,0 +1,119 @@
+{
+  "assumptions": [
+    "ordered leaves are materialized exactly as finite nonnegative float32 values",
+    "every graph node performs one float32 addition with round-to-nearest, ties-to-even",
+    "no operation overflows",
+    "the graph is a proper pure-addition tree"
+  ],
+  "case_name": "nonuniform_positive_v1",
+  "correctly_rounded_target_bits": "0x3f800001",
+  "exact_leaf_sum_fraction": "134217737/134217728",
+  "failure_signature": [
+    "an observed output bit pattern differs from its graph-specific predicted_output_bits",
+    "an observed signed error relative to exact_leaf_sum_fraction differs from predicted_signed_error_fraction"
+  ],
+  "inputs": {
+    "dtype": "float32",
+    "ordered_leaf_fractions": [
+      "1/33554432",
+      "1/67108864",
+      "1/67108864",
+      "1/134217728",
+      "1"
+    ],
+    "shape": [
+      5
+    ],
+    "source_to_stored_quantization_error": "zero_by_exact_representability",
+    "u_fraction": "1/134217728"
+  },
+  "ownership": {
+    "prediction": "user-authored after explain-back and hand calculation",
+    "record_scaffolding": "agent-authored"
+  },
+  "predictions": [
+    {
+      "candidate_correctly_rounded": true,
+      "graph": {
+        "leaf_indices": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "name": "sequential_left_to_right",
+        "nodes": [
+          {
+            "index": 5,
+            "left": 0,
+            "right": 1
+          },
+          {
+            "index": 6,
+            "left": 5,
+            "right": 2
+          },
+          {
+            "index": 7,
+            "left": 6,
+            "right": 3
+          },
+          {
+            "index": 8,
+            "left": 7,
+            "right": 4
+          }
+        ],
+        "root": 8
+      },
+      "predicted_output_bits": "0x3f800001",
+      "predicted_output_fraction": "8388609/8388608",
+      "predicted_signed_error_fraction": "7/134217728"
+    },
+    {
+      "candidate_correctly_rounded": false,
+      "graph": {
+        "leaf_indices": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "name": "balanced_contiguous_floor_half",
+        "nodes": [
+          {
+            "index": 5,
+            "left": 0,
+            "right": 1
+          },
+          {
+            "index": 6,
+            "left": 3,
+            "right": 4
+          },
+          {
+            "index": 7,
+            "left": 2,
+            "right": 6
+          },
+          {
+            "index": 8,
+            "left": 5,
+            "right": 7
+          }
+        ],
+        "root": 8
+      },
+      "predicted_output_bits": "0x3f800000",
+      "predicted_output_fraction": "1",
+      "predicted_signed_error_fraction": "-9/134217728"
+    }
+  ],
+  "preregistered_before_execution": true,
+  "recorded_date": "2026-08-11",
+  "record_type": "preexecution_prediction",
+  "schema_version": "1",
+  "status": "preregistered_not_executed"
+}
