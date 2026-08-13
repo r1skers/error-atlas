@@ -28,7 +28,9 @@ Thumbs.db
 Desktop.ini
 
 # Local Codex/workspace state
-.agents/
+.agents/*
+!.agents/skills/
+!.agents/skills/**
 .codex/
 
 # Scratch files
