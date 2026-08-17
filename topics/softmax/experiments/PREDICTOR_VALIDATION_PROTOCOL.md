@@ -29,35 +29,91 @@ must never later be relabeled as held-out evidence.
 
 ## 2. Experimental unit
 
-`TO FREEZE`
+**Decision recorded:** the independent experimental/sampling unit is one input group: one
+ordered set of stored FP32 leaves. The graph observations evaluated on those same leaves
+are paired observations within that input group, not independent samples.
 
-Record explicitly:
+The dataset schema must retain a stable `input_group_id` on every graph observation.
+Calibration/held-out assignment is group-wise: graph rows from one input group must never
+be split across the boundary.
 
-- what constitutes one input group;
-- which graph observations are produced from one group;
-- which observations share the same underlying stored leaves;
-- the unit that is considered independent for sampling and uncertainty estimation.
+Every input group used in the primary analysis must have the complete graph-observation
+set required by the frozen graph protocol. If a required graph observation is missing or
+invalid, preserve the group and failure metadata for diagnostics, but exclude the whole
+group from the primary paired analysis rather than silently using the remaining rows.
 
-The dataset schema must retain an `input_group_id` (or an equivalently explicit stable
-identifier) so paired graph observations cannot be accidentally treated as unrelated
-rows.
+The exact graph set remains `TO FREEZE` in Section 4.
 
 ## 3. Controlled stored-input distribution
 
-`TO FREEZE`
+This stage uses a **controlled synthetic stress distribution**, not a distribution intended
+to estimate the prevalence of numerical failures in real Softmax workloads. Its purpose is
+to provide broad and deliberately difficult numerical cases for predictor
+ranking/screening validation. Failure prevalence measured here must not be reported as a
+real-workload prevalence estimate.
 
-Freeze before held-out generation:
+### Input families
+
+Use three approximately equally represented families:
+
+1. **head + many small tails** — one dominant term with many smaller terms;
+2. **same-scale random** — randomly varying terms of broadly comparable scale;
+3. **wide-dynamic-range random** — terms spanning a deliberately broad exponent / scale
+   range.
+
+Family membership is a broad stratum, not a single fixed template. Each family must vary
+its internal difficulty parameters so the dataset covers a range of numerical conditions.
+The exact within-family parameter distributions remain `TO FREEZE`.
+
+### Width strata
+
+The regular validation width strata are:
+
+- 256;
+- 1,024;
+- 4,096;
+- 16,384;
+- 65,536;
+- 262,144.
+
+Width 1,048,576 is reserved as an optional resource-stress stratum and is not part of the
+regular approximately equal-allocation validation mixture unless a later protocol revision
+explicitly promotes it before held-out generation.
+
+This boundary was selected from an infrastructure-only VPS resource benchmark. On the
+current 4-logical-CPU / approximately 3.7-GiB-RAM environment, width 262,144 required
+about 14.9 seconds group total and about 203 MiB peak RSS for the benchmarked sequential
+and balanced exact-oracle pair; width 1,048,576 required about 59.8 seconds and about
+760 MiB. No swap was used in either run. These measurements constrain execution cost only
+and were not selected using predictor, oracle-error, or failure metrics.
+
+### Distribution health checks
+
+Calibration may use input-only diagnostics to check whether the generated stress inputs
+are diverse and whether the three families occupy useful, non-degenerate regions of input
+feature space. Candidate diagnostics include exponent range, head dominance, top-k mass
+fraction, coefficient of variation, pairwise feature distances, feature-histogram entropy,
+family silhouette, and coverage bins.
+
+Generator parameters may be revised during calibration in response to these **input-only**
+distribution-health diagnostics. They must not be revised in response to held-out data or,
+for distribution tuning, in response to oracle failure labels, failure prevalence,
+predictor correlation, AUROC, or other predictor-performance metrics.
+
+### Still to freeze
+
+Before held-out generation, freeze:
 
 - generator name and version;
-- all generator parameters and their distributions;
+- exact within-family parameters and their distributions;
+- exact family and width allocation counts;
 - stored dtype and materialization rules;
-- shape / width strata;
 - ordering or layout rules;
 - random-seed policy;
 - exclusions and validity checks.
 
-Generated records must distinguish generator/source values from the actual ordered
-stored FP32 leaves consumed by the graph oracle.
+Generated records must distinguish generator/source values from the actual ordered stored
+FP32 leaves consumed by the graph oracle.
 
 ## 4. Graphs and pairing
 
