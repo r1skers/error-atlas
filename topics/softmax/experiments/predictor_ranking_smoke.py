@@ -109,6 +109,22 @@ def _format_rho(value: float | None) -> str:
     return "undefined" if value is None else f"{value:+.3f}"
 
 
+def _diagnostic_line(name: str, values: list[float]) -> str:
+    finite_values = [value for value in values if math.isfinite(value)]
+    nonfinite_count = len(values) - len(finite_values)
+    unique_count = len(set(values))
+    if finite_values:
+        minimum = min(finite_values)
+        maximum = max(finite_values)
+        range_text = f"min={minimum:.6g} max={maximum:.6g}"
+    else:
+        range_text = "min=n/a max=n/a"
+    return (
+        f"  {name:<17} unique={unique_count:<2d} "
+        f"nonfinite={nonfinite_count:<2d} {range_text}"
+    )
+
+
 def _run_input(name: str, values: tuple[Fraction, ...]) -> None:
     target: list[float] = []
     mismatch_mean: list[float] = []
@@ -134,6 +150,18 @@ def _run_input(name: str, values: tuple[Fraction, ...]) -> None:
 
     print(f"input={name} width={len(values)} random_graphs={len(target)}")
     print("  provisional_target = abs(exact signed forward error)")
+    print("  diagnostics:")
+    for diagnostic_name, diagnostic_values in (
+        ("target", target),
+        ("mismatch.mean", mismatch_mean),
+        ("mismatch.max", mismatch_max),
+        ("mismatch.top4", mismatch_top4),
+        ("exposure.total", exposure_total),
+        ("exposure.mean", exposure_mean),
+        ("exposure.max", exposure_max),
+    ):
+        print(_diagnostic_line(diagnostic_name, diagnostic_values))
+    print("  rank correlations:")
     print(f"  mismatch.mean   rho={_format_rho(_spearman(mismatch_mean, target))}")
     print(f"  mismatch.max    rho={_format_rho(_spearman(mismatch_max, target))}")
     print(f"  mismatch.top4   rho={_format_rho(_spearman(mismatch_top4, target))}")
