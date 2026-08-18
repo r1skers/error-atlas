@@ -27,8 +27,9 @@ from summation_graph_predictor import predict_fp32_tree_error
 
 WIDTH = 256
 INPUT_SEEDS = (20260818, 20260819, 20260820, 20260821)
-RANDOM_GRAPH_COUNT = 16
+RANDOM_GRAPH_COUNT = 64
 TREE_BASE_SEED = 31000000
+PROGRESS_EVERY = 16
 
 
 def _rankdata(values: list[float]) -> list[float]:
@@ -74,7 +75,7 @@ def _spearman(left: list[float], right: list[float]) -> float | None:
 
 
 def _graphs(width: int, *, input_index: int):
-    """Use the same predeclared random-tree schedule as target-variation calibration."""
+    """Use the same deterministic tree schedule, extended to the larger K."""
     for graph_index in range(RANDOM_GRAPH_COUNT):
         seed = TREE_BASE_SEED + input_index * 10_000 + graph_index
         if graph_index % 2 == 0:
@@ -96,7 +97,16 @@ def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
     exposure_mean: list[float] = []
     exposure_max: list[float] = []
 
-    for graph in _graphs(len(values), input_index=input_index):
+    print(
+        f"running family={family} seed={seed} width={len(values)} "
+        f"random_graphs={RANDOM_GRAPH_COUNT}",
+        flush=True,
+    )
+
+    for graph_number, graph in enumerate(
+        _graphs(len(values), input_index=input_index),
+        start=1,
+    ):
         oracle = predict_fp32_tree_error(values, graph)
         target.append(float(abs(oracle.signed_error)))
 
@@ -110,6 +120,9 @@ def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
         exposure_mean.append(exposure.mean_severity_log2)
         exposure_max.append(exposure.max_severity_log2)
 
+        if graph_number % PROGRESS_EVERY == 0 or graph_number == RANDOM_GRAPH_COUNT:
+            print(f"  progress {graph_number}/{RANDOM_GRAPH_COUNT}", flush=True)
+
     print(
         f"family={family:<24} seed={seed:<10d} width={len(values)} "
         f"random_graphs={len(target)} target_unique={len(set(target))}"
@@ -120,7 +133,7 @@ def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
     print(f"  exposure.total  rho={_format_rho(_spearman(exposure_total, target))}")
     print(f"  exposure.mean   rho={_format_rho(_spearman(exposure_mean, target))}")
     print(f"  exposure.max    rho={_format_rho(_spearman(exposure_max, target))}")
-    print()
+    print(flush=True)
 
 
 def main() -> int:
