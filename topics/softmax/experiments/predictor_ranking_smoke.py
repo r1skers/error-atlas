@@ -1,20 +1,21 @@
 """Calibration-only smoke test for within-input graph ranking signal.
 
 This runner is exploratory calibration infrastructure, not held-out validation evidence.
-It intentionally uses a tiny deterministic set of stored-FP32 inputs and a small fixed
-candidate-tree sample.  Its only purpose is to answer whether the currently defined cheap
-structural features show any obvious within-input ranking signal worth investigating.
+It reuses the predeclared irregular stored-FP32 calibration inputs that were checked for
+graph-sensitive target variation, then asks whether the currently defined cheap structural
+features show any obvious within-input ranking signal worth investigating.
 
 Nothing printed by this script freezes the final target, predictor score, tree budget,
-input distribution, or metric protocol.  Do not promote these rows into held-out evidence.
+input distribution, or metric protocol.  No input seed is selected or rejected using the
+rank correlations printed here.  Do not promote these rows into held-out evidence.
 """
 
 from __future__ import annotations
 
 import math
-from fractions import Fraction
 from statistics import mean
 
+from predictor_calibration_inputs import calibration_input_families
 from predictor_dominant_exposure import dominant_leaf_exposure_features
 from predictor_structural_features import sibling_scale_mismatch_features
 from predictor_tree_generator import (
@@ -24,9 +25,10 @@ from predictor_tree_generator import (
 from summation_graph_predictor import predict_fp32_tree_error
 
 
-SMOKE_WIDTH = 64
+WIDTH = 256
+INPUT_SEEDS = (20260818, 20260819, 20260820, 20260821)
 RANDOM_GRAPH_COUNT = 16
-BASE_SEED = 20260818
+TREE_BASE_SEED = 31000000
 
 
 def _rankdata(values: list[float]) -> list[float]:
@@ -71,61 +73,21 @@ def _spearman(left: list[float], right: list[float]) -> float | None:
     return _pearson(_rankdata(left), _rankdata(right))
 
 
-def _head_tail() -> tuple[Fraction, ...]:
-    values = [Fraction(1)]
-    values.extend(Fraction(1, 2**18) for _ in range(SMOKE_WIDTH - 1))
-    return tuple(values)
-
-
-def _same_scale() -> tuple[Fraction, ...]:
-    # Exactly representable dyadic values spanning only a narrow scale band.
-    cycle = (Fraction(1), Fraction(5, 8), Fraction(3, 4), Fraction(7, 8))
-    return tuple(cycle[index % len(cycle)] for index in range(SMOKE_WIDTH))
-
-
-def _wide_range() -> tuple[Fraction, ...]:
-    exponents = (0, -4, -8, -12, -16, -20, -24, -28)
-    return tuple(
-        Fraction(1, 2 ** (-exponents[index % len(exponents)]))
-        if exponents[index % len(exponents)] < 0
-        else Fraction(1)
-        for index in range(SMOKE_WIDTH)
-    )
-
-
-def _graphs() -> list[object]:
-    graphs = []
-    for index in range(RANDOM_GRAPH_COUNT):
-        seed = BASE_SEED + index
-        if index % 2 == 0:
-            graph = random_contiguous_split_graph(SMOKE_WIDTH, seed=seed)
+def _graphs(width: int, *, input_index: int):
+    """Use the same predeclared random-tree schedule as target-variation calibration."""
+    for graph_index in range(RANDOM_GRAPH_COUNT):
+        seed = TREE_BASE_SEED + input_index * 10_000 + graph_index
+        if graph_index % 2 == 0:
+            yield random_contiguous_split_graph(width, seed=seed)
         else:
-            graph = random_pair_merge_graph(SMOKE_WIDTH, seed=seed)
-        graphs.append(graph)
-    return graphs
+            yield random_pair_merge_graph(width, seed=seed)
 
 
 def _format_rho(value: float | None) -> str:
     return "undefined" if value is None else f"{value:+.3f}"
 
 
-def _diagnostic_line(name: str, values: list[float]) -> str:
-    finite_values = [value for value in values if math.isfinite(value)]
-    nonfinite_count = len(values) - len(finite_values)
-    unique_count = len(set(values))
-    if finite_values:
-        minimum = min(finite_values)
-        maximum = max(finite_values)
-        range_text = f"min={minimum:.6g} max={maximum:.6g}"
-    else:
-        range_text = "min=n/a max=n/a"
-    return (
-        f"  {name:<17} unique={unique_count:<2d} "
-        f"nonfinite={nonfinite_count:<2d} {range_text}"
-    )
-
-
-def _run_input(name: str, values: tuple[Fraction, ...]) -> None:
+def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
     target: list[float] = []
     mismatch_mean: list[float] = []
     mismatch_max: list[float] = []
@@ -134,7 +96,7 @@ def _run_input(name: str, values: tuple[Fraction, ...]) -> None:
     exposure_mean: list[float] = []
     exposure_max: list[float] = []
 
-    for graph in _graphs():
+    for graph in _graphs(len(values), input_index=input_index):
         oracle = predict_fp32_tree_error(values, graph)
         target.append(float(abs(oracle.signed_error)))
 
@@ -148,20 +110,10 @@ def _run_input(name: str, values: tuple[Fraction, ...]) -> None:
         exposure_mean.append(exposure.mean_severity_log2)
         exposure_max.append(exposure.max_severity_log2)
 
-    print(f"input={name} width={len(values)} random_graphs={len(target)}")
-    print("  provisional_target = abs(exact signed forward error)")
-    print("  diagnostics:")
-    for diagnostic_name, diagnostic_values in (
-        ("target", target),
-        ("mismatch.mean", mismatch_mean),
-        ("mismatch.max", mismatch_max),
-        ("mismatch.top4", mismatch_top4),
-        ("exposure.total", exposure_total),
-        ("exposure.mean", exposure_mean),
-        ("exposure.max", exposure_max),
-    ):
-        print(_diagnostic_line(diagnostic_name, diagnostic_values))
-    print("  rank correlations:")
+    print(
+        f"family={family:<24} seed={seed:<10d} width={len(values)} "
+        f"random_graphs={len(target)} target_unique={len(set(target))}"
+    )
     print(f"  mismatch.mean   rho={_format_rho(_spearman(mismatch_mean, target))}")
     print(f"  mismatch.max    rho={_format_rho(_spearman(mismatch_max, target))}")
     print(f"  mismatch.top4   rho={_format_rho(_spearman(mismatch_top4, target))}")
@@ -174,15 +126,23 @@ def _run_input(name: str, values: tuple[Fraction, ...]) -> None:
 def main() -> int:
     print("Predictor within-input ranking smoke test")
     print("CALIBRATION ONLY — not held-out evidence; no protocol choice is frozen here")
-    print(f"tree_sample=random-only K={RANDOM_GRAPH_COUNT}; anchors excluded")
+    print(
+        f"width={WIDTH} input_seeds={len(INPUT_SEEDS)} "
+        f"tree_sample=random-only K={RANDOM_GRAPH_COUNT}; anchors excluded"
+    )
+    print("Inputs are predeclared; no row is selected or rejected using predictor metrics.")
     print()
 
-    for name, values in (
-        ("head_tail", _head_tail()),
-        ("same_scale", _same_scale()),
-        ("wide_range", _wide_range()),
-    ):
-        _run_input(name, values)
+    input_index = 0
+    for base_seed in INPUT_SEEDS:
+        for generated in calibration_input_families(WIDTH, seed=base_seed):
+            _run_input(
+                family=generated.family,
+                seed=generated.seed,
+                values=generated.values,
+                input_index=input_index,
+            )
+            input_index += 1
     return 0
 
 
