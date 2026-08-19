@@ -16,23 +16,27 @@ The real candidate-tree residual is
 
     delta_v = RN32(a_v + b_v) - (a_v + b_v),
 
-where a_v and b_v include all earlier FP32 rounding history.  Their difference is exposed as
+where a_v and b_v include all earlier FP32 rounding history. Their difference is
 
-    history_shift_v = (a_v + b_v) - T*_v,
+    H_v = (a_v + b_v) - T*_v,
 
 which is exactly the accumulated descendant rounding error entering node v.
 
-The shadow residual is not an oracle for the executed tree: it uses only the stored leaves and
-known graph topology.  This script compares shadow vs real local rounding direction and reports
-how agreement degrades as rounding history shifts the node across the FP32 lattice.
+This version also checks the lattice-boundary mechanism. Within one binary32 binade, rounding
+decision boundaries lie at half-integer ULP coordinates. We therefore measure the distance from
+the shadow state to the next half-ULP boundary in the signed direction of H_v, count how many
+such boundaries H_v crosses, and compare that with shadow/actual rounding-direction changes.
+Binade changes and exact ties are reported separately instead of being forced into the simple
+same-spacing rule.
 
-CALIBRATION ONLY.  This is a mechanism diagnostic, not held-out evidence and not a frozen
+CALIBRATION ONLY. This is a mechanism diagnostic, not held-out evidence and not a frozen
 predictor.
 """
 
 from __future__ import annotations
 
 import argparse
+import math
 from dataclasses import dataclass
 from fractions import Fraction
 from statistics import mean
@@ -54,6 +58,7 @@ TREE_BASE_SEED = 32_000_000
 FP32_FRACTION_BITS = 23
 FP32_MIN_NORMAL_EXPONENT = -126
 FP32_MIN_SUBNORMAL_EXPONENT = -149
+HALF = Fraction(1, 2)
 
 
 @dataclass(frozen=True)
@@ -68,9 +73,37 @@ class ShadowNodeDiagnostic:
     history_shift: Fraction
     ulp_shadow: Fraction
     shadow_phase: Fraction
+    actual_phase_on_shadow_grid: Fraction | None
     shadow_direction: int
     actual_direction: int
     direction_match: bool
+    same_binade_after_shift: bool
+    directional_boundary_distance_ulp: Fraction | None
+    boundary_crossing_count: int | None
+
+    @property
+    def history_shift_ulp(self) -> Fraction:
+        return self.history_shift / self.ulp_shadow
+
+    @property
+    def sign_flipped(self) -> bool:
+        return self.shadow_direction != self.actual_direction
+
+    @property
+    def simple_crossing_explains_flip(self) -> bool | None:
+        """Whether same-binade half-ULP crossings explain a direction change.
+
+        Exact tie endpoints are excluded because ties-to-even needs lattice parity, not only
+        the phase coordinate. A zero-vs-nonzero direction change is still considered a change.
+        """
+        if not self.same_binade_after_shift or self.boundary_crossing_count is None:
+            return None
+        shadow_tie = self.shadow_phase == HALF
+        actual_tie = self.actual_phase_on_shadow_grid == HALF
+        if shadow_tie or actual_tie:
+            return None
+        predicted_flip = self.boundary_crossing_count > 0
+        return predicted_flip == self.sign_flipped
 
 
 @dataclass(frozen=True)
@@ -100,11 +133,24 @@ class ShadowTreeDiagnostic:
 
     @property
     def mean_abs_history_shift_ulp(self) -> float:
-        return mean(float(abs(node.history_shift) / node.ulp_shadow) for node in self.nodes)
+        return mean(float(abs(node.history_shift_ulp)) for node in self.nodes)
 
     @property
     def max_abs_history_shift_ulp(self) -> float:
-        return max(float(abs(node.history_shift) / node.ulp_shadow) for node in self.nodes)
+        return max(float(abs(node.history_shift_ulp)) for node in self.nodes)
+
+    @property
+    def crossing_explanation_counts(self) -> tuple[int, int]:
+        eligible = [
+            node.simple_crossing_explains_flip
+            for node in self.nodes
+            if node.simple_crossing_explains_flip is not None
+        ]
+        return sum(bool(value) for value in eligible), len(eligible)
+
+    @property
+    def binade_shift_count(self) -> int:
+        return sum(not node.same_binade_after_shift for node in self.nodes)
 
 
 def _graph(width: int, *, graph_index: int, input_index: int):
@@ -148,6 +194,42 @@ def _phase_on_local_grid(value: Fraction, ulp: Fraction) -> Fraction:
     return scaled - lower
 
 
+def _directional_boundary_distance(phase: Fraction, shift_ulp: Fraction) -> Fraction | None:
+    """Distance in ULPs to the next half-integer boundary along the shift direction."""
+    if shift_ulp == 0:
+        return None
+    if shift_ulp > 0:
+        return HALF - phase if phase < HALF else Fraction(3, 2) - phase
+    return phase - HALF if phase > HALF else phase + HALF
+
+
+def _count_half_integer_boundaries(start: Fraction, stop: Fraction) -> int:
+    """Count half-integer lattice boundaries strictly between start and stop.
+
+    Endpoints that are exact half-integers are excluded and handled as tie cases. Counting is
+    done on exact rationals by mapping k+1/2 boundaries to odd integers under multiplication by 2.
+    """
+    if start == stop:
+        return 0
+    lo = min(start, stop) * 2
+    hi = max(start, stop) * 2
+
+    first_integer = lo.numerator // lo.denominator + 1
+    if Fraction(first_integer) <= lo:
+        first_integer += 1
+    last_integer = math.ceil(hi) - 1
+    if first_integer > last_integer:
+        return 0
+
+    if first_integer % 2 == 0:
+        first_integer += 1
+    if last_integer % 2 == 0:
+        last_integer -= 1
+    if first_integer > last_integer:
+        return 0
+    return (last_integer - first_integer) // 2 + 1
+
+
 def diagnose_shadow_tree(
     values: tuple[Fraction, ...],
     graph: BinaryReductionGraph,
@@ -169,6 +251,19 @@ def diagnose_shadow_tree(
         history_shift = actual_node.exact_addend_sum - shadow_exact
         ulp_shadow = _ulp32_at_positive(shadow_exact)
         shadow_phase = _phase_on_local_grid(shadow_exact, ulp_shadow)
+        same_binade = _floor_log2(shadow_exact) == _floor_log2(actual_node.exact_addend_sum)
+
+        actual_phase: Fraction | None = None
+        boundary_distance: Fraction | None = None
+        crossing_count: int | None = None
+        shift_ulp = history_shift / ulp_shadow
+        if same_binade:
+            actual_phase = _phase_on_local_grid(actual_node.exact_addend_sum, ulp_shadow)
+            boundary_distance = _directional_boundary_distance(shadow_phase, shift_ulp)
+            crossing_count = _count_half_integer_boundaries(
+                shadow_exact / ulp_shadow,
+                actual_node.exact_addend_sum / ulp_shadow,
+            )
 
         records.append(
             ShadowNodeDiagnostic(
@@ -182,9 +277,13 @@ def diagnose_shadow_tree(
                 history_shift=history_shift,
                 ulp_shadow=ulp_shadow,
                 shadow_phase=shadow_phase,
+                actual_phase_on_shadow_grid=actual_phase,
                 shadow_direction=_sign(shadow_delta),
                 actual_direction=_sign(actual_node.local_rounding_error),
                 direction_match=_sign(shadow_delta) == _sign(actual_node.local_rounding_error),
+                same_binade_after_shift=same_binade,
+                directional_boundary_distance_ulp=boundary_distance,
+                boundary_crossing_count=crossing_count,
             )
         )
 
@@ -211,6 +310,8 @@ def _print_tree_summary(
     tree_index: int,
     diagnostic: ShadowTreeDiagnostic,
 ) -> None:
+    crossing_matches, crossing_total = diagnostic.crossing_explanation_counts
+    crossing_rate = "n/a" if crossing_total == 0 else f"{crossing_matches / crossing_total:.3f}"
     print(
         "TREE "
         f"input_seed={input_seed} tree={tree_index:02d} "
@@ -221,6 +322,11 @@ def _print_tree_summary(
         f"mean|history_shift|/ulp={diagnostic.mean_abs_history_shift_ulp:.3f} "
         f"max={diagnostic.max_abs_history_shift_ulp:.3f}"
     )
+    print(
+        "  boundary "
+        f"crossing_explains_flip={crossing_matches}/{crossing_total} rate={crossing_rate} "
+        f"binade_shifts={diagnostic.binade_shift_count}"
+    )
 
 
 def _print_trace(diagnostic: ShadowTreeDiagnostic) -> None:
@@ -229,18 +335,26 @@ def _print_trace(diagnostic: ShadowTreeDiagnostic) -> None:
     )
     print(
         "  shadow_trace columns: node left right actual_delta shadow_delta actual_share "
-        "shadow_phase history_shift_ulp dirs match"
+        "shadow_phase history_shift_ulp boundary_dist crossing_count dirs match explained"
     )
     for node in diagnostic.nodes:
         share = 0.0 if total_actual_abs == 0 else float(abs(node.actual_delta) / total_actual_abs)
-        history_ulp = float(node.history_shift / node.ulp_shadow)
         dirs = f"{_symbol(node.shadow_direction)}/{_symbol(node.actual_direction)}"
+        boundary_dist = (
+            "x"
+            if node.directional_boundary_distance_ulp is None
+            else f"{float(node.directional_boundary_distance_ulp):.6f}"
+        )
+        crossings = "x" if node.boundary_crossing_count is None else str(node.boundary_crossing_count)
+        explained = node.simple_crossing_explains_flip
+        explained_text = "x" if explained is None else str(int(explained))
         print(
             "  NODE "
             f"{node.node_index:>3d} {node.left_index:>3d} {node.right_index:>3d} "
             f"{_sci(node.actual_delta)} {_sci(node.shadow_delta)} {share:.4f} "
-            f"{float(node.shadow_phase):.6f} {history_ulp:+.6f} "
-            f"{dirs:>3s} {int(node.direction_match)}"
+            f"{float(node.shadow_phase):.6f} {float(node.history_shift_ulp):+.6f} "
+            f"{boundary_dist:>8s} {crossings:>2s} {dirs:>3s} "
+            f"{int(node.direction_match)} {explained_text}"
         )
 
 
@@ -263,10 +377,17 @@ def _print_family_summary(family: str, trees: list[ShadowTreeDiagnostic]) -> Non
         start=Fraction(0),
     )
     weighted = 1.0 if actual_mass == 0 else float(matched_mass / actual_mass)
+    crossing_pairs = [tree.crossing_explanation_counts for tree in trees]
+    crossing_matches = sum(pair[0] for pair in crossing_pairs)
+    crossing_total = sum(pair[1] for pair in crossing_pairs)
+    crossing_rate = "n/a" if crossing_total == 0 else f"{crossing_matches / crossing_total:.6f}"
+    binade_shifts = sum(tree.binade_shift_count for tree in trees)
     print(
         f"  {family:<10} trees={len(trees):2d} "
         f"shadow_sign_match={matches}/{total}({matches / total:.6f}) "
         f"weighted_match={weighted:.6f} "
+        f"crossing_explains_flip={crossing_matches}/{crossing_total}({crossing_rate}) "
+        f"binade_shifts={binade_shifts} "
         f"mean_tree_history_shift_ulp={mean(tree.mean_abs_history_shift_ulp for tree in trees):.6f} "
         f"mean_tree_max_shift_ulp={mean(tree.max_abs_history_shift_ulp for tree in trees):.6f}"
     )
