@@ -2,8 +2,8 @@
 
 This runner is exploratory calibration infrastructure, not held-out validation evidence.
 It reuses the predeclared irregular stored-FP32 calibration inputs that were checked for
-graph-sensitive target variation, then asks whether the currently defined cheap structural
-features show any obvious within-input ranking signal worth investigating.
+graph-sensitive target variation, then compares the current hand-designed features and a
+second-moment theory baseline against the exact within-input graph ranking target.
 
 Nothing printed by this script freezes the final target, predictor score, tree budget,
 input distribution, or metric protocol.  No input seed is selected or rejected using the
@@ -17,6 +17,7 @@ from statistics import mean
 
 from predictor_calibration_inputs import calibration_input_families
 from predictor_dominant_exposure import dominant_leaf_exposure_features
+from predictor_second_moment_baseline import second_moment_tree_cost
 from predictor_structural_features import sibling_scale_mismatch_features
 from predictor_tree_generator import (
     random_contiguous_split_graph,
@@ -90,6 +91,7 @@ def _format_rho(value: float | None) -> str:
 
 def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
     target: list[float] = []
+    second_moment: list[float] = []
     mismatch_mean: list[float] = []
     mismatch_max: list[float] = []
     mismatch_top4: list[float] = []
@@ -110,6 +112,9 @@ def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
         oracle = predict_fp32_tree_error(values, graph)
         target.append(float(abs(oracle.signed_error)))
 
+        theory = second_moment_tree_cost(values, graph)
+        second_moment.append(theory.partial_sum_square_cost)
+
         mismatch = sibling_scale_mismatch_features(values, graph, top_k=4)
         mismatch_mean.append(mismatch.mean_log2_gap)
         mismatch_max.append(mismatch.max_log2_gap)
@@ -127,6 +132,7 @@ def _run_input(*, family: str, seed: int, values, input_index: int) -> None:
         f"family={family:<24} seed={seed:<10d} width={len(values)} "
         f"random_graphs={len(target)} target_unique={len(set(target))}"
     )
+    print(f"  second_moment   rho={_format_rho(_spearman(second_moment, target))}")
     print(f"  mismatch.mean   rho={_format_rho(_spearman(mismatch_mean, target))}")
     print(f"  mismatch.max    rho={_format_rho(_spearman(mismatch_max, target))}")
     print(f"  mismatch.top4   rho={_format_rho(_spearman(mismatch_top4, target))}")
@@ -144,6 +150,7 @@ def main() -> int:
         f"tree_sample=random-only K={RANDOM_GRAPH_COUNT}; anchors excluded"
     )
     print("Inputs are predeclared; no row is selected or rejected using predictor metrics.")
+    print("second_moment = sum of squared cheap binary64 internal partial sums")
     print()
 
     input_index = 0
