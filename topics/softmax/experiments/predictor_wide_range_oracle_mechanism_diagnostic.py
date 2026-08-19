@@ -13,7 +13,17 @@ and the script verifies the exact tree identity
     root_fp32 - sum_i x_i = sum_v delta_v.
 
 Besides sign counts and cancellation, selected trees can be printed as compact microscopic
-traces with cumulative signed error, per-node contribution share, and child magnitude ratio.
+traces with cumulative signed error, per-node contribution share, child magnitude ratio,
+and an ULP-phase diagnostic.  For a larger child L and smaller child S, define
+
+    r_v = S / ulp32(L)
+    phase_v = frac(r_v).
+
+When L + S stays in the same binary32 binade as L, the local spacing is unchanged and the
+non-tie rounding direction is determined by phase_v: phase < 1/2 rounds downward relative
+to the exact sum and phase > 1/2 rounds upward.  Binade-crossing and exact-halfway cases are
+reported but excluded from the simple phase-direction consistency rate.
+
 Nothing produced here is held-out evidence and no predictor formula is frozen by this run.
 """
 
@@ -37,6 +47,9 @@ DEFAULT_WIDTH = 16
 DEFAULT_INPUT_SEEDS = (22260821, 22260822, 22260823, 22260824)
 DEFAULT_GRAPH_COUNT = 16
 TREE_BASE_SEED = 32_000_000
+FP32_FRACTION_BITS = 23
+FP32_MIN_NORMAL_EXPONENT = -126
+FP32_MIN_SUBNORMAL_EXPONENT = -149
 
 
 @dataclass(frozen=True)
@@ -50,6 +63,19 @@ class NodeRoundingRecord:
     rounded_sum: Fraction
     rounded_sum_bits: str
     delta: Fraction
+
+
+@dataclass(frozen=True)
+class PhaseDiagnostic:
+    ulp_large: Fraction
+    r_ulp: Fraction
+    phase: Fraction
+    delta_in_large_ulp: Fraction
+    same_binade: bool
+    tie: bool
+    expected_direction: int | None
+    observed_direction: int
+    direction_match: bool | None
 
 
 @dataclass(frozen=True)
@@ -88,6 +114,79 @@ def _graph(width: int, *, graph_index: int, input_index: int):
     if graph_index % 2 == 0:
         return "contiguous", seed, random_contiguous_split_graph(width, seed=seed)
     return "pair_merge", seed, random_pair_merge_graph(width, seed=seed)
+
+
+def _power_of_two(exponent: int) -> Fraction:
+    if exponent >= 0:
+        return Fraction(2**exponent)
+    return Fraction(1, 2 ** (-exponent))
+
+
+def _floor_log2(value: Fraction) -> int:
+    if value <= 0:
+        raise ValueError("log2 requires a positive value")
+    exponent = value.numerator.bit_length() - value.denominator.bit_length()
+    if value < _power_of_two(exponent):
+        exponent -= 1
+    return exponent
+
+
+def _ulp32_at_positive(value: Fraction) -> Fraction:
+    """Return binary32 spacing in the binade containing positive ``value``."""
+    if value <= 0:
+        raise ValueError("ULP is defined here only for positive values")
+    exponent = _floor_log2(value)
+    if exponent < FP32_MIN_NORMAL_EXPONENT:
+        return _power_of_two(FP32_MIN_SUBNORMAL_EXPONENT)
+    return _power_of_two(exponent - FP32_FRACTION_BITS)
+
+
+def _sign(value: Fraction) -> int:
+    return (value > 0) - (value < 0)
+
+
+def phase_diagnostic(record: NodeRoundingRecord) -> PhaseDiagnostic:
+    """Describe one local rounding event in units of the larger child's ULP."""
+    large = max(abs(record.a), abs(record.b))
+    small = min(abs(record.a), abs(record.b))
+    if large <= 0:
+        raise ValueError("phase diagnostic requires a positive larger child")
+
+    ulp_large = _ulp32_at_positive(large)
+    r_ulp = small / ulp_large
+    floor_r = r_ulp.numerator // r_ulp.denominator
+    phase = r_ulp - floor_r
+    delta_in_large_ulp = record.delta / ulp_large
+    same_binade = _floor_log2(large) == _floor_log2(record.exact_sum)
+    tie = phase == Fraction(1, 2)
+
+    expected_direction: int | None
+    if not same_binade or tie:
+        expected_direction = None
+    elif phase == 0:
+        expected_direction = 0
+    elif phase < Fraction(1, 2):
+        expected_direction = -1
+    else:
+        expected_direction = 1
+
+    observed_direction = _sign(record.delta)
+    direction_match = (
+        None
+        if expected_direction is None
+        else expected_direction == observed_direction
+    )
+    return PhaseDiagnostic(
+        ulp_large=ulp_large,
+        r_ulp=r_ulp,
+        phase=phase,
+        delta_in_large_ulp=delta_in_large_ulp,
+        same_binade=same_binade,
+        tie=tie,
+        expected_direction=expected_direction,
+        observed_direction=observed_direction,
+        direction_match=direction_match,
+    )
 
 
 def diagnose_tree(
@@ -176,7 +275,6 @@ def _fraction(value: Fraction) -> str:
 
 
 def _magnitude_ratio(a: Fraction, b: Fraction) -> float:
-    """Return min(|a|,|b|)/max(|a|,|b|), in [0,1]."""
     aa = abs(a)
     bb = abs(b)
     high = max(aa, bb)
@@ -192,11 +290,30 @@ def _log2_magnitude_ratio(a: Fraction, b: Fraction) -> float:
     return math.log2(ratio)
 
 
+def _phase_consistency(diagnostic: TreeRoundingDiagnostic) -> tuple[int, int, int, int]:
+    eligible = 0
+    matches = 0
+    ties = 0
+    binade_crossings = 0
+    for record in diagnostic.nodes:
+        phase = phase_diagnostic(record)
+        if not phase.same_binade:
+            binade_crossings += 1
+        if phase.tie:
+            ties += 1
+        if phase.direction_match is not None:
+            eligible += 1
+            matches += int(phase.direction_match)
+    return matches, eligible, ties, binade_crossings
+
+
 def _print_tree_summary(
     input_seed: int,
     tree_index: int,
     diagnostic: TreeRoundingDiagnostic,
 ) -> None:
+    matches, eligible, ties, crossings = _phase_consistency(diagnostic)
+    phase_rate = "n/a" if eligible == 0 else f"{matches / eligible:.3f}"
     print(
         "TREE "
         f"input_seed={input_seed} tree={tree_index:02d} "
@@ -218,6 +335,11 @@ def _print_tree_summary(
         f"ratio={diagnostic.cancellation_ratio:.6f} "
         f"dominant_node_share={diagnostic.dominant_node_share:.6f}"
     )
+    print(
+        "  phase "
+        f"direction_match={matches}/{eligible} rate={phase_rate} "
+        f"ties={ties} binade_crossings={crossings}"
+    )
 
 
 def _print_node_trace(
@@ -230,15 +352,15 @@ def _print_node_trace(
     cumulative = Fraction(0)
     if compact:
         print(
-            "  compact_trace columns: "
-            "node left right delta cumulative delta_share child_ratio log2_child_ratio"
+            "  compact_trace columns: node left right delta cumulative share "
+            "r_ulp phase delta_ulp phase_dir same_binade child_log2_ratio"
         )
     else:
         print(
-            "  node_trace columns: "
-            "input_seed tree family graph_seed node left right "
-            "a b fl32 delta cumulative delta_share child_ratio log2_child_ratio "
-            "fl32_bits delta_exact"
+            "  node_trace columns: input_seed tree family graph_seed node left right "
+            "a b fl32 delta cumulative delta_share r_ulp phase delta_ulp "
+            "expected_dir observed_dir phase_match same_binade tie child_ratio "
+            "log2_child_ratio fl32_bits delta_exact"
         )
 
     for record in diagnostic.nodes:
@@ -250,13 +372,23 @@ def _print_node_trace(
         )
         ratio = _magnitude_ratio(record.a, record.b)
         log2_ratio = _log2_magnitude_ratio(record.a, record.b)
+        phase = phase_diagnostic(record)
+        expected = (
+            "x"
+            if phase.expected_direction is None
+            else {1: "+", 0: "0", -1: "-"}[phase.expected_direction]
+        )
+        observed = {1: "+", 0: "0", -1: "-"}[phase.observed_direction]
+        phase_dir = f"{expected}/{observed}"
 
         if compact:
             print(
                 "  NODE "
                 f"{record.node_index:>3d} {record.left_index:>3d} {record.right_index:>3d} "
-                f"{_sci(record.delta)} {_sci(cumulative)} "
-                f"{share:.4f} {ratio:.4e} {log2_ratio:+.2f}"
+                f"{_sci(record.delta)} {_sci(cumulative)} {share:.4f} "
+                f"{float(phase.r_ulp):.6g} {float(phase.phase):.6f} "
+                f"{float(phase.delta_in_large_ulp):+.6f} {phase_dir:>3s} "
+                f"{int(phase.same_binade)} {log2_ratio:+.2f}"
             )
         else:
             print(
@@ -266,7 +398,12 @@ def _print_node_trace(
                 f"{record.left_index} {record.right_index} "
                 f"{float(record.a):.9e} {float(record.b):.9e} "
                 f"{float(record.rounded_sum):.9e} {_sci(record.delta)} "
-                f"{_sci(cumulative)} {share:.6f} {ratio:.9e} {log2_ratio:+.6f} "
+                f"{_sci(cumulative)} {share:.6f} "
+                f"{float(phase.r_ulp):.9g} {float(phase.phase):.9f} "
+                f"{float(phase.delta_in_large_ulp):+.9f} "
+                f"{expected} {observed} {phase.direction_match} "
+                f"{phase.same_binade} {phase.tie} "
+                f"{ratio:.9e} {log2_ratio:+.6f} "
                 f"{record.rounded_sum_bits} {_fraction(record.delta)}"
             )
 
@@ -280,12 +417,19 @@ def _print_family_summary(
 ) -> None:
     if not diagnostics:
         return
+    phase_counts = [_phase_consistency(item) for item in diagnostics]
+    matches = sum(item[0] for item in phase_counts)
+    eligible = sum(item[1] for item in phase_counts)
+    ties = sum(item[2] for item in phase_counts)
+    crossings = sum(item[3] for item in phase_counts)
+    phase_rate = "n/a" if eligible == 0 else f"{matches / eligible:.6f}"
     print(
         f"  {family:<10} trees={len(diagnostics):2d} "
         f"mean|root_error|={mean(float(abs(item.root_signed_error)) for item in diagnostics):.9e} "
         f"mean_sum|delta|={mean(float(item.sum_abs_delta) for item in diagnostics):.9e} "
         f"mean_cancel={mean(item.cancellation_ratio for item in diagnostics):.6f} "
         f"mean_dominant_share={mean(item.dominant_node_share for item in diagnostics):.6f} "
+        f"phase_match={matches}/{eligible}({phase_rate}) ties={ties} crossings={crossings} "
         f"mean_N+={mean(item.n_positive for item in diagnostics):.2f} "
         f"mean_N-={mean(item.n_negative for item in diagnostics):.2f}"
     )
