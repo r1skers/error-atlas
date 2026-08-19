@@ -22,12 +22,14 @@ where a_v and b_v include all earlier FP32 rounding history. Their difference is
 
 which is exactly the accumulated descendant rounding error entering node v.
 
-This version also checks the lattice-boundary mechanism. Within one binary32 binade, rounding
-decision boundaries lie at half-integer ULP coordinates. We therefore measure the distance from
-the shadow state to the next half-ULP boundary in the signed direction of H_v, count how many
-such boundaries H_v crosses, and compare that with shadow/actual rounding-direction changes.
-Binade changes and exact ties are reported separately instead of being forced into the simple
-same-spacing rule.
+This version also checks the lattice-boundary mechanism. Within one binary32 binade, the sign
+of RN32(x)-x alternates on half-ULP intervals: grid points k*ULP have zero residual, phases in
+(0,1/2) round downward, midpoints are ties, and phases in (1/2,1) round upward. Thus sign
+boundaries occur every 1/2 ULP (both integer grid points and half-integer midpoints). We measure
+the distance from the shadow state to the next sign boundary in the direction of H_v and count
+how many half-ULP sign boundaries H_v crosses. For non-boundary endpoints in the same binade,
+the parity of that count predicts whether the residual sign flips. Binade changes and exact
+boundary endpoints are reported separately.
 
 CALIBRATION ONLY. This is a mechanism diagnostic, not held-out evidence and not a frozen
 predictor.
@@ -91,18 +93,16 @@ class ShadowNodeDiagnostic:
 
     @property
     def simple_crossing_explains_flip(self) -> bool | None:
-        """Whether same-binade half-ULP crossings explain a direction change.
-
-        Exact tie endpoints are excluded because ties-to-even needs lattice parity, not only
-        the phase coordinate. A zero-vs-nonzero direction change is still considered a change.
-        """
+        """Check sign-flip parity for non-boundary endpoints in one fixed-ULP binade."""
         if not self.same_binade_after_shift or self.boundary_crossing_count is None:
             return None
-        shadow_tie = self.shadow_phase == HALF
-        actual_tie = self.actual_phase_on_shadow_grid == HALF
-        if shadow_tie or actual_tie:
+        if _is_sign_boundary_phase(self.shadow_phase):
             return None
-        predicted_flip = self.boundary_crossing_count > 0
+        if self.actual_phase_on_shadow_grid is None:
+            return None
+        if _is_sign_boundary_phase(self.actual_phase_on_shadow_grid):
+            return None
+        predicted_flip = self.boundary_crossing_count % 2 == 1
         return predicted_flip == self.sign_flipped
 
 
@@ -194,40 +194,34 @@ def _phase_on_local_grid(value: Fraction, ulp: Fraction) -> Fraction:
     return scaled - lower
 
 
+def _is_sign_boundary_phase(phase: Fraction) -> bool:
+    return phase == 0 or phase == HALF
+
+
 def _directional_boundary_distance(phase: Fraction, shift_ulp: Fraction) -> Fraction | None:
-    """Distance in ULPs to the next half-integer boundary along the shift direction."""
+    """Distance in ULPs to the next 0.5-ULP sign boundary along the shift direction."""
     if shift_ulp == 0:
         return None
     if shift_ulp > 0:
-        return HALF - phase if phase < HALF else Fraction(3, 2) - phase
-    return phase - HALF if phase > HALF else phase + HALF
+        if phase < HALF:
+            return HALF - phase
+        return 1 - phase
+    if phase > HALF:
+        return phase - HALF
+    if phase > 0:
+        return phase
+    return HALF
 
 
-def _count_half_integer_boundaries(start: Fraction, stop: Fraction) -> int:
-    """Count half-integer lattice boundaries strictly between start and stop.
-
-    Endpoints that are exact half-integers are excluded and handled as tie cases. Counting is
-    done on exact rationals by mapping k+1/2 boundaries to odd integers under multiplication by 2.
-    """
+def _count_sign_boundaries(start: Fraction, stop: Fraction) -> int:
+    """Count multiples of 1/2 strictly between two exact ULP coordinates."""
     if start == stop:
         return 0
     lo = min(start, stop) * 2
     hi = max(start, stop) * 2
-
-    first_integer = lo.numerator // lo.denominator + 1
-    if Fraction(first_integer) <= lo:
-        first_integer += 1
+    first_integer = math.floor(lo) + 1
     last_integer = math.ceil(hi) - 1
-    if first_integer > last_integer:
-        return 0
-
-    if first_integer % 2 == 0:
-        first_integer += 1
-    if last_integer % 2 == 0:
-        last_integer -= 1
-    if first_integer > last_integer:
-        return 0
-    return (last_integer - first_integer) // 2 + 1
+    return max(0, last_integer - first_integer + 1)
 
 
 def diagnose_shadow_tree(
@@ -260,7 +254,7 @@ def diagnose_shadow_tree(
         if same_binade:
             actual_phase = _phase_on_local_grid(actual_node.exact_addend_sum, ulp_shadow)
             boundary_distance = _directional_boundary_distance(shadow_phase, shift_ulp)
-            crossing_count = _count_half_integer_boundaries(
+            crossing_count = _count_sign_boundaries(
                 shadow_exact / ulp_shadow,
                 actual_node.exact_addend_sum / ulp_shadow,
             )
@@ -324,7 +318,7 @@ def _print_tree_summary(
     )
     print(
         "  boundary "
-        f"crossing_explains_flip={crossing_matches}/{crossing_total} rate={crossing_rate} "
+        f"crossing_parity_explains={crossing_matches}/{crossing_total} rate={crossing_rate} "
         f"binade_shifts={diagnostic.binade_shift_count}"
     )
 
@@ -386,7 +380,7 @@ def _print_family_summary(family: str, trees: list[ShadowTreeDiagnostic]) -> Non
         f"  {family:<10} trees={len(trees):2d} "
         f"shadow_sign_match={matches}/{total}({matches / total:.6f}) "
         f"weighted_match={weighted:.6f} "
-        f"crossing_explains_flip={crossing_matches}/{crossing_total}({crossing_rate}) "
+        f"crossing_parity_explains={crossing_matches}/{crossing_total}({crossing_rate}) "
         f"binade_shifts={binade_shifts} "
         f"mean_tree_history_shift_ulp={mean(tree.mean_abs_history_shift_ulp for tree in trees):.6f} "
         f"mean_tree_max_shift_ulp={mean(tree.max_abs_history_shift_ulp for tree in trees):.6f}"
