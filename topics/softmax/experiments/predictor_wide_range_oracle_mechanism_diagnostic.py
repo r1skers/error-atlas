@@ -1,29 +1,26 @@
 """Calibration-only microscopic rounding diagnostic for wide-range reductions.
 
-This is an oracle/mechanism diagnostic, not a cheap predictor. It is intentionally
-allowed to inspect the actual FP32 intermediate state at every internal node.
+This is an oracle/mechanism diagnostic, not a cheap predictor. It intentionally inspects
+the actual FP32 intermediate state at every internal node.
 
-For each tree node v we record the two already-rounded child states a_v and b_v,
+For each tree node v:
 
     fl_v = RN32(a_v + b_v)
-    delta_v = fl_v - (a_v + b_v),
+    delta_v = fl_v - (a_v + b_v)
 
-and verify the exact tree identity
+and the script verifies the exact tree identity
 
     root_fp32 - sum_i x_i = sum_v delta_v.
 
-The diagnostic then exposes the sign balance and cancellation of local rounding errors via
-N_+, N_-, sum(delta_+), sum(delta_-), sum(|delta|), and |sum(delta)|. The latter is
-identically the absolute root error; it is reported only as a mechanism check and must not
-be interpreted as a pre-execution predictor.
-
-Nothing produced by this script is held-out evidence and no predictor formula is frozen by
-this run.
+Besides sign counts and cancellation, selected trees can be printed as compact microscopic
+traces with cumulative signed error, per-node contribution share, and child magnitude ratio.
+Nothing produced here is held-out evidence and no predictor formula is frozen by this run.
 """
 
 from __future__ import annotations
 
 import argparse
+import math
 from dataclasses import dataclass
 from fractions import Fraction
 from statistics import mean
@@ -79,20 +76,18 @@ class TreeRoundingDiagnostic:
             return 0.0
         return 1.0 - float(self.abs_sum_delta / self.sum_abs_delta)
 
+    @property
+    def dominant_node_share(self) -> float:
+        if self.sum_abs_delta == 0:
+            return 0.0
+        return max(float(abs(node.delta) / self.sum_abs_delta) for node in self.nodes)
+
 
 def _graph(width: int, *, graph_index: int, input_index: int):
     seed = TREE_BASE_SEED + input_index * 10_000 + graph_index
     if graph_index % 2 == 0:
-        return (
-            "contiguous",
-            seed,
-            random_contiguous_split_graph(width, seed=seed),
-        )
-    return (
-        "pair_merge",
-        seed,
-        random_pair_merge_graph(width, seed=seed),
-    )
+        return "contiguous", seed, random_contiguous_split_graph(width, seed=seed)
+    return "pair_merge", seed, random_pair_merge_graph(width, seed=seed)
 
 
 def diagnose_tree(
@@ -111,7 +106,6 @@ def diagnose_tree(
         a = states[node.left]
         b = states[node.right]
         exact_sum = a + b
-
         if exact_sum != node_prediction.exact_addend_sum:
             raise AssertionError("oracle replay disagrees on the exact node addend sum")
 
@@ -150,7 +144,6 @@ def diagnose_tree(
 
     positive = [record.delta for record in records if record.delta > 0]
     negative = [record.delta for record in records if record.delta < 0]
-    zero_count = len(records) - len(positive) - len(negative)
     sum_delta_positive = sum(positive, start=Fraction(0))
     sum_delta_negative = sum(negative, start=Fraction(0))
     sum_abs_delta = sum((abs(record.delta) for record in records), start=Fraction(0))
@@ -165,7 +158,7 @@ def diagnose_tree(
         local_delta_sum=local_delta_sum,
         n_positive=len(positive),
         n_negative=len(negative),
-        n_zero=zero_count,
+        n_zero=len(records) - len(positive) - len(negative),
         sum_delta_positive=sum_delta_positive,
         sum_delta_negative=sum_delta_negative,
         sum_abs_delta=sum_abs_delta,
@@ -180,6 +173,23 @@ def _sci(value: Fraction) -> str:
 
 def _fraction(value: Fraction) -> str:
     return f"{value.numerator}/{value.denominator}"
+
+
+def _magnitude_ratio(a: Fraction, b: Fraction) -> float:
+    """Return min(|a|,|b|)/max(|a|,|b|), in [0,1]."""
+    aa = abs(a)
+    bb = abs(b)
+    high = max(aa, bb)
+    if high == 0:
+        return 1.0
+    return float(min(aa, bb) / high)
+
+
+def _log2_magnitude_ratio(a: Fraction, b: Fraction) -> float:
+    ratio = _magnitude_ratio(a, b)
+    if ratio == 0.0:
+        return float("-inf")
+    return math.log2(ratio)
 
 
 def _print_tree_summary(
@@ -205,7 +215,8 @@ def _print_tree_summary(
         "  cancellation "
         f"sum_abs_delta={_sci(diagnostic.sum_abs_delta)} "
         f"abs_sum_delta={_sci(diagnostic.abs_sum_delta)} "
-        f"ratio={diagnostic.cancellation_ratio:.6f}"
+        f"ratio={diagnostic.cancellation_ratio:.6f} "
+        f"dominant_node_share={diagnostic.dominant_node_share:.6f}"
     )
 
 
@@ -213,20 +224,54 @@ def _print_node_trace(
     input_seed: int,
     tree_index: int,
     diagnostic: TreeRoundingDiagnostic,
+    *,
+    compact: bool,
 ) -> None:
-    print(
-        "  node_trace columns: "
-        "input_seed tree family graph_seed node left right a b fl32 delta fl32_bits delta_exact"
-    )
-    for record in diagnostic.nodes:
+    cumulative = Fraction(0)
+    if compact:
         print(
-            "  NODE "
-            f"{input_seed} {tree_index:02d} {diagnostic.graph_family} "
-            f"{diagnostic.graph_seed} {record.node_index} {record.left_index} {record.right_index} "
-            f"{float(record.a):.9e} {float(record.b):.9e} "
-            f"{float(record.rounded_sum):.9e} {_sci(record.delta)} "
-            f"{record.rounded_sum_bits} {_fraction(record.delta)}"
+            "  compact_trace columns: "
+            "node left right delta cumulative delta_share child_ratio log2_child_ratio"
         )
+    else:
+        print(
+            "  node_trace columns: "
+            "input_seed tree family graph_seed node left right "
+            "a b fl32 delta cumulative delta_share child_ratio log2_child_ratio "
+            "fl32_bits delta_exact"
+        )
+
+    for record in diagnostic.nodes:
+        cumulative += record.delta
+        share = (
+            0.0
+            if diagnostic.sum_abs_delta == 0
+            else float(abs(record.delta) / diagnostic.sum_abs_delta)
+        )
+        ratio = _magnitude_ratio(record.a, record.b)
+        log2_ratio = _log2_magnitude_ratio(record.a, record.b)
+
+        if compact:
+            print(
+                "  NODE "
+                f"{record.node_index:>3d} {record.left_index:>3d} {record.right_index:>3d} "
+                f"{_sci(record.delta)} {_sci(cumulative)} "
+                f"{share:.4f} {ratio:.4e} {log2_ratio:+.2f}"
+            )
+        else:
+            print(
+                "  NODE "
+                f"{input_seed} {tree_index:02d} {diagnostic.graph_family} "
+                f"{diagnostic.graph_seed} {record.node_index} "
+                f"{record.left_index} {record.right_index} "
+                f"{float(record.a):.9e} {float(record.b):.9e} "
+                f"{float(record.rounded_sum):.9e} {_sci(record.delta)} "
+                f"{_sci(cumulative)} {share:.6f} {ratio:.9e} {log2_ratio:+.6f} "
+                f"{record.rounded_sum_bits} {_fraction(record.delta)}"
+            )
+
+    if cumulative != diagnostic.root_signed_error:
+        raise AssertionError("printed cumulative delta does not reach root error")
 
 
 def _print_family_summary(
@@ -235,17 +280,14 @@ def _print_family_summary(
 ) -> None:
     if not diagnostics:
         return
-    mean_abs_root_error = mean(float(abs(item.root_signed_error)) for item in diagnostics)
-    mean_sum_abs_delta = mean(float(item.sum_abs_delta) for item in diagnostics)
-    mean_cancellation = mean(item.cancellation_ratio for item in diagnostics)
-    mean_positive = mean(item.n_positive for item in diagnostics)
-    mean_negative = mean(item.n_negative for item in diagnostics)
     print(
         f"  {family:<10} trees={len(diagnostics):2d} "
-        f"mean|root_error|={mean_abs_root_error:.9e} "
-        f"mean_sum|delta|={mean_sum_abs_delta:.9e} "
-        f"mean_cancel={mean_cancellation:.6f} "
-        f"mean_N+={mean_positive:.2f} mean_N-={mean_negative:.2f}"
+        f"mean|root_error|={mean(float(abs(item.root_signed_error)) for item in diagnostics):.9e} "
+        f"mean_sum|delta|={mean(float(item.sum_abs_delta) for item in diagnostics):.9e} "
+        f"mean_cancel={mean(item.cancellation_ratio for item in diagnostics):.6f} "
+        f"mean_dominant_share={mean(item.dominant_node_share for item in diagnostics):.6f} "
+        f"mean_N+={mean(item.n_positive for item in diagnostics):.2f} "
+        f"mean_N-={mean(item.n_negative for item in diagnostics):.2f}"
     )
 
 
@@ -274,16 +316,37 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--show-nodes",
         action="store_true",
-        help="print every internal-node a,b,fl32,delta record",
+        help="print full internal-node trace for selected trees",
+    )
+    parser.add_argument(
+        "--compact-trace",
+        action="store_true",
+        help="print compact node trace for selected trees",
+    )
+    parser.add_argument(
+        "--trace-trees",
+        type=int,
+        nargs="+",
+        default=None,
+        metavar="INDEX",
+        help="only expand these zero-based tree indices; summaries are still printed for all trees",
     )
     args = parser.parse_args()
     if args.graphs <= 0:
         parser.error("--graphs must be positive")
+    if args.trace_trees is not None:
+        bad = [index for index in args.trace_trees if not 0 <= index < args.graphs]
+        if bad:
+            parser.error(f"--trace-trees indices must be in [0,{args.graphs - 1}]: {bad}")
+    if args.show_nodes and args.compact_trace:
+        parser.error("choose at most one of --show-nodes and --compact-trace")
     return args
 
 
 def main() -> int:
     args = _parse_args()
+    trace_tree_set = None if args.trace_trees is None else set(args.trace_trees)
+
     print("Wide-range microscopic FP32 rounding diagnostic")
     print("CALIBRATION ONLY — exact intermediate states are intentionally inspected")
     print("ORACLE/MECHANISM DIAGNOSTIC — not a predictor and not held-out evidence")
@@ -291,6 +354,8 @@ def main() -> int:
         f"width={args.width} graphs_per_input={args.graphs} "
         f"input_seeds={','.join(str(seed) for seed in args.input_seeds)}"
     )
+    if args.trace_trees is not None:
+        print("trace_trees=" + ",".join(f"{index:02d}" for index in args.trace_trees))
     print()
 
     for input_index, input_seed in enumerate(args.input_seeds):
@@ -315,8 +380,12 @@ def main() -> int:
             )
             diagnostics.append(diagnostic)
             _print_tree_summary(input_seed, graph_index, diagnostic)
-            if args.show_nodes:
-                _print_node_trace(input_seed, graph_index, diagnostic)
+
+            should_trace = trace_tree_set is None or graph_index in trace_tree_set
+            if should_trace and args.show_nodes:
+                _print_node_trace(input_seed, graph_index, diagnostic, compact=False)
+            if should_trace and args.compact_trace:
+                _print_node_trace(input_seed, graph_index, diagnostic, compact=True)
 
         print("INPUT SUMMARY")
         _print_family_summary("all", diagnostics)
