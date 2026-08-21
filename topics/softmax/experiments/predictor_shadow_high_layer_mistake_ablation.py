@@ -4,9 +4,10 @@ The corrected sparse-repair experiment shows that replacing the shadow residuals
 top-of-tree band can recover much of the within-input ranking signal.  That result alone does not
 show whether the useful repairs are discrete phase mistakes or a more diffuse high-layer drift.
 
-For the top k nodes ordered by exact subtree height, compare four oracle repair policies:
+Compare five oracle repair policies at budgets k=1,2,4,...:
 
 * ``top_all``: repair every node in the high-layer budget;
+* ``ulp_all``: repair the k nodes with the largest local FP32 ULP;
 * ``top_cell``: repair only budget nodes whose actual history changes the RN-even cell;
 * ``top_sign``: repair only budget nodes whose actual and shadow residual signs differ;
 * ``oracle_gap``: repair the globally largest |delta_actual - delta_shadow| nodes (upper bound).
@@ -42,7 +43,7 @@ from summation_graph_predictor import (
 )
 
 DEFAULT_REPAIR_COUNTS = (1, 2, 4, 8, 16, 32)
-POLICIES = ("top_all", "top_cell", "top_sign", "oracle_gap")
+POLICIES = ("top_all", "ulp_all", "top_cell", "top_sign", "oracle_gap")
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,7 @@ def _analyze(
     actual_output = [*values]
     actual_delta: dict[int, Fraction] = {}
     shadow_delta: dict[int, Fraction] = {}
+    node_ulp: dict[int, Fraction] = {}
     changed_cell: dict[int, bool] = {}
     changed_sign: dict[int, bool] = {}
 
@@ -96,6 +98,7 @@ def _analyze(
             - exact_subtree[node.right]
         )
         ulp = _fp32_ulp_fraction(exact_sum)
+        node_ulp[index] = ulp
         changed_cell[index] = _crosses_boundary(
             exact_sum / ulp,
             (exact_sum + history) / ulp,
@@ -108,6 +111,7 @@ def _analyze(
     shadow_sum = sum((shadow_delta[index] for index in internal), start=Fraction(0))
 
     depth_order = sorted(internal, key=lambda index: depths[index], reverse=True)
+    ulp_order = sorted(internal, key=node_ulp.__getitem__, reverse=True)
     gap_order = sorted(
         internal,
         key=lambda index: abs(actual_delta[index] - shadow_delta[index]),
@@ -121,6 +125,7 @@ def _analyze(
         top = set(depth_order[:budget])
         repair_sets = {
             "top_all": top,
+            "ulp_all": set(ulp_order[:budget]),
             "top_cell": {index for index in top if changed_cell[index]},
             "top_sign": {index for index in top if changed_sign[index]},
             "oracle_gap": set(gap_order[:budget]),
