@@ -28,6 +28,8 @@ DEFAULT_GRAPHS_PER_FAMILY = 4
 DEFAULT_REPEATS = 1
 DEFAULT_INPUT_SEED = 22260821
 DEFAULT_BUDGET = 8
+DEFAULT_CANDIDATE_COUNT = 64
+DEFAULT_SHORTLISTS = (4, 8, 16, 32)
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,18 @@ def _average_ms(call, count: int, repeats: int) -> float:
     for _ in range(repeats):
         call()
     return 1000.0 * (time.perf_counter() - start) / (count * repeats)
+
+
+def _cascade_average_ms(
+    q_metadata_ms: float,
+    beam_total_ms: float,
+    candidate_count: int,
+    shortlist: int,
+) -> float:
+    """Return per-candidate cost when Q filters all trees and beam reranks M trees."""
+    if candidate_count <= 0 or shortlist <= 0 or shortlist > candidate_count:
+        raise ValueError("shortlist must be between 1 and candidate_count")
+    return q_metadata_ms + shortlist * beam_total_ms / candidate_count
 
 
 def _benchmark_width(
@@ -110,11 +124,25 @@ def main() -> int:
     )
     parser.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
     parser.add_argument("--budget", type=int, default=DEFAULT_BUDGET)
+    parser.add_argument("--candidate-count", type=int, default=DEFAULT_CANDIDATE_COUNT)
+    parser.add_argument(
+        "--shortlists",
+        type=int,
+        nargs="+",
+        default=list(DEFAULT_SHORTLISTS),
+    )
     args = parser.parse_args()
     if not args.widths or any(width < 2 for width in args.widths):
         parser.error("--widths must contain integers of at least 2")
     if args.graphs_per_family <= 0 or args.repeats <= 0 or args.budget <= 1:
         parser.error("graph count/repeats must be positive and budget must exceed 1")
+    if args.candidate_count <= 0:
+        parser.error("--candidate-count must be positive")
+    if not args.shortlists or any(
+        shortlist <= 0 or shortlist > args.candidate_count
+        for shortlist in args.shortlists
+    ):
+        parser.error("--shortlists must be between 1 and --candidate-count")
 
     print("Selected ancestor-cell beam prototype cost diagnostic")
     print("CALIBRATION ONLY — Python Fraction timings are not hardware claims")
@@ -144,6 +172,27 @@ def main() -> int:
             f"total/Q B1/B3={beam1_total / row.q_metadata_ms:.2f}/"
             f"{beam3_total / row.q_metadata_ms:.2f}"
         )
+        print(f"  cascade amortized over N={args.candidate_count} candidates")
+        for shortlist in args.shortlists:
+            cascade1 = _cascade_average_ms(
+                row.q_metadata_ms,
+                beam1_total,
+                args.candidate_count,
+                shortlist,
+            )
+            cascade3 = _cascade_average_ms(
+                row.q_metadata_ms,
+                beam3_total,
+                args.candidate_count,
+                shortlist,
+            )
+            print(
+                f"    M={shortlist:<2} avg_ms B1/B3={cascade1:.3f}/{cascade3:.3f} "
+                f"avg/Q={cascade1 / row.q_metadata_ms:.2f}/"
+                f"{cascade3 / row.q_metadata_ms:.2f} "
+                f"avg/oracle={cascade1 / row.oracle_ms:.2f}/"
+                f"{cascade3 / row.oracle_ms:.2f}"
+            )
         print()
     return 0
 
