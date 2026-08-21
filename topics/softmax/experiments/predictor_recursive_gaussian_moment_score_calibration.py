@@ -1,13 +1,16 @@
-"""Calibration-only recursive Gaussian moment-closure tree score.
+"""Calibration-only recursive Gaussian moment-closure tree scores.
 
-This is the first predictor-side recursion motivated by the history-transition diagnostics.
-For each subtree we propagate a Gaussian approximation to its signed accumulated FP32 error.
-At a parent, child error moments determine the history distribution H; the deterministic shadow
-sum fixes the FP32 ulp and phase.  We integrate the rounding response q(phi + H/ulp) under that
-Gaussian, then propagate moments of E = H + delta.
+Two predictor-side recursions are compared:
 
-Only stored leaves and the candidate graph are used by the score.  Exact FP32 execution is used
-only for the calibration ranking target.  Held-out inputs remain untouched.
+1. deterministic-shadow recursion: propagate only the phase-aware rounded output moments. Starting
+   from exact leaves this collapses to zero variance and is retained as a useful control.
+2. stochastic-innovation recursion: after the same phase-aware transform, inject an unresolved
+   local rounding innovation variance u_v^2/12 before propagating upward. This is the first cheap
+   stochastic recursion motivated by the transition diagnostic H_p = I_p + J_p, where inherited
+   state dominates but local rounding innovation supplies substantial new variance.
+
+Only stored leaves and the candidate graph are used by the scores. Exact FP32 execution is used
+only for the calibration ranking target. Held-out inputs remain untouched.
 """
 from __future__ import annotations
 
@@ -18,11 +21,7 @@ from fractions import Fraction
 from statistics import mean
 
 from predictor_calibration_inputs import wide_range_random
-from predictor_gaussian_ancestor_coherence_calibration import (
-    _fp32_ulp,
-    _normal_cdf,
-    _normal_pdf,
-)
+from predictor_gaussian_ancestor_coherence_calibration import _fp32_ulp, _normal_cdf
 from predictor_second_moment_baseline import second_moment_tree_cost
 from predictor_tree_generator import random_contiguous_split_graph, random_pair_merge_graph
 from summation_graph_predictor import BinaryReductionGraph, predict_fp32_tree_error
@@ -43,9 +42,10 @@ class Moment:
 @dataclass(frozen=True)
 class Scores:
     second_moment: float
-    root_mean_abs: float
-    root_rms: float
-    root_variance: float
+    shadow_mean_abs: float
+    stochastic_mean_abs: float
+    stochastic_rms: float
+    stochastic_variance: float
 
 
 def _graph(width: int, graph_index: int, input_index: int):
@@ -56,7 +56,7 @@ def _graph(width: int, graph_index: int, input_index: int):
 
 
 def _rounding_output_moments(phase: float, mu: float, sigma: float) -> tuple[float, float]:
-    """Return E[y], E[y^2] for y=h+q(phi+h)=RN(phi+h)-phi, h~N(mu,sigma^2)."""
+    """Return E[y], E[y^2] for y=RN(phi+h)-phi, h~N(mu,sigma^2)."""
     if sigma <= 1e-15:
         y = round(phase + mu) - phase
         return y, y * y
@@ -87,7 +87,7 @@ def _normal_mean_abs(mu: float, variance: float) -> float:
     return sigma * math.sqrt(2.0 / math.pi) * math.exp(-0.5 * z * z) + mu * (2.0 * _normal_cdf(z) - 1.0)
 
 
-def cheap_scores(values: tuple[Fraction, ...], graph: BinaryReductionGraph) -> Scores:
+def _propagate(values: tuple[Fraction, ...], graph: BinaryReductionGraph, *, inject_innovation: bool) -> Moment:
     shadow = [float(v) for v in values]
     error = [Moment(0.0, 0.0) for _ in values]
 
@@ -96,7 +96,6 @@ def cheap_scores(values: tuple[Fraction, ...], graph: BinaryReductionGraph) -> S
         left = error[node.left]
         right = error[node.right]
 
-        # Disjoint sibling subtrees are the first closure approximation.
         h_mu = left.mean + right.mean
         h_var = max(left.variance + right.variance, 0.0)
 
@@ -111,16 +110,25 @@ def cheap_scores(values: tuple[Fraction, ...], graph: BinaryReductionGraph) -> S
         out_second = ulp * ulp * ey2
         out_var = max(out_second - out_mu * out_mu, 0.0)
 
+        if inject_innovation:
+            out_var += ulp * ulp / 12.0
+
         shadow.append(shadow_sum)
         error.append(Moment(out_mu, out_var))
 
-    root = error[-1]
+    return error[-1]
+
+
+def cheap_scores(values: tuple[Fraction, ...], graph: BinaryReductionGraph) -> Scores:
+    shadow_root = _propagate(values, graph, inject_innovation=False)
+    stochastic_root = _propagate(values, graph, inject_innovation=True)
     second = second_moment_tree_cost(values, graph).partial_sum_square_cost
     return Scores(
         second_moment=second,
-        root_mean_abs=_normal_mean_abs(root.mean, root.variance),
-        root_rms=math.sqrt(max(root.variance + root.mean * root.mean, 0.0)),
-        root_variance=root.variance,
+        shadow_mean_abs=_normal_mean_abs(shadow_root.mean, shadow_root.variance),
+        stochastic_mean_abs=_normal_mean_abs(stochastic_root.mean, stochastic_root.variance),
+        stochastic_rms=math.sqrt(max(stochastic_root.variance + stochastic_root.mean * stochastic_root.mean, 0.0)),
+        stochastic_variance=stochastic_root.variance,
     )
 
 
@@ -164,16 +172,18 @@ def _report(label: str, rows: list[tuple[str, Scores, float]]) -> dict[str, floa
     target = [r[2] for r in rows]
     rhos = {
         "second_moment": _spearman([r[1].second_moment for r in rows], target),
-        "recursive_mean_abs": _spearman([r[1].root_mean_abs for r in rows], target),
-        "recursive_rms": _spearman([r[1].root_rms for r in rows], target),
-        "recursive_variance": _spearman([r[1].root_variance for r in rows], target),
+        "shadow_abs": _spearman([r[1].shadow_mean_abs for r in rows], target),
+        "stochastic_abs": _spearman([r[1].stochastic_mean_abs for r in rows], target),
+        "stochastic_rms": _spearman([r[1].stochastic_rms for r in rows], target),
+        "stochastic_variance": _spearman([r[1].stochastic_variance for r in rows], target),
     }
     print(
         f"  {label:<10} n={len(rows):2d} "
         f"rho_second={_fmt(rhos['second_moment'])} "
-        f"rho_rec_abs={_fmt(rhos['recursive_mean_abs'])} "
-        f"rho_rec_rms={_fmt(rhos['recursive_rms'])} "
-        f"rho_rec_var={_fmt(rhos['recursive_variance'])}"
+        f"rho_shadow={_fmt(rhos['shadow_abs'])} "
+        f"rho_stoch_abs={_fmt(rhos['stochastic_abs'])} "
+        f"rho_stoch_rms={_fmt(rhos['stochastic_rms'])} "
+        f"rho_stoch_var={_fmt(rhos['stochastic_variance'])}"
     )
     return rhos
 
@@ -192,11 +202,12 @@ def main() -> int:
     print("Recursive Gaussian moment-closure cheap-score calibration")
     print("CALIBRATION ONLY — formula not frozen; held-out remains untouched")
     print("PREDICTOR SIDE — stored FP32 leaves + graph only; oracle used only for ranking target")
-    print("Propagate Gaussian signed-error moments through exact FP32 rounding cells")
+    print("Compare deterministic shadow recursion against stochastic recursion with u^2/12 innovation")
     print(f"width={args.width} graphs_per_input={args.graphs} input_seeds={','.join(map(str,args.input_seeds))}")
     print()
 
-    pooled = {k: [] for k in ("second_moment", "recursive_mean_abs", "recursive_rms", "recursive_variance")}
+    keys = ("second_moment", "shadow_abs", "stochastic_abs", "stochastic_rms", "stochastic_variance")
+    pooled = {k: [] for k in keys}
     for input_index, seed in enumerate(args.input_seeds):
         generated = wide_range_random(args.width, seed=seed)
         rows: list[tuple[str, Scores, float]] = []
@@ -217,6 +228,9 @@ def main() -> int:
 
     print("SEED SUMMARY all-tree rho mean/min/max")
     for key, values in pooled.items():
+        if not values:
+            print(f"  {key:<20} n/a")
+            continue
         print(f"  {key:<20} mean={mean(values):+.3f} min={min(values):+.3f} max={max(values):+.3f}")
     return 0
 
