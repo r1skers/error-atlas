@@ -76,6 +76,8 @@ class TransitionSample:
     crossing: int
     sign_flip: int
     wrong_cell: int
+    cell_shift: int
+    innovation_shift: int
     predicted_crossing: int
     predicted_sign_flip: int
 
@@ -145,6 +147,8 @@ def _tree_transitions(
     graph: BinaryReductionGraph,
     family: str,
     budget: int,
+    *,
+    include_root: bool = False,
 ) -> list[TransitionSample]:
     trace = _predictor_trace(values, graph, (budget,))
     oracle = predict_fp32_tree_error(values, graph)
@@ -176,8 +180,11 @@ def _tree_transitions(
     for descendant in selected_order:
         relation = _nearest_selected_ancestor(descendant, selected, parent)
         if relation is None:
-            continue
-        ancestor, gap, _branch = relation
+            if not include_root:
+                continue
+            ancestor, gap = descendant, 0
+        else:
+            ancestor, gap, _branch = relation
         target_node = graph.nodes[descendant - graph.leaf_count]
         ancestor_ulp = float(trace.node_ulp[ancestor])
         descendant_ulp = float(trace.node_ulp[descendant])
@@ -232,9 +239,26 @@ def _tree_transitions(
             trace.exact_subtree[descendant] + trace.delta0[descendant]
         )
         rounded_actual = actual_rounded[descendant]
+        actual_rounded_bits = round_nonnegative_fraction_to_fp32(rounded_actual).bits
         shadow_rounded = round_nonnegative_fraction_to_fp32(
             trace.exact_subtree[descendant]
             + Fraction.from_float(shadow_output_error[descendant])
+        )
+        deterministic_children = []
+        for child in (target_node.left, target_node.right):
+            if child in selected:
+                deterministic_children.append(actual_rounded[child])
+            elif child < graph.leaf_count:
+                deterministic_children.append(values[child])
+            else:
+                deterministic_children.append(
+                    round_nonnegative_fraction_to_fp32(
+                        trace.exact_subtree[child]
+                        + Fraction.from_float(shadow_output_error[child])
+                    ).value
+                )
+        deterministic_parent = round_nonnegative_fraction_to_fp32(
+            deterministic_children[0] + deterministic_children[1]
         )
         rows.append(
             TransitionSample(
@@ -252,6 +276,8 @@ def _tree_transitions(
                 # rational operation is not propagated into an ancestor, so it cannot replay the
                 # candidate FP32 trajectory.  It also avoids cancellation from float(S + error).
                 wrong_cell=int(rounded_actual != shadow_rounded.value),
+                cell_shift=actual_rounded_bits - shadow_rounded.bits,
+                innovation_shift=actual_rounded_bits - deterministic_parent.bits,
                 predicted_crossing=int(trace.predicted_cross[descendant]),
                 predicted_sign_flip=int(trace.predicted_phase[descendant]),
             )
@@ -381,13 +407,23 @@ def _generate_width(
     seeds: tuple[int, ...],
     graphs_per_family: int,
     budget: int,
+    *,
+    include_root: bool = False,
 ) -> list[list[TransitionSample]]:
     groups: list[list[TransitionSample]] = []
     for input_index, seed in enumerate(seeds):
         values = wide_range_random(width, seed=seed).values
         group: list[TransitionSample] = []
         for family, graph in _graphs(width, input_index, graphs_per_family):
-            group.extend(_tree_transitions(values, graph, family, budget))
+            group.extend(
+                _tree_transitions(
+                    values,
+                    graph,
+                    family,
+                    budget,
+                    include_root=include_root,
+                )
+            )
         groups.append(group)
     return groups
 

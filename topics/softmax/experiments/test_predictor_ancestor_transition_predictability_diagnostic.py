@@ -53,6 +53,8 @@ class AncestorTransitionPredictabilityDiagnosticTests(unittest.TestCase):
             self.assertIn(row.crossing, (0, 1))
             self.assertIn(row.sign_flip, (0, 1))
             self.assertIn(row.wrong_cell, (0, 1))
+            self.assertEqual(row.wrong_cell, int(row.cell_shift != 0))
+            self.assertIsInstance(row.innovation_shift, int)
 
     def test_auc_handles_perfect_order_and_ties(self) -> None:
         target = np.asarray([0.0, 0.0, 1.0, 1.0])
@@ -71,6 +73,8 @@ class AncestorTransitionPredictabilityDiagnosticTests(unittest.TestCase):
                 crossing=int(value > 0.0),
                 sign_flip=0,
                 wrong_cell=0,
+                cell_shift=0,
+                innovation_shift=0,
                 predicted_crossing=0,
                 predicted_sign_flip=0,
             )
