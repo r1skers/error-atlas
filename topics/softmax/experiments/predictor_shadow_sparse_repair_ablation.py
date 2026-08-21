@@ -113,9 +113,12 @@ def _topological_depths(graph: BinaryReductionGraph) -> dict[int, int]:
 
 
 def _crosses_boundary(x0: Fraction, x1: Fraction) -> bool:
-    lo, hi = sorted((float(x0), float(x1)))
-    first = math.floor(lo - 0.5) + 0.5
-    return first <= hi and first > lo + 1e-15
+    """Whether the exact shift changes the RN-even quantization cell.
+
+    Comparing the rounded integer coordinates handles half-integer ties exactly and avoids
+    converting the (roughly 24-bit) FP32-grid coordinate to a binary64 approximation.
+    """
+    return round(x0) != round(x1)
 
 
 def _analyze(values: tuple[Fraction,...], graph: BinaryReductionGraph, family: str) -> TreeRow:
