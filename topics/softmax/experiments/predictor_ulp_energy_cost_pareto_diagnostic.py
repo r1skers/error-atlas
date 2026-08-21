@@ -63,6 +63,29 @@ class TreeCostProfile:
     budget_q: dict[int, float]
 
 
+def _root_band_internal_order(
+    graph: BinaryReductionGraph,
+    subtree_leaves: list[int],
+    max_visits: int,
+) -> tuple[int, ...]:
+    """Choose a deterministic root-first band using only structural metadata."""
+    if len(subtree_leaves) != graph.leaf_count + len(graph.nodes):
+        raise ValueError("subtree metadata must cover every graph value")
+    if max_visits <= 0:
+        raise ValueError("max_visits must be positive")
+
+    frontier = [(-subtree_leaves[graph.root], graph.root)]
+    order: list[int] = []
+    while frontier and len(order) < min(max_visits, len(graph.nodes)):
+        _, index = heapq.heappop(frontier)
+        order.append(index)
+        node = graph.nodes[index - graph.leaf_count]
+        for child in (node.left, node.right):
+            if child >= graph.leaf_count:
+                heapq.heappush(frontier, (-subtree_leaves[child], child))
+    return tuple(order)
+
+
 def _tree_cost_profile(
     values: tuple[Fraction, ...],
     graph: BinaryReductionGraph,
@@ -93,18 +116,16 @@ def _tree_cost_profile(
     full_q = sum(node_energy.values())
 
     ordered_budgets = tuple(sorted(set(budgets)))
-    max_visits = min(ordered_budgets[-1], len(graph.nodes))
-    frontier = [(-subtree_leaves[graph.root], graph.root)]
+    root_band = _root_band_internal_order(
+        graph,
+        subtree_leaves,
+        ordered_budgets[-1],
+    )
     cumulative_q = 0.0
     q_after_visit: list[float] = []
-    while frontier and len(q_after_visit) < max_visits:
-        _, index = heapq.heappop(frontier)
+    for index in root_band:
         cumulative_q += node_energy[index]
         q_after_visit.append(cumulative_q)
-        node = graph.nodes[index - graph.leaf_count]
-        for child in (node.left, node.right):
-            if child >= graph.leaf_count:
-                heapq.heappush(frontier, (-subtree_leaves[child], child))
 
     budget_q = {
         budget: q_after_visit[min(budget, len(q_after_visit)) - 1]

@@ -5,6 +5,7 @@ from fractions import Fraction
 
 from predictor_ulp_energy_cost_pareto_diagnostic import (
     _pareto_indices,
+    _root_band_internal_order,
     _tree_cost_profile,
 )
 from summation_graph_predictor import (
@@ -59,6 +60,20 @@ class UlpEnergyCostParetoDiagnosticTests(unittest.TestCase):
                 "balanced",
                 (0,),
             )
+
+    def test_root_band_is_root_first_and_complete_when_unbounded(self) -> None:
+        graph = balanced_reduction_graph(8)
+        subtree_leaves = [1] * graph.leaf_count
+        for node in graph.nodes:
+            subtree_leaves.append(
+                subtree_leaves[node.left] + subtree_leaves[node.right]
+            )
+
+        order = _root_band_internal_order(graph, subtree_leaves, 20)
+
+        self.assertEqual(order[0], graph.root)
+        self.assertEqual(len(order), len(graph.nodes))
+        self.assertEqual(len(set(order)), len(order))
 
     def test_pareto_indices_minimize_q_and_span(self) -> None:
         values = tuple(Fraction(1) for _ in range(8))
