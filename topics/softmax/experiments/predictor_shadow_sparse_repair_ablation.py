@@ -1,20 +1,29 @@
-"""Calibration-only sparse repair ablation for the deterministic shadow trajectory.
+"""Calibration-only sparse local-residual repair ablation for the shadow model.
 
-The preceding shadow diagnostic showed that most shallow nodes preserve rounding direction, while
-history drift, boundary crossings, and sign mismatches concentrate near the top of the tree.  This
-script asks whether tree-level ranking can be recovered by repairing only a sparse subset of
-internal nodes with oracle history.
+The shadow model intentionally ignores descendant rounding history at every internal node:
 
-This is NOT a predictor: repaired nodes intentionally use exact FP32 accumulated history.  The goal
-is purely mechanistic: quantify how many nodes must be corrected before the shadow ranking recovers.
+    delta_shadow(v) = RN32(S_v) - S_v,
+
+where S_v is the exact stored-FP32 subtree sum.  The true oracle residual is
+
+    delta_actual(v) = RN32(S_v + H_v) - (S_v + H_v).
+
+Because the exact root error is the sum of true local residuals, this ablation asks whether replacing
+only a sparse subset of shadow residuals by their oracle counterparts is enough to recover tree-level
+ranking:
+
+    E_repaired = sum_{v in R} delta_actual(v) + sum_{v not in R} delta_shadow(v).
+
+This is NOT a predictor.  Oracle histories/residuals are intentionally used only to diagnose whether
+shadow failure is sparse.  Importantly, the script never recursively replays RN32(child outputs),
+because doing so would exactly execute the candidate tree and trivially reproduce the oracle.
 
 Repair policies:
-  * depth: deepest/topmost nodes by distance from leaves
-  * oracle_drift: nodes with largest |actual_history - shadow_history| / ulp
-  * oracle_cross: nodes whose shadow->actual history shift crosses a rounding boundary, then drift
+  * depth: topmost nodes by distance from leaves
+  * oracle_drift: largest |H_v| / ulp(S_v)
+  * oracle_cross: nodes where H_v crosses an RN boundary, then largest drift
 
-Fractions 1%, 5%, 10%, 20% are tested.  At repaired nodes we inject the exact oracle subtree output;
-unrepaired nodes continue the deterministic shadow recursion from their current children.
+Fractions 1%, 5%, 10%, 20% are tested.
 """
 from __future__ import annotations
 
@@ -69,8 +78,8 @@ def _pearson(x: list[float], y: list[float]) -> float | None:
     if len(x) != len(y) or len(x) < 2:
         return None
     mx, my = mean(x), mean(y)
-    dx = [v-mx for v in x]
-    dy = [v-my for v in y]
+    dx = [v - mx for v in x]
+    dy = [v - my for v in y]
     sx = math.sqrt(sum(v*v for v in dx))
     sy = math.sqrt(sum(v*v for v in dy))
     if sx == 0 or sy == 0:
@@ -86,19 +95,13 @@ def _fp32_ulp_fraction(value: Fraction) -> Fraction:
     if value <= 0:
         raise ValueError("positive sums only")
     e = value.numerator.bit_length() - value.denominator.bit_length()
-    while value < (Fraction(2) ** e if e >= 0 else Fraction(1, 2**(-e))):
+    p2 = Fraction(2**e) if e >= 0 else Fraction(1, 2**(-e))
+    if value < p2:
         e -= 1
     if e < -126:
         return Fraction(1, 2**149)
     qexp = e - 23
     return Fraction(2**qexp) if qexp >= 0 else Fraction(1, 2**(-qexp))
-
-
-def _distance_to_boundary(shadow_sum: Fraction, ulp: Fraction) -> float:
-    scaled = shadow_sum / ulp
-    floor = scaled.numerator // scaled.denominator
-    phase = float(scaled - floor)
-    return min(phase, abs(0.5-phase), 1.0-phase)
 
 
 def _topological_depths(graph: BinaryReductionGraph) -> dict[int, int]:
@@ -109,50 +112,53 @@ def _topological_depths(graph: BinaryReductionGraph) -> dict[int, int]:
     return d
 
 
+def _crosses_boundary(x0: Fraction, x1: Fraction) -> bool:
+    lo, hi = sorted((float(x0), float(x1)))
+    first = math.floor(lo - 0.5) + 0.5
+    return first <= hi and first > lo + 1e-15
+
+
 def _analyze(values: tuple[Fraction,...], graph: BinaryReductionGraph, family: str) -> TreeRow:
     oracle = predict_fp32_tree_error(values, graph)
     nleaf = graph.leaf_count
-    exact_total = sum(values, start=Fraction(0))
-
-    actual_out = [*values]
-    for pred in oracle.node_predictions:
-        actual_out.append(pred.rounded_sum)
-
-    shadow_out = [*values]
-    shadow_history: dict[int, Fraction] = {}
-    actual_history: dict[int, Fraction] = {}
-    drift_ulp: dict[int, float] = {}
-    crossed: dict[int, bool] = {}
+    internal = [nleaf+i for i in range(len(graph.nodes))]
     depths = _topological_depths(graph)
 
-    # Exact subtree input sums, independent of execution history.
     exact_subtree = [*values]
-    for off,node in enumerate(graph.nodes):
+    actual_output = [*values]
+    actual_delta: dict[int, Fraction] = {}
+    shadow_delta: dict[int, Fraction] = {}
+    drift_ulp: dict[int, float] = {}
+    crossed: dict[int, bool] = {}
+
+    for off, (node, pred) in enumerate(zip(graph.nodes, oracle.node_predictions, strict=True)):
         idx = nleaf + off
         exact_sum = exact_subtree[node.left] + exact_subtree[node.right]
         exact_subtree.append(exact_sum)
 
-        ssum = shadow_out[node.left] + shadow_out[node.right]
-        sout = round_nonnegative_fraction_to_fp32(ssum).value
-        shadow_out.append(sout)
+        actual_output.append(pred.rounded_sum)
+        actual_delta[idx] = pred.local_rounding_error
 
-        ah = (actual_out[node.left] - exact_subtree[node.left]) + (actual_out[node.right] - exact_subtree[node.right])
-        sh = (shadow_out[node.left] - exact_subtree[node.left]) + (shadow_out[node.right] - exact_subtree[node.right])
-        actual_history[idx] = ah
-        shadow_history[idx] = sh
+        shadow_rounded = round_nonnegative_fraction_to_fp32(exact_sum).value
+        shadow_delta[idx] = shadow_rounded - exact_sum
+
+        history = (
+            actual_output[node.left] - exact_subtree[node.left]
+            + actual_output[node.right] - exact_subtree[node.right]
+        )
         ulp = _fp32_ulp_fraction(exact_sum)
-        drift = ah - sh
-        drift_ulp[idx] = float(abs(drift / ulp))
+        drift_ulp[idx] = float(abs(history / ulp))
+        crossed[idx] = _crosses_boundary(exact_sum / ulp, (exact_sum + history) / ulp)
 
-        # Crossing test against the nearest RN boundary using exact scaled positions.
-        x0 = (exact_sum + sh) / ulp
-        x1 = (exact_sum + ah) / ulp
-        lo, hi = sorted((float(x0), float(x1)))
-        first = math.floor(lo - 0.5) + 0.5
-        crossed[idx] = first <= hi and first > lo + 1e-15
+    # Hard identities/guards: target must equal sum(actual delta), while shadow is a distinct
+    # history-free local model rather than a replay of candidate execution.
+    actual_sum = sum((actual_delta[i] for i in internal), start=Fraction(0))
+    if actual_sum != oracle.signed_error:
+        raise AssertionError("oracle local-residual identity failed")
+    shadow_sum = sum((shadow_delta[i] for i in internal), start=Fraction(0))
 
-    shadow_error = abs(float(shadow_out[-1] - exact_total))
-    internal = [nleaf+i for i in range(len(graph.nodes))]
+    target = abs(float(actual_sum))
+    shadow_error = abs(float(shadow_sum))
 
     policy_orders = {
         "depth": sorted(internal, key=lambda i: depths[i], reverse=True),
@@ -165,17 +171,12 @@ def _analyze(values: tuple[Fraction,...], graph: BinaryReductionGraph, family: s
         for frac in FRACTIONS:
             k = max(1, math.ceil(len(internal)*frac))
             repair = set(order[:k])
-            out = [*values]
-            for off,node in enumerate(graph.nodes):
-                idx = nleaf + off
-                if idx in repair:
-                    out.append(actual_out[idx])
-                else:
-                    s = out[node.left] + out[node.right]
-                    out.append(round_nonnegative_fraction_to_fp32(s).value)
-            repaired_scores[(policy,frac)] = abs(float(out[-1] - exact_total))
+            repaired_sum = sum(
+                (actual_delta[i] if i in repair else shadow_delta[i] for i in internal),
+                start=Fraction(0),
+            )
+            repaired_scores[(policy,frac)] = abs(float(repaired_sum))
 
-    target = abs(float(oracle.signed_error))
     return TreeRow(family=family,target=target,shadow=shadow_error,repaired=repaired_scores)
 
 
@@ -206,9 +207,9 @@ def main() -> int:
     if args.width<=1: p.error('--width must exceed 1')
     if args.graphs<=1: p.error('--graphs must exceed 1')
 
-    print('Sparse shadow repair ablation')
-    print('CALIBRATION ONLY — repaired nodes use oracle FP32 history/output; not a predictor')
-    print('Question: can sparse high-risk repairs recover tree ranking?')
+    print('Sparse shadow local-residual repair ablation')
+    print('CALIBRATION ONLY — repaired residuals use oracle FP32 history; not a predictor')
+    print('Shadow = sum of history-free per-node residuals; candidate execution is never replayed')
     print(f"width={args.width} graphs_per_input={args.graphs} input_seeds={','.join(map(str,args.input_seeds))}")
     print()
 
