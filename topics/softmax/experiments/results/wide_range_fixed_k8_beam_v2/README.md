@@ -1,6 +1,6 @@
 # Wide-range fixed-K8 beam v2
 
-Status: **frozen, not opened**.
+Status: **completed**.
 
 This stage promotes the fixed-K8/B3 baseline only after observing the completed v1 outcomes.  The
 adaptation is disclosed in the preregistration, and the v1 held-out groups are not reused for
@@ -22,4 +22,18 @@ deleted for a silent rerun.
 
 This stage validates ranking utility, not production runtime.  Its research implementation still
 contains exact `Fraction` and oracle instrumentation; a score-only cost implementation is a
-separate milestone if the confirmation succeeds.
+separate next milestone after this confirmation.
+
+## Frozen outcome
+
+The preregistered overall comparison passed its positive-evidence rule:
+
+- paired normalized-regret improvement, `regret(Q-only) - regret(beam)`: `+0.057699`;
+- stratified group-bootstrap 95% interval: `[+0.018713, +0.097991]`;
+- beam versus Q-only best-tier hit: `83.33%` versus `70.83%`;
+- beam versus Q-only mean normalized regret: `0.07421` versus `0.13191`;
+- beam versus Q-only severe-regret rate: `5.73%` versus `11.46%`.
+
+The pooled, width-stratified comparison is the sole confirmatory claim.  Width 256 was individually
+positive, while the descriptive width-512 and width-1024 intervals crossed zero.  The result does
+not establish cross-family generality or production runtime cheapness.

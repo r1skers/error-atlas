@@ -1,0 +1,35 @@
+{
+  "artifacts": {
+    "calibration_model.json": {
+      "bytes": 4249,
+      "sha256": "23f028e578ca18e55643bf1a080d22929f059be7c8035900153b0a6b95d95b7e"
+    },
+    "graph_observations.csv": {
+      "bytes": 3004623,
+      "sha256": "b3136b47505926da0bdac1b477426f8a6aa3d813dced422ae0ab0f25ab8dc527"
+    },
+    "group_metrics.csv": {
+      "bytes": 25556,
+      "sha256": "39f722af7849532adb882cf49e63a5928f2502bc54bc33eed1eebff531af611d"
+    },
+    "input_groups.jsonl": {
+      "bytes": 1347269,
+      "sha256": "d8b1cd5d2e6b16da8cebb9665efad78316ad2b0537c258a65e739787c093ca5b"
+    },
+    "metric_summary.json": {
+      "bytes": 4872,
+      "sha256": "222151ebd04b6d7eec1fefaa3918113e8960ac905ce23d0a0e0c41dc4e779bdb"
+    },
+    "opening_manifest.json": {
+      "bytes": 3993,
+      "sha256": "ee31798d34d3ed70a6c38d613a55217979e11d2929ff6e47f879b90546ddb58a"
+    }
+  },
+  "completed_at_utc": "2026-08-22T13:22:33.439934+00:00",
+  "experiment_id": "wide_range_fixed_k8_beam_v2",
+  "git_commit": "18a8d9abc477aabda95a9caac3477668b1ab19dd",
+  "git_tree": "01e915ee9aced204c75aa6ea1698f49283e1c287",
+  "preregistration_sha256": "e56810382f44513926a2d9f7652cf8de68c74b0468b80c60761ab193ac01f538",
+  "schema_version": "1",
+  "status": "completed"
+}
