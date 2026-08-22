@@ -1,0 +1,43 @@
+{
+  "artifacts": {
+    "calibration_graph_observations.csv": {
+      "bytes": 1081067,
+      "sha256": "e48dc45a49de15f9217cc603fccb8bc4375a232d38f42dd254b4cee6da30f2a6"
+    },
+    "calibration_inputs.jsonl": {
+      "bytes": 671351,
+      "sha256": "5f2a74b1c31ca43e84844667314e361a07a47db3173565f6b434c5c3a214e0b9"
+    },
+    "confirmation_graph_observations.csv": {
+      "bytes": 2115828,
+      "sha256": "d2c2e2818cf79f8361ed8da57c657d2ee46d6b51533117eec78c958a34850663"
+    },
+    "confirmation_group_metrics.csv": {
+      "bytes": 164681,
+      "sha256": "fa324f1890cedfa6f72ab44687f972daa07889c1604e6b5bcedf4fae5ad969f1"
+    },
+    "confirmation_inputs.jsonl": {
+      "bytes": 1343589,
+      "sha256": "fba1acd13761e7ea9c912d84f2245328238fd412d6a2d38639e388b8e4bed948"
+    },
+    "metric_summary.json": {
+      "bytes": 23302,
+      "sha256": "25b91e11fb94607056bc950d0397067dedb4c70b6bf7fdb4396204e2590b4482"
+    },
+    "offline_selections.json": {
+      "bytes": 3018,
+      "sha256": "e4c5fbe41ebb46ccab4af7c02dc27a7972d21f052cf2b0eefa60203ff8e4b73c"
+    },
+    "opening_manifest.json": {
+      "bytes": 5688,
+      "sha256": "9196d2e064d58c30cfe5ebf892fe2e4a688c272d87deecec675d5c271b518df8"
+    }
+  },
+  "completed_at_utc": "2026-08-22T15:14:07.835942+00:00",
+  "experiment_id": "wide_range_offline_tree_reuse_v1",
+  "git_commit": "aac78f794224a717a8812f14626b1a5343ad1c3e",
+  "git_tree": "ac53528868c9c20e7998d787e1fb4a2e596092fe",
+  "preregistration_sha256": "d28e328f7d9e68127d92af8f83079618af246c66fe87b559512fb517d110a604",
+  "schema_version": "1",
+  "status": "completed"
+}
