@@ -30,7 +30,10 @@ class FixedK8BeamInferenceBenchmarkTests(unittest.TestCase):
         public = select_tree(record["stored_leaf_bits"], graphs, model)
 
         self.assertEqual(measured, public)
-        self.assertEqual(set(profile), {"input_ms", "macro_ms", "beam_ms", "total_ms"})
+        self.assertEqual(
+            set(profile),
+            {"input_ms", "macro_ms", "q_total_ms", "beam_ms", "total_ms"},
+        )
         self.assertTrue(all(value >= 0.0 for value in profile.values()))
 
     def test_graph_execution_keeps_fp32_state(self) -> None:

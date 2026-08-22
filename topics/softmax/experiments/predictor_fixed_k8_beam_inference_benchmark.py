@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import platform
 import subprocess
@@ -210,6 +211,7 @@ def _profile_selector(
         {
             "input_ms": (after_input - started) * scale,
             "macro_ms": (after_macro - after_input) * scale,
+            "q_total_ms": (after_macro - started) * scale,
             "beam_ms": (after_beam - after_macro) * scale,
             "total_ms": (after_beam - started) * scale,
         },
@@ -270,7 +272,10 @@ def _benchmark_width(
     reduction_repeats: int,
     include_oracle: bool,
 ) -> dict:
-    stage_samples = {name: [] for name in ("input_ms", "macro_ms", "beam_ms", "total_ms")}
+    stage_samples = {
+        name: []
+        for name in ("input_ms", "macro_ms", "q_total_ms", "beam_ms", "total_ms")
+    }
     one_tree_ms: list[float] = []
     all_tree_ms: list[float] = []
     oracle_ms: list[float] = []
@@ -319,6 +324,7 @@ def _benchmark_width(
     tracemalloc.stop()
 
     total_median = median(stage_samples["total_ms"])
+    q_total_median = median(stage_samples["q_total_ms"])
     one_tree_median = median(one_tree_ms)
     all_tree_median = median(all_tree_ms)
     result = {
@@ -336,6 +342,7 @@ def _benchmark_width(
         },
         "selector_over_one_tree_ratio_median": total_median / one_tree_median,
         "selector_over_all_64_execution_ratio_median": total_median / all_tree_median,
+        "beam_selector_over_q_only_ratio_median": total_median / q_total_median,
         "reuses_for_100_percent_amortized_overhead": total_median / one_tree_median,
         "reuses_for_10_percent_amortized_overhead": 10.0 * total_median / one_tree_median,
         "algorithmic_full_tree_passes": 64 + FROZEN_SHORTLIST_SIZE,
@@ -372,6 +379,30 @@ def _git_state() -> tuple[str | None, str | None]:
     return commit, tree
 
 
+def _efficacy_reference() -> dict:
+    path = HELDOUT / "metric_summary.json"
+    with path.open(encoding="utf-8") as handle:
+        summary = json.load(handle)["overall"]
+    return {
+        "source": str(path.relative_to(HERE)),
+        "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "not_reestimated_by_this_benchmark": True,
+        "group_count": summary["group_count"],
+        "q_only": {
+            "best_hit": summary["q_best_hit"],
+            "mean_normalized_regret": summary["q_regret"],
+        },
+        "fixed_k8_beam_b3": {
+            "best_hit": summary["beam_best_hit"],
+            "mean_normalized_regret": summary["beam_regret"],
+        },
+        "paired_q_minus_beam_regret": summary[
+            "primary_fixed_q_minus_beam_regret"
+        ],
+        "paired_q_minus_beam_regret_95_ci": summary["primary_95_ci"],
+    }
+
+
 def _print_report(report: dict) -> None:
     fidelity = report["fidelity"]["overall"]
     print("\nscore fidelity")
@@ -387,7 +418,8 @@ def _print_report(report: dict) -> None:
         execution = row["python_fp32_execution_ms"]
         print(
             f"  width={row['width']} selector={stages['total']['median']:.3f} ms "
-            f"(macro={stages['macro']['median']:.3f}, beam={stages['beam']['median']:.3f})"
+            f"(Q-only={stages['q_total']['median']:.3f}, "
+            f"beam-extra={stages['beam']['median']:.3f})"
         )
         print(
             f"    one-tree={execution['one_selected_tree']['median']:.3f} ms "
@@ -466,6 +498,7 @@ def main() -> int:
             "model_loading_timed": False,
             "fidelity_scope": "all_v2_groups" if args.fidelity_limit is None else "prefix",
         },
+        "efficacy_reference": _efficacy_reference(),
         "fidelity": fidelity,
         "benchmark": benchmark,
         "interpretation_limits": [
