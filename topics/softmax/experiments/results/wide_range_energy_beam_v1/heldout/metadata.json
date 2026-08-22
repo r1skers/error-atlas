@@ -1,0 +1,35 @@
+{
+  "artifacts": {
+    "calibration_model.json": {
+      "bytes": 4249,
+      "sha256": "23f028e578ca18e55643bf1a080d22929f059be7c8035900153b0a6b95d95b7e"
+    },
+    "graph_observations.csv": {
+      "bytes": 1624317,
+      "sha256": "29ba43579f90448a2e66360be07c6f8bbb536d84eda3c8c930d778e587c16d18"
+    },
+    "group_metrics.csv": {
+      "bytes": 16720,
+      "sha256": "f56198ae3d3dfd6aad59bf291c8214a0412931d89802345999f6d0f949006c91"
+    },
+    "input_groups.jsonl": {
+      "bytes": 673430,
+      "sha256": "62e533bca0730c3b1fd20165842ed49ec8ec64c34af648c4f02f33be751f8119"
+    },
+    "metric_summary.json": {
+      "bytes": 3682,
+      "sha256": "9321e13a2b5ac7126229b306ea097ab8b13b22e40812a8aebed9a64d931a3959"
+    },
+    "opening_manifest.json": {
+      "bytes": 2201,
+      "sha256": "022d1b601d7626af22d2a524cc1f1e24e02486239c2e2399df8801f1057910eb"
+    }
+  },
+  "completed_at_utc": "2026-08-22T01:17:33.945624+00:00",
+  "experiment_id": "wide_range_energy_beam_v1",
+  "git_commit": "e99b1f6cf35655c4270fdab80b146aa00e5dcec5",
+  "git_tree": "b83ccc573e050701df629cf9b44fbd836e88bd09",
+  "preregistration_sha256": "927000f1f3d1fc9f2e9408d9bf3ee7c2782cb22905e78c8ec141f45682770634",
+  "schema_version": "1",
+  "status": "completed"
+}

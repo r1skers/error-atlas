@@ -1,0 +1,115 @@
+{
+  "by_width": {
+    "1024": {
+      "fixed_best_hit": 0.84375,
+      "fixed_regret": 0.06956382556154835,
+      "group_count": 32,
+      "mass_best_hit": 0.8125,
+      "mass_best_hit_95_ci": [
+        0.65625,
+        0.9375
+      ],
+      "mass_pairwise_accuracy": 0.803030303030303,
+      "mass_pairwise_defined_groups": 22,
+      "mass_regret": 0.10767208744217434,
+      "mass_shortlist_coverage": 1.0,
+      "mass_spearman_defined_groups": 22,
+      "mass_spearman_rho": 0.5141824244620695,
+      "mean_energy_node_count": 7.212890625,
+      "oracle_best_prevalence": 0.638671875,
+      "positive_evidence": false,
+      "primary_95_ci": [
+        -0.08023475348310208,
+        0.08817465718012533
+      ],
+      "primary_q_minus_mass_regret": 0.004436187006593168,
+      "q_best_hit": 0.78125,
+      "q_regret": 0.1121082744487675,
+      "random_expected_regret": 0.18266590574652708
+    },
+    "256": {
+      "fixed_best_hit": 0.78125,
+      "fixed_regret": 0.05413016600791974,
+      "group_count": 32,
+      "mass_best_hit": 0.8125,
+      "mass_best_hit_95_ci": [
+        0.65625,
+        0.9375
+      ],
+      "mass_pairwise_accuracy": 0.7833333333333333,
+      "mass_pairwise_defined_groups": 27,
+      "mass_regret": 0.055490464443748395,
+      "mass_shortlist_coverage": 0.9375,
+      "mass_spearman_defined_groups": 27,
+      "mass_spearman_rho": 0.4756483640920612,
+      "mean_energy_node_count": 9.74267578125,
+      "oracle_best_prevalence": 0.57568359375,
+      "positive_evidence": false,
+      "primary_95_ci": [
+        -0.010033651381016617,
+        0.24320817499332617
+      ],
+      "primary_q_minus_mass_regret": 0.11302927800880723,
+      "q_best_hit": 0.5,
+      "q_regret": 0.16851974245255563,
+      "random_expected_regret": 0.19265503767716702
+    },
+    "512": {
+      "fixed_best_hit": 0.71875,
+      "fixed_regret": 0.04173122660145323,
+      "group_count": 32,
+      "mass_best_hit": 0.75,
+      "mass_best_hit_95_ci": [
+        0.59375,
+        0.875
+      ],
+      "mass_pairwise_accuracy": 0.6333333333333333,
+      "mass_pairwise_defined_groups": 18,
+      "mass_regret": 0.08158844371793539,
+      "mass_shortlist_coverage": 0.96875,
+      "mass_spearman_defined_groups": 18,
+      "mass_spearman_rho": 0.2272407652374948,
+      "mean_energy_node_count": 8.1630859375,
+      "oracle_best_prevalence": 0.6015625,
+      "positive_evidence": false,
+      "primary_95_ci": [
+        -0.047738399212287556,
+        0.10194338412926623
+      ],
+      "primary_q_minus_mass_regret": 0.01914483281676805,
+      "q_best_hit": 0.6875,
+      "q_regret": 0.10073327653470344,
+      "random_expected_regret": 0.17094662830871196
+    }
+  },
+  "experiment_id": "wide_range_energy_beam_v1",
+  "opened_at_utc": "2026-08-22T01:09:35.526496+00:00",
+  "overall": {
+    "fixed_best_hit": 0.78125,
+    "fixed_regret": 0.05514173939030711,
+    "group_count": 96,
+    "mass_best_hit": 0.7916666666666666,
+    "mass_best_hit_95_ci": [
+      0.7083333333333334,
+      0.8645833333333334
+    ],
+    "mass_pairwise_accuracy": 0.7495024875621891,
+    "mass_pairwise_defined_groups": 67,
+    "mass_regret": 0.08158366520128604,
+    "mass_shortlist_coverage": 0.96875,
+    "mass_spearman_defined_groups": 67,
+    "mass_spearman_rho": 0.4215649692974043,
+    "mean_energy_node_count": 8.372884114583334,
+    "oracle_best_prevalence": 0.6053059895833334,
+    "positive_evidence": false,
+    "primary_95_ci": [
+      -0.009823271860041222,
+      0.10158713978683039
+    ],
+    "primary_q_minus_mass_regret": 0.045536765944056146,
+    "q_best_hit": 0.65625,
+    "q_regret": 0.1271204311453422,
+    "random_expected_regret": 0.1820891905774687
+  },
+  "schema_version": "1"
+}
