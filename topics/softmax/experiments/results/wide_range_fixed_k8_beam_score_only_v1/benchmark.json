@@ -1,0 +1,294 @@
+{
+  "benchmark": [
+    {
+      "algorithmic_full_tree_passes": 68,
+      "beam_selector_over_q_only_ratio_median": 2.1218116225175323,
+      "candidate_count": 64,
+      "fraction_oracle_all_64_ms": {
+        "maximum": 292.859579,
+        "median": 277.0283425,
+        "minimum": 264.276912,
+        "p90": 288.68507239999997
+      },
+      "measured_input_groups": [
+        "wr256_v2_g000",
+        "wr256_v2_g001",
+        "wr256_v2_g002",
+        "wr256_v2_g003"
+      ],
+      "python_fp32_execution_ms": {
+        "all_64_candidates": {
+          "maximum": 8.068526499999999,
+          "median": 7.258863,
+          "minimum": 7.0524165,
+          "p90": 7.83009025
+        },
+        "one_selected_tree": {
+          "maximum": 0.13095584999999998,
+          "median": 0.11213225,
+          "minimum": 0.10489394999999999,
+          "p90": 0.12591339
+        }
+      },
+      "reuses_for_100_percent_amortized_overhead": 91.13933770168707,
+      "reuses_for_10_percent_amortized_overhead": 911.3933770168707,
+      "selector_over_all_64_execution_ratio_median": 1.4078870203226044,
+      "selector_over_one_tree_ratio_median": 91.13933770168707,
+      "selector_speedup_over_fraction_oracle_median": 27.1073959023486,
+      "selector_stage_ms": {
+        "beam": {
+          "maximum": 9.019572,
+          "median": 5.3853634999999995,
+          "minimum": 4.872096,
+          "p90": 6.425507900000004
+        },
+        "input": {
+          "maximum": 0.071452,
+          "median": 0.06570799999999999,
+          "minimum": 0.061493,
+          "p90": 0.0681673
+        },
+        "macro": {
+          "maximum": 5.205521,
+          "median": 4.751441,
+          "minimum": 4.308018,
+          "p90": 5.0388283
+        },
+        "q_total": {
+          "maximum": 5.271046999999999,
+          "median": 4.816478,
+          "minimum": 4.372701999999999,
+          "p90": 5.107409699999999
+        },
+        "total": {
+          "maximum": 14.004301,
+          "median": 10.219659,
+          "minimum": 9.244798,
+          "p90": 11.317570700000005
+        }
+      },
+      "shortlist_size": 4,
+      "tracemalloc_peak_mib_one_selection": 1.8382835388183594,
+      "width": 256
+    },
+    {
+      "algorithmic_full_tree_passes": 68,
+      "beam_selector_over_q_only_ratio_median": 2.1618277284042615,
+      "candidate_count": 64,
+      "fraction_oracle_all_64_ms": {
+        "maximum": 617.078796,
+        "median": 587.7557835,
+        "minimum": 567.652373,
+        "p90": 608.9254386
+      },
+      "measured_input_groups": [
+        "wr512_v2_g000",
+        "wr512_v2_g001",
+        "wr512_v2_g002",
+        "wr512_v2_g003"
+      ],
+      "python_fp32_execution_ms": {
+        "all_64_candidates": {
+          "maximum": 17.2870335,
+          "median": 15.159388749999998,
+          "minimum": 14.7526275,
+          "p90": 16.71412245
+        },
+        "one_selected_tree": {
+          "maximum": 0.241589,
+          "median": 0.23344165,
+          "minimum": 0.2206568,
+          "p90": 0.23976146
+        }
+      },
+      "reuses_for_100_percent_amortized_overhead": 74.00167665024642,
+      "reuses_for_10_percent_amortized_overhead": 740.0167665024642,
+      "selector_over_all_64_execution_ratio_median": 1.1395626687124836,
+      "selector_over_one_tree_ratio_median": 74.00167665024642,
+      "selector_speedup_over_fraction_oracle_median": 34.0233448789668,
+      "selector_stage_ms": {
+        "beam": {
+          "maximum": 12.847983,
+          "median": 8.995747999999999,
+          "minimum": 8.215869999999999,
+          "p90": 10.1901197
+        },
+        "input": {
+          "maximum": 0.269283,
+          "median": 0.12749549999999998,
+          "minimum": 0.12199099999999999,
+          "p90": 0.16778150000000003
+        },
+        "macro": {
+          "maximum": 8.869283,
+          "median": 7.865796,
+          "minimum": 7.231529999999999,
+          "p90": 8.6416489
+        },
+        "q_total": {
+          "maximum": 8.998709999999999,
+          "median": 7.9909575,
+          "minimum": 7.397628999999999,
+          "p90": 8.7676033
+        },
+        "total": {
+          "maximum": 20.831232,
+          "median": 17.275073499999998,
+          "minimum": 15.990801999999999,
+          "p90": 18.6344829
+        }
+      },
+      "shortlist_size": 4,
+      "tracemalloc_peak_mib_one_selection": 3.6317596435546875,
+      "width": 512
+    },
+    {
+      "algorithmic_full_tree_passes": 68,
+      "beam_selector_over_q_only_ratio_median": 2.1603434913799,
+      "candidate_count": 64,
+      "fraction_oracle_all_64_ms": {
+        "maximum": 1671.277713,
+        "median": 1238.033113,
+        "minimum": 1173.854458,
+        "p90": 1549.6444578
+      },
+      "measured_input_groups": [
+        "wr1024_v2_g000",
+        "wr1024_v2_g001",
+        "wr1024_v2_g002",
+        "wr1024_v2_g003"
+      ],
+      "python_fp32_execution_ms": {
+        "all_64_candidates": {
+          "maximum": 43.4830805,
+          "median": 37.822965499999995,
+          "minimum": 28.5847405,
+          "p90": 42.700038649999996
+        },
+        "one_selected_tree": {
+          "maximum": 1.31514,
+          "median": 0.6155466249999999,
+          "minimum": 0.4661226,
+          "p90": 1.12282824
+        }
+      },
+      "reuses_for_100_percent_amortized_overhead": 50.40063374565656,
+      "reuses_for_10_percent_amortized_overhead": 504.0063374565656,
+      "selector_over_all_64_execution_ratio_median": 0.8202408137458181,
+      "selector_over_one_tree_ratio_median": 50.40063374565656,
+      "selector_speedup_over_fraction_oracle_median": 39.90573450696462,
+      "selector_stage_ms": {
+        "beam": {
+          "maximum": 51.274234,
+          "median": 16.4937285,
+          "minimum": 14.845975999999999,
+          "p90": 19.29544260000001
+        },
+        "input": {
+          "maximum": 0.63517,
+          "median": 0.24738,
+          "minimum": 0.232504,
+          "p90": 0.38475860000000006
+        },
+        "macro": {
+          "maximum": 25.524417,
+          "median": 14.121561,
+          "minimum": 13.137998999999999,
+          "p90": 15.1997484
+        },
+        "q_total": {
+          "maximum": 25.797518,
+          "median": 14.3606515,
+          "minimum": 13.37976,
+          "p90": 15.5518262
+        },
+        "total": {
+          "maximum": 65.657966,
+          "median": 31.02394,
+          "minimum": 28.37456,
+          "p90": 39.81989670000001
+        }
+      },
+      "shortlist_size": 4,
+      "tracemalloc_peak_mib_one_selection": 7.203983306884766,
+      "width": 1024
+    }
+  ],
+  "configuration": {
+    "fidelity_scope": "all_v2_groups",
+    "fraction_oracle_baseline": true,
+    "graph_generation_timed": false,
+    "groups_per_width": 4,
+    "model_loading_timed": false,
+    "reduction_repeats": 20,
+    "selector_repeats": 5
+  },
+  "efficacy_reference": {
+    "fixed_k8_beam_b3": {
+      "best_hit": 0.8333333333333334,
+      "mean_normalized_regret": 0.07420796557795428
+    },
+    "group_count": 192,
+    "not_reestimated_by_this_benchmark": true,
+    "paired_q_minus_beam_regret": 0.05769899819135069,
+    "paired_q_minus_beam_regret_95_ci": [
+      0.018712643194917288,
+      0.09799146548640958
+    ],
+    "q_only": {
+      "best_hit": 0.7083333333333334,
+      "mean_normalized_regret": 0.13190696376930497
+    },
+    "source": "results/wide_range_fixed_k8_beam_v2/heldout/metric_summary.json",
+    "source_sha256": "222151ebd04b6d7eec1fefaa3918113e8960ac905ce23d0a0e0c41dc4e779bdb"
+  },
+  "environment": {
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "python": "3.12.13 (main, Aug  7 2026, 02:25:39) [Clang 22.1.3 ]"
+  },
+  "fidelity": {
+    "by_width": {
+      "1024": {
+        "groups": 64,
+        "score_exact_groups": 64,
+        "selection_exact_groups": 64
+      },
+      "256": {
+        "groups": 64,
+        "score_exact_groups": 64,
+        "selection_exact_groups": 64
+      },
+      "512": {
+        "groups": 64,
+        "score_exact_groups": 64,
+        "selection_exact_groups": 64
+      }
+    },
+    "overall": {
+      "all_decisions_exact": true,
+      "all_scores_exact": true,
+      "beam_score_exact_groups": 192,
+      "beam_selection_exact_groups": 192,
+      "elapsed_seconds": 19.318095785998594,
+      "groups": 192,
+      "max_abs_beam_score_difference": 0.0,
+      "max_abs_q_score_difference": 0.0,
+      "q_score_exact_groups": 192,
+      "q_selection_exact_groups": 192,
+      "shortlist_exact_groups": 192
+    }
+  },
+  "generated_at_utc": "2026-08-22T14:42:43.340718+00:00",
+  "git_commit": "6e853be5cbe5c111344e2d39301170ecdf66fa82",
+  "git_tree": "51beee9a536798cc73b1e4e38b593c70faac1f67",
+  "interpretation_limits": [
+    "Python prototype timings are not compiled-kernel hardware claims.",
+    "The efficacy heldout is reused only for frozen-score implementation fidelity.",
+    "The selector improves numerical ranking, not tree work; selection has no intrinsic runtime payback.",
+    "Amortization across changing inputs is not validated because the selector is input-dependent."
+  ],
+  "kind": "engineering_fidelity_and_cost_benchmark",
+  "schema_version": "1"
+}

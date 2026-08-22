@@ -20,9 +20,10 @@ disjoint from calibration and v1 held-out inputs.  The runner refuses a dirty wo
 `heldout/` exactly once.  An interrupted or partial directory is forensic evidence and must not be
 deleted for a silent rerun.
 
-This stage validates ranking utility, not production runtime.  Its research implementation still
-contains exact `Fraction` and oracle instrumentation; a score-only cost implementation is a
-separate next milestone after this confirmation.
+This stage validates ranking utility, not production runtime.  Its evidence-generation runner still
+contains exact `Fraction` and oracle instrumentation.  The subsequent
+`wide_range_fixed_k8_beam_score_only_v1` milestone reproduced all 192 frozen decisions and scores
+exactly without those operations, then measured the remaining inference cost separately.
 
 ## Frozen outcome
 
@@ -37,3 +38,11 @@ The preregistered overall comparison passed its positive-evidence rule:
 The pooled, width-stratified comparison is the sole confirmatory claim.  Width 256 was individually
 positive, while the descriptive width-512 and width-1024 intervals crossed zero.  The result does
 not establish cross-family generality or production runtime cheapness.
+
+## Engineering follow-up
+
+The score-only implementation is 27--40x faster than evaluating all 64 candidates with the Python
+`Fraction` oracle, but it still requires 64 macro traversals plus four full shadow traversals.  Its
+measured cost was 50--91 Python FP32 tree reductions, depending on width.  The efficacy conclusion
+therefore survives unchanged, while a per-vector production-cheap claim does not yet follow.  See
+`../wide_range_fixed_k8_beam_score_only_v1/README.md` for fidelity, timing, and amortization limits.

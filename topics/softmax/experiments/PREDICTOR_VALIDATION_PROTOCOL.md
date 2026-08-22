@@ -7,7 +7,13 @@ Two narrow, stage-specific records now sit beside this scaffold:
 - `wide_range_energy_beam_v1` is completed; its energy-mass primary comparison did not satisfy its
   preregistered positive-evidence rule.
 - `wide_range_fixed_k8_beam_v2` freezes a fresh confirmation of the unchanged fixed-K8/B3 baseline
-  that was promoted only after v1 was opened.
+  that was promoted only after v1 was opened; it completed with positive pooled evidence.
+
+An engineering follow-up, `wide_range_fixed_k8_beam_score_only_v1`, then removed `Fraction` and
+oracle instrumentation from the inference path.  It reproduced every Q score, beam score,
+shortlist, and selection on all 192 v2 groups exactly.  The remaining algorithm still performs 64
+macro traversals plus four full shadow traversals per input, so this establishes a score-only
+prototype—not a production-cheap per-vector selector.
 
 Neither stage freezes, completes, or weakens this broader three-family scaffold.  The prohibitions
 below continue to apply to held-out data not explicitly authorized by a stage-specific
