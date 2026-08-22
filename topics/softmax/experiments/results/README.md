@@ -17,7 +17,7 @@ and the existing test imports stay simple.
 | `wide_range_energy_beam_v1/` | Does the adaptive energy-mass cascade improve wide-range within-input ranking? | Frozen preregistration and completed negative primary result |
 | `wide_range_fixed_k8_beam_v2/` | Does the unchanged fixed-K8/B3 cascade improve wide-range within-input ranking on fresh groups? | Frozen preregistration and completed positive confirmation artifacts |
 | `wide_range_fixed_k8_beam_score_only_v1/` | Can the confirmed selector run without exact-oracle instrumentation, and what does it cost? | Exact 192-group fidelity replay and Python prototype cost benchmark |
-| `wide_range_offline_tree_reuse_v1/` | Can one score-selected tree per width be reused across unseen inputs with zero online selection work? | Frozen preregistration; confirmation artifacts are created only by the one-shot runner |
+| `wide_range_offline_tree_reuse_v1/` | Can one score-selected tree per width be reused across unseen inputs with zero online selection work? | Completed 96-calibration/192-confirmation run: random-fixed reuse signal passed, balanced-FP32 deployment gate failed |
 
 CSV files are evidence rather than hand-maintained inputs. JSON metadata records
 the execution environment, registered configuration, and source or artifact
