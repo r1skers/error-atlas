@@ -1,0 +1,148 @@
+{
+  "schema_version": "1",
+  "experiment_id": "wide_range_fixed_k8_beam_v2",
+  "status": "frozen_not_opened",
+  "freeze_date": "2026-08-22",
+  "scope": {
+    "claim": "Confirm whether the unchanged fixed-K8, shortlist-four, beam-width-three cascade lowers group-normalized tree-selection regret relative to fixed-K8 Q-only selection under the frozen wide-range synthetic distribution.",
+    "input_family": "wide_range_random",
+    "input_generator_version": "irregular_stored_fp32_v1",
+    "not_claimed": [
+      "real Softmax workload prevalence",
+      "other input families",
+      "production runtime cheapness",
+      "a rigorous error bound or safety certificate",
+      "classification performance"
+    ]
+  },
+  "adaptive_lineage": {
+    "source_experiment": "wide_range_energy_beam_v1",
+    "source_preregistration_sha256": "927000f1f3d1fc9f2e9408d9bf3ee7c2782cb22905e78c8ec141f45682770634",
+    "source_result_commit": "c3fee4e8a7011d6f9c8e8239f7bd19197a3714d7",
+    "source_primary_outcome": "The v1 energy-mass cascade did not satisfy its preregistered positive-evidence rule.",
+    "selection_disclosure": "fixed-K8/beam3 was a preregistered v1 baseline, but it is promoted here after observing v1 outcomes; this new stage is therefore required for a primary confirmation claim.",
+    "unchanged_candidate": "The K=8 root band, four-tree Q shortlist, B=3 joint cell-beam, calibration seeds, innovation label, model fitting, and stable tie rules are unchanged from the v1 baseline.",
+    "v1_heldout_reuse": "No v1 held-out input, graph, oracle label, fitted parameter, threshold, or confidence gate is used by v2 scoring. V1 aggregate outcomes are used only to select the candidate and plan sample size."
+  },
+  "sample_size_planning": {
+    "v1_exploratory_group_count": 96,
+    "v1_exploratory_mean_paired_regret_improvement": 0.070302036,
+    "v1_exploratory_paired_standard_deviation": 0.300579514,
+    "allocation": "64 independent input groups at each of three widths, 192 groups total",
+    "rationale": "The balanced 192-group design was fixed before v2 opening. Under a normal approximation and exact repetition of the disclosed v1 exploratory effect and variance, it gives about 90% probability that a two-sided 95% interval excludes zero in the positive direction.",
+    "stopping_rule": "No early stopping, sequential extension, or sample-size increase is permitted after opening. All 192 complete groups are required for the primary analysis."
+  },
+  "experimental_unit": "one ordered stored-FP32 input group; its 64 graph rows are paired",
+  "stored_input": {
+    "dtype": "positive normal IEEE-754 binary32 represented exactly",
+    "materialization": "wide_range_random samples exponent uniformly from [-32,4], a uniform 23-bit fraction field, then shuffles with Python random.Random(seed)",
+    "ordering": "the generated shuffled order is consumed unchanged",
+    "validity": "all 64 graph observations must complete; otherwise preserve the partial directory and do not silently rerun or include a partial group"
+  },
+  "widths": [256, 512, 1024],
+  "groups_per_width": 64,
+  "heldout_seeds": {
+    "policy": "first 31 bits of SHA256('wide_range_fixed_k8_beam_v2|input|<width>|<index>'), indices 0..63; explicitly materialized below before opening",
+    "256": [2055805352, 574503658, 1404761710, 1254278722, 1860553558, 1041611034, 1700494715, 529102947, 320803153, 1109362728, 548539841, 1609484352, 1130278206, 2073652671, 869911739, 1571114667, 1051231465, 1521136562, 1801706098, 417710768, 506600089, 1320235123, 2006840528, 665312716, 346758622, 1317855446, 1437692178, 1827192786, 1406775168, 160457316, 1330324756, 1078225645, 1271301841, 1343819924, 878680013, 644181002, 529514983, 1871262339, 829820006, 1321733955, 1919357238, 1306688529, 588973985, 1406021467, 309748924, 1522172020, 48245634, 1906460812, 1274828717, 777992804, 1505269018, 218587251, 58690920, 1442495504, 741611709, 593878168, 897806733, 640036849, 1652480026, 1866253699, 1001532662, 1439143820, 974258358, 1044119454],
+    "512": [17182879, 1096566457, 2118622904, 229218778, 2106076454, 824687699, 1619693589, 305896989, 1337454995, 948344782, 1598041460, 173314940, 1114465541, 686636587, 455697809, 27382847, 816326596, 935395359, 1378057508, 1252699635, 1609545049, 597335853, 1064973712, 561160087, 1780038497, 2116912512, 1735917754, 104375596, 1031670898, 1582530703, 944095914, 1734915630, 760708029, 76844848, 1551794692, 423567500, 330904639, 816072419, 1468753846, 1426224033, 457663133, 480567177, 862232487, 2096959044, 2093528557, 2081989443, 2033304988, 1703995085, 1002848431, 702169934, 526767405, 85628137, 1720500650, 1362590631, 1679254391, 1382787196, 1357856756, 1862530860, 612987536, 1934966344, 831284504, 820113212, 170938075, 1035856390],
+    "1024": [1475473092, 827930137, 1213031044, 432805774, 219656288, 1864048034, 2055582200, 1053107634, 1371347772, 778960980, 1180219971, 1970416116, 1950029393, 1072756198, 732201241, 530271804, 1040003601, 619343343, 1975764857, 1930967081, 965400492, 1489997648, 1856847701, 380543082, 433151995, 418995855, 575093538, 1066814799, 1794331773, 1226080946, 1514931870, 853020101, 732470235, 12603725, 56368583, 486161691, 1105974145, 959751414, 2115339021, 1041770775, 494774412, 1141726190, 77226752, 1344460213, 1587875380, 936130413, 482822382, 1466091126, 296999844, 1646358237, 1433618003, 378574366, 223365500, 1907985317, 1825110252, 1039601696, 1924682714, 783756340, 1033621217, 365320319, 1521419972, 2022308138, 1457994720, 1316359117]
+  },
+  "graphs": {
+    "complete_set_per_group": true,
+    "families": ["contiguous", "pair_merge"],
+    "count_per_family": 32,
+    "order": "for graph_index 0..31: contiguous then pair_merge",
+    "evaluation_group_index_offset": 1000,
+    "freshness": "The offset gives v2 a graph-seed namespace disjoint from v1 evaluation graphs.",
+    "versions": {
+      "contiguous": "random_contiguous_split_graph with seed 45000000 + (1000+group_index)*10000 + graph_index",
+      "pair_merge": "random_pair_merge_graph with seed 46000000 + (1000+group_index)*10000 + graph_index"
+    }
+  },
+  "target": {
+    "raw_preserved": "exact signed root forward error as a rational and in root-ULP units",
+    "ranking_formula": "(signed root forward error / root ULP)^2",
+    "direction": "smaller is better",
+    "ties": "all equal minimum targets form the oracle best tier",
+    "degenerate_group": "if all targets tie, hit is one and normalized regret is zero; ranking correlation is undefined"
+  },
+  "predictor": {
+    "identifier": "fixed_k8_joint_cell_beam_v2_confirmation",
+    "training_width": 256,
+    "training_input_seeds": [22260821, 22260822, 22260823, 22260824],
+    "training_graphs_per_family": 32,
+    "training_root_band_budget": 32,
+    "root_band_budget": 8,
+    "shortlist_size": 4,
+    "beam_width": 3,
+    "macro_score": "Q_8/12, the connected eight-node root-band ULP energy divided by 12; lower is better",
+    "micro_score": "B=3 joint cell-beam expected squared signed root error in root-ULP units; lower is better",
+    "allowed_inputs": "stored leaves, candidate graph, deterministic shadow features, and the innovation model fitted only on the declared calibration groups",
+    "candidate_selection": "score all 64 trees by Q_8/12, retain the four lowest, then choose the lowest beam score",
+    "tie_break": "stable graph row index"
+  },
+  "baseline": {
+    "identifier": "fixed_k8_q_only",
+    "selection": "choose the lowest Q_8/12 over all 64 trees",
+    "tie_break": "stable graph row index"
+  },
+  "metrics": {
+    "primary": "mean paired normalized-regret improvement: regret(fixed-K8 Q-only) - regret(fixed-K8/B3 beam cascade)",
+    "positive_evidence_rule": "the 95% stratified input-group bootstrap interval lower bound for the primary metric is greater than zero",
+    "secondary": [
+      "global oracle-best-tier hit rates and their paired difference",
+      "global normalized regret",
+      "90th-percentile normalized regret",
+      "normalized-regret-at-least-0.5 rate",
+      "beam benefit, harm, and exact-tie rates relative to Q-only",
+      "shortlist oracle-best-tier coverage",
+      "within-shortlist pairwise accuracy",
+      "within-shortlist Spearman rho",
+      "oracle best-tier prevalence",
+      "exact random-selection expected regret"
+    ],
+    "normalization": "within each group, (selected target - group minimum)/(group maximum - group minimum); zero when all targets tie",
+    "severe_regret_threshold": 0.5,
+    "undefined_reporting": "undefined pairwise accuracy or rho is retained as null and its defined-group count is reported",
+    "weighting": "each input group has equal weight; pooled bootstrap preserves equal width allocation",
+    "multiplicity": "only the paired regret improvement is confirmatory; all secondary metrics are descriptive"
+  },
+  "uncertainty": {
+    "unit": "input group",
+    "method": "nonparametric bootstrap stratified by width",
+    "resamples": 20000,
+    "confidence_level": 0.95,
+    "bootstrap_seed": 20260823
+  },
+  "cost_boundary": {
+    "frozen_structural_work": "64 Q_8 scores and at most four K=8, B=3 beam scores per input group",
+    "runtime_claim": "No production runtime claim is made by this validation because the research runner retains exact Fraction-based instrumentation and oracle evaluation.",
+    "next_if_confirmed": "Implement and benchmark a score-only inference path that removes oracle and Fraction instrumentation before making a cheapness claim."
+  },
+  "opening": {
+    "one_shot": true,
+    "required_worktree": "clean Git worktree containing this frozen preregistration",
+    "output_directory": "topics/softmax/experiments/results/wide_range_fixed_k8_beam_v2/heldout",
+    "overwrite": "forbidden; an existing or partial directory blocks execution",
+    "after_opening": "score, target, sampling unit, graph set, primary metric, sample size, and uncertainty procedure are immutable; changes require another validation stage"
+  },
+  "artifacts": {
+    "input_records": "heldout/input_groups.jsonl",
+    "graph_observations": "heldout/graph_observations.csv",
+    "group_metrics": "heldout/group_metrics.csv",
+    "metric_summary": "heldout/metric_summary.json",
+    "model": "heldout/calibration_model.json",
+    "opening_manifest": "heldout/opening_manifest.json",
+    "metadata": "heldout/metadata.json"
+  },
+  "calibration_boundary": {
+    "closed": true,
+    "used_seed_ranges": [
+      "22260821-22260824 model training",
+      "22260825-22260848 prior calibration and diagnostics"
+    ],
+    "v1_heldout_seed_overlap": false,
+    "v1_evaluation_graph_overlap": false,
+    "choices_frozen_after_opening": true
+  }
+}

@@ -2,10 +2,16 @@
 
 Status: **draft scaffold for the future broad multi-family stage**
 
-The separately frozen, narrow `wide_range_energy_beam_v1` preregistration governs one
-wide-range-only validation stage.  Its authorization does not freeze, complete, or weaken this
-broader three-family scaffold.  The prohibitions below continue to apply to any held-out data not
-explicitly authorized by that stage-specific preregistration.
+Two narrow, stage-specific records now sit beside this scaffold:
+
+- `wide_range_energy_beam_v1` is completed; its energy-mass primary comparison did not satisfy its
+  preregistered positive-evidence rule.
+- `wide_range_fixed_k8_beam_v2` freezes a fresh confirmation of the unchanged fixed-K8/B3 baseline
+  that was promoted only after v1 was opened.
+
+Neither stage freezes, completes, or weakens this broader three-family scaffold.  The prohibitions
+below continue to apply to held-out data not explicitly authorized by a stage-specific
+preregistration.
 
 This document is the working protocol for the next Softmax predictor-validation stage.
 It deliberately separates protocol structure from research decisions that still need to be
