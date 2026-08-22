@@ -15,6 +15,13 @@ shortlist, and selection on all 192 v2 groups exactly.  The remaining algorithm 
 macro traversals plus four full shadow traversals per input, so this establishes a score-only
 prototype—not a production-cheap per-vector selector.
 
+The preregistered `wide_range_offline_tree_reuse_v1` stage now tests the corresponding cost-first
+deployment contract.  It freezes one 64-tree catalog per width, selects one reusable tree from 32
+fresh calibration inputs using the unchanged K8/B3 score, and evaluates it on 64 fresh confirmation
+inputs.  Online selection cost is exactly zero.  Random fixed-catalog regret is the primary
+statistical comparison; balanced FP32 is a separate engineering gate, while FP64-then-FP32 and
+Kahan FP32 are direct computation baselines.  This stage does not reopen or tune the v2 score.
+
 Neither stage freezes, completes, or weakens this broader three-family scaffold.  The prohibitions
 below continue to apply to held-out data not explicitly authorized by a stage-specific
 preregistration.

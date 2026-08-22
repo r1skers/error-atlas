@@ -1,0 +1,103 @@
+{
+  "schema_version": "1",
+  "experiment_id": "wide_range_offline_tree_reuse_v1",
+  "status": "frozen_not_opened",
+  "freeze_date": "2026-08-23",
+  "scope": {
+    "claim": "Test whether one width-specific tree chosen once by aggregating the frozen K8/B3 score over representative calibration inputs can be reused on unseen wide-range inputs with zero online selection work.",
+    "motivation": "The validated per-input selector improves ranking but costs 68 full-tree-equivalent traversals, so this stage tests an offline deployment contract rather than tuning another score.",
+    "not_claimed": [
+      "cross-family or real-workload generality",
+      "reuse across widths",
+      "compiled target-hardware speed",
+      "a rigorous numerical error bound",
+      "that FP32 tree selection beats higher-precision accumulation"
+    ]
+  },
+  "frozen_lineage": {
+    "score": "fixed K8 root-band Q, shortlist four, B3 joint cell beam",
+    "score_model_path": "results/wide_range_fixed_k8_beam_v2/heldout/calibration_model.json",
+    "score_model_sha256": "23f028e578ca18e55643bf1a080d22929f059be7c8035900153b0a6b95d95b7e",
+    "score_tuning": "none; no K8/B3 parameter or model coefficient may change in this stage",
+    "v2_heldout_use": "implementation/model provenance only; no v2 held-out input, graph, target, or aggregate label selects the offline policy"
+  },
+  "input_family": "wide_range_random irregular_stored_fp32_v1",
+  "widths": [256, 512, 1024],
+  "calibration_groups_per_width": 32,
+  "confirmation_groups_per_width": 64,
+  "input_seeds": {
+    "calibration_policy": "first 31 bits of SHA256('wide_range_offline_tree_reuse_v1|calibration|<width>|<index>'), indices 0..31",
+    "confirmation_policy": "first 31 bits of SHA256('wide_range_offline_tree_reuse_v1|confirmation|<width>|<index>'), indices 0..63",
+    "separation": "all derived seeds must be unique, calibration and confirmation must be disjoint, and neither split may overlap v1/v2 held-out seeds"
+  },
+  "graphs": {
+    "fixed_across_inputs_within_width": true,
+    "families": ["contiguous", "pair_merge"],
+    "count_per_family": 32,
+    "candidate_count": 64,
+    "order": "for index 0..31: contiguous then pair_merge",
+    "contiguous_seed": "57000000 + width*10000 + index",
+    "pair_merge_seed": "58000000 + width*10000 + index",
+    "width_specific": true
+  },
+  "offline_policy": {
+    "primary_identifier": "score_static_r32",
+    "representative_counts": [1, 2, 4, 8, 16, 32],
+    "per_input_complete_rank": "K8/B3 shortlist members occupy ranks 0..3 ordered by beam score; all remaining candidates follow in Q-score order; all ties use graph index",
+    "aggregation": "choose the graph with minimum mean complete cascade rank over the first r calibration inputs; ties use graph index",
+    "primary_r": 32,
+    "q_static_baseline": "minimum mean Q rank over all 32 calibration inputs",
+    "oracle_static_ceiling": "minimum mean within-input normalized regret over all 32 calibration inputs; uses labels and is not a deployable label-free policy",
+    "single_representative_baseline": "the r=1 score-static tree",
+    "no_confirmation_adaptation": "no graph, representative count, aggregation, threshold, or gate may change after confirmation begins"
+  },
+  "confirmation_baselines": {
+    "candidate_policies": ["score_static_r32", "q_static_r32", "oracle_static_r32", "score_static_r1", "per_input_K8_B3", "per_input_Q"],
+    "direct_methods": ["balanced FP32 tree", "sequential FP32 tree", "sequential FP64 accumulation then FP32 cast", "Kahan FP32 accumulation"],
+    "reference": "correctly rounded FP32 value of the exact rational input sum",
+    "warning": "Python measurements are not used to claim target-hardware speed; operation/pass contracts are compared instead"
+  },
+  "target": {
+    "candidate_ranking": "squared signed forward error in exact-sum root-ULP units; smaller is better",
+    "normalized_regret": "(target - candidate-catalog minimum)/(candidate-catalog maximum - minimum), or zero if all candidates tie",
+    "direct_method_quality": "squared error, absolute error, and correctly-rounded-output hit relative to the exact rational sum"
+  },
+  "metrics": {
+    "primary": "paired random-fixed-catalog expected normalized regret minus score_static_r32 normalized regret",
+    "positive_evidence_rule": "the lower endpoint of the 95% width-stratified input bootstrap interval is greater than zero",
+    "balanced_gate": "the lower endpoint for balanced-FP32 squared error minus score_static_r32 squared error is greater than zero",
+    "oracle_ceiling_gate": "the lower endpoint for balanced-FP32 squared error minus oracle_static_r32 squared error is greater than zero",
+    "deployment_go": "both the primary reuse-signal rule and balanced gate pass",
+    "secondary": [
+      "best-tier hit, mean and p90 normalized regret, and severe-regret rate",
+      "mean/p90 squared root-ULP error and mean absolute root-ULP error",
+      "correctly-rounded-output hit",
+      "representative-count learning curve",
+      "per-input score winner concentration and normalized entropy",
+      "FP64 and Kahan descriptive comparisons"
+    ],
+    "severe_regret_threshold": 0.5
+  },
+  "uncertainty": {
+    "bootstrap_seed": 20260824,
+    "confidence_level": 0.95,
+    "method": "stratified nonparametric input-group bootstrap",
+    "resamples": 20000
+  },
+  "online_cost_contract": {
+    "score_static_selection_passes": 0,
+    "score_static_execution": "one selected FP32 tree: n-1 FP32 additions",
+    "balanced_execution": "one fixed FP32 tree: n-1 FP32 additions",
+    "per_input_K8_B3": "68 score-side full-tree-equivalent traversals plus execution of one selected tree",
+    "fp64_then_fp32": "one pass of FP64 additions plus one FP32 cast",
+    "kahan_fp32": "one pass with multiple FP32 operations and a compensation state",
+    "offline_cost": "32 K8/B3 selections per width, paid once and excluded from online inference"
+  },
+  "opening": {
+    "one_shot": true,
+    "required_worktree": "clean committed worktree containing this preregistration",
+    "output_directory": "results/wide_range_offline_tree_reuse_v1/confirmation",
+    "overwrite": "forbidden; a complete or partial directory blocks execution",
+    "stopping_rule": "all 32 calibration and 64 confirmation inputs at every width must complete; no early stopping"
+  }
+}
