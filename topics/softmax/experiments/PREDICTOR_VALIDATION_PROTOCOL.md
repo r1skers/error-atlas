@@ -1,6 +1,11 @@
 # Predictor Validation Protocol — Scaffold
 
-Status: **draft scaffold; not frozen; no new validation data authorized**
+Status: **draft scaffold for the future broad multi-family stage**
+
+The separately frozen, narrow `wide_range_energy_beam_v1` preregistration governs one
+wide-range-only validation stage.  Its authorization does not freeze, complete, or weaken this
+broader three-family scaffold.  The prohibitions below continue to apply to any held-out data not
+explicitly authorized by that stage-specific preregistration.
 
 This document is the working protocol for the next Softmax predictor-validation stage.
 It deliberately separates protocol structure from research decisions that still need to be

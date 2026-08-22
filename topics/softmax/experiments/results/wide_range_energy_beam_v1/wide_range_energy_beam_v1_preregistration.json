@@ -1,0 +1,117 @@
+{
+  "schema_version": "1",
+  "experiment_id": "wide_range_energy_beam_v1",
+  "status": "frozen_not_opened",
+  "freeze_date": "2026-08-22",
+  "scope": {
+    "claim": "Screen and rank wide-range positive stored-FP32 reduction trees under the frozen synthetic distribution.",
+    "input_family": "wide_range_random",
+    "input_generator_version": "irregular_stored_fp32_v1",
+    "not_claimed": [
+      "real Softmax workload prevalence",
+      "other input families",
+      "a rigorous error bound or safety certificate",
+      "classification performance"
+    ]
+  },
+  "experimental_unit": "one ordered stored-FP32 input group; its 64 graph rows are paired",
+  "stored_input": {
+    "dtype": "positive normal IEEE-754 binary32 represented exactly",
+    "materialization": "wide_range_random samples exponent uniformly from [-32,4], a uniform 23-bit fraction field, then shuffles with Python random.Random(seed)",
+    "ordering": "the generated shuffled order is consumed unchanged",
+    "validity": "all 64 graph observations must complete; otherwise exclude the whole group from primary analysis and preserve failure metadata"
+  },
+  "widths": [256, 512, 1024],
+  "groups_per_width": 32,
+  "heldout_seeds": {
+    "policy": "first 31 bits of SHA256('wide_range_energy_beam_v1|<width>|<index>'), indices 0..31; explicitly materialized below before opening",
+    "256": [1774584678, 1371122942, 327129593, 1675034440, 1927114099, 173241749, 1807707890, 1565699709, 1470353227, 1341576261, 1991983690, 437187973, 1564150348, 210936111, 1456799595, 1423612781, 1539672628, 1910276733, 728713107, 401207937, 1098545732, 461349030, 1742512019, 1216154634, 1308917025, 863914154, 873432656, 1337677720, 1328847007, 114223826, 93962960, 1163674143],
+    "512": [1523842667, 508329533, 1467488566, 733749009, 469605053, 1322751083, 410146202, 1762381624, 2104799182, 2125411743, 1657501431, 1763648325, 1819289161, 445624828, 1963603580, 1355638639, 1746521400, 1369172353, 98803813, 2093892627, 1361499014, 864599826, 771081308, 606189211, 970968245, 1051282140, 1538764656, 324942390, 2133267339, 266443486, 497320133, 1630577283],
+    "1024": [1253772232, 632304696, 110884560, 1306490570, 1902147701, 1295349370, 1435146380, 193323928, 202466887, 1860645937, 1988760292, 1682907977, 1533380336, 1305762921, 532727113, 271284716, 1695970278, 1203316552, 1655704264, 104807254, 890836832, 1540040452, 1397045634, 1483071622, 1453610193, 882960274, 438584894, 511738754, 716685639, 2013914244, 1800467048, 1992092138]
+  },
+  "graphs": {
+    "complete_set_per_group": true,
+    "families": ["contiguous", "pair_merge"],
+    "count_per_family": 32,
+    "order": "for graph_index 0..31: contiguous then pair_merge",
+    "versions": {
+      "contiguous": "random_contiguous_split_graph with seed 45000000 + group_index*10000 + graph_index",
+      "pair_merge": "random_pair_merge_graph with seed 46000000 + group_index*10000 + graph_index"
+    }
+  },
+  "target": {
+    "raw_preserved": "exact signed root forward error as a rational and in root-ULP units",
+    "ranking_formula": "(signed root forward error / root ULP)^2",
+    "direction": "smaller is better",
+    "ties": "all equal minimum targets form the oracle best tier",
+    "degenerate_group": "if all targets tie, hit is one and normalized regret is zero; ranking correlation is undefined"
+  },
+  "predictor": {
+    "identifier": "energy_mass_joint_cell_beam_v1",
+    "training_width": 256,
+    "training_input_seeds": [22260821, 22260822, 22260823, 22260824],
+    "training_graphs_per_family": 32,
+    "maximum_root_band_budget": 32,
+    "energy_mass": 0.8,
+    "minimum_energy_nodes": 4,
+    "shortlist_size": 4,
+    "beam_width": 3,
+    "macro_score": "selected connected root-band ULP energy divided by 12; lower is better",
+    "micro_score": "joint cell-beam expected squared signed root error in root-ULP units; lower is better",
+    "allowed_inputs": "stored leaves, candidate graph, deterministic shadow features, and innovation model fitted only on declared calibration groups",
+    "tie_break": "stable graph row index"
+  },
+  "baselines": {
+    "q_only": "minimum frozen 80%-energy-mass macro score over all 64 trees",
+    "fixed_k8_beam3": "K=8 macro shortlist of four followed by B=3 joint beam",
+    "random": "exact group-wise expectation under uniform selection of one of 64 trees"
+  },
+  "metrics": {
+    "primary": "mean paired normalized-regret improvement: regret(Q-only) - regret(frozen cascade)",
+    "positive_evidence_rule": "the 95% stratified group-bootstrap interval lower bound for the primary metric is greater than zero",
+    "secondary": [
+      "global oracle-best-tier hit rate",
+      "global normalized regret",
+      "shortlist oracle-best-tier coverage",
+      "within-shortlist pairwise accuracy",
+      "within-shortlist Spearman rho",
+      "same quantities for frozen baselines",
+      "oracle best-tier prevalence"
+    ],
+    "normalization": "within each group, (selected target - group minimum)/(group maximum - group minimum); zero when all targets tie",
+    "undefined_reporting": "undefined pairwise accuracy or rho is retained as null and its defined-group count is reported",
+    "weighting": "each input group has equal weight; pooled bootstrap preserves equal width allocation"
+  },
+  "uncertainty": {
+    "unit": "input group",
+    "method": "nonparametric bootstrap stratified by width",
+    "resamples": 10000,
+    "confidence_level": 0.95,
+    "bootstrap_seed": 20260822
+  },
+  "opening": {
+    "one_shot": true,
+    "required_worktree": "clean Git worktree containing this frozen preregistration",
+    "output_directory": "topics/softmax/experiments/results/wide_range_energy_beam_v1/heldout",
+    "overwrite": "forbidden; an existing or partial directory blocks execution",
+    "after_opening": "score, target, sampling unit, primary metric, and uncertainty procedure are immutable; changes require a new validation stage"
+  },
+  "artifacts": {
+    "input_records": "heldout/input_groups.jsonl",
+    "graph_observations": "heldout/graph_observations.csv",
+    "group_metrics": "heldout/group_metrics.csv",
+    "metric_summary": "heldout/metric_summary.json",
+    "model": "heldout/calibration_model.json",
+    "opening_manifest": "heldout/opening_manifest.json",
+    "metadata": "heldout/metadata.json"
+  },
+  "calibration_boundary": {
+    "closed": true,
+    "used_seed_ranges": [
+      "22260821-22260824 training/LOO calibration",
+      "22260825-22260848 disjoint calibration and diagnostics"
+    ],
+    "heldout_seed_overlap": false,
+    "choices_frozen_after_opening": true
+  }
+}

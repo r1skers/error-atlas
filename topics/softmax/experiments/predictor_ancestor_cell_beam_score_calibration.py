@@ -71,6 +71,7 @@ class BeamTree:
     family: str
     values: tuple[Fraction, ...]
     graph: BinaryReductionGraph
+    signed_error: Fraction
     target: float
     q_score: float
     shadow_score: float
@@ -129,6 +130,7 @@ def _beam_tree(
         family=family,
         values=values,
         graph=graph,
+        signed_error=oracle.signed_error,
         target=float(oracle.signed_error / trace.root_ulp) ** 2,
         q_score=trace.budget[budget].q_budget / 12.0,
         shadow_score=trace.trajectory,
