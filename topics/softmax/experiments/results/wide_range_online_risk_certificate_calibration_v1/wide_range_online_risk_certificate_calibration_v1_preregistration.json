@@ -1,0 +1,118 @@
+{
+  "schema_version": "1",
+  "experiment_id": "wide_range_online_risk_certificate_calibration_v1",
+  "status": "frozen_calibration_not_opened",
+  "freeze_date": "2026-08-23",
+  "scope": {
+    "claim": "Test whether one fixed balanced FP32 reduction can carry a small online state that yields a useful rigorous reduction-error envelope and a calibrated statistical error interval / correctly-rounded probability.",
+    "motivation": "Per-input tree selection was scientifically predictive but required 68 score-side traversals. This stage performs no candidate-tree search: it annotates the one reduction that is executed.",
+    "not_claimed": [
+      "a production-speed implementation",
+      "a guarantee from the Gaussian interval",
+      "tree ranking or tree construction",
+      "coverage outside the frozen wide-range calibration distribution",
+      "input-materialization, exponential, or division error",
+      "confirmation or held-out evidence"
+    ]
+  },
+  "data_boundary": {
+    "stage": "calibration only",
+    "input_family": "wide_range_random irregular_stored_fp32_v1",
+    "widths": [256, 512, 1024],
+    "groups_per_width": 64,
+    "seed_policy": "first 31 bits of SHA256('wide_range_online_risk_certificate_calibration_v1|calibration|<width>|<index>'), indices 0..63",
+    "stopping_rule": "run every frozen group once; do not add groups in response to results",
+    "confirmation_rule": "no fresh confirmation split may be generated or opened in this stage"
+  },
+  "execution_contract": {
+    "graph": "balanced_contiguous_floor_half",
+    "leaf_domain": "positive finite values already stored exactly as binary32",
+    "target": "exact stored-leaf sum",
+    "trajectory": "one FP32 result per internal node; no candidate-tree replay or search",
+    "cheap_side": "nonnegative FP32 bit patterns, exponent extraction, integer-aligned operand addition for exactness detection, fixed-size scalar state, and normal-CDF evaluation",
+    "label_side": "Fraction oracle is isolated to calibration labels and invariant checks"
+  },
+  "online_state": {
+    "result": "s: rounded binary32 subtree sum bits",
+    "scale": "e: ULP exponent of s",
+    "rigorous_all": "B_all = sum_v 0.5*U_v",
+    "rigorous_inexact": "B_inexact = sum_{v: add is inexact} 0.5*U_v",
+    "independent_all": "Q_all = sum_v (U_v/U_root)^2 / 12",
+    "independent_inexact": "Q_inexact = sum_{v: add is inexact} (U_v/U_root)^2 / 12",
+    "corr4_all": "Qcorr4_all adds 2*rho_gap*U_v*U_a/12 for ancestor pairs at gaps 1..4",
+    "corr4_inexact": "Qcorr4_inexact applies the same kernel only when both endpoint additions are inexact",
+    "correlation_kernel": {
+      "1": 0.476,
+      "2": 0.267,
+      "3": 0.168,
+      "4": 0.055
+    },
+    "kernel_warning": "The kernel came from standardized history correlation, not a proved local-residual covariance law; corr4 quantities are exploratory, not bounds.",
+    "exactness_warning": "Detecting exact additions is cheaper than tree enumeration but is not free; the diagnostic must report this cost contract explicitly."
+  },
+  "frozen_variance_proxies": {
+    "primary": "q_inexact",
+    "comparators": ["q_all", "q_corr4_all", "q_corr4_inexact"],
+    "scale_feature": "sqrt(Q) in root-ULP units",
+    "no_posthoc_proxy": "No new maintained quantity may be promoted using these 192 target labels; additional quantities require a new calibration version."
+  },
+  "cross_fitting": {
+    "fold_count": 5,
+    "fold_assignment": "input index modulo 5 within every width",
+    "zero_mean_model": "E/sqrt(Q) ~ Normal(0, c^2), with c^2 = mean(E^2/Q) on the other four folds",
+    "bias_aware_model": "E/sqrt(Q) ~ Normal(beta, c^2), with beta and population variance fitted on the other four folds",
+    "primary_gaussian_model": "bias-aware q_inexact",
+    "reason": "Cross-fitting prevents each reported interval from using its own error label while keeping this explicitly calibration-only."
+  },
+  "rounding_cell_probability": {
+    "error_sign": "E = computed FP32 root minus exact stored-leaf sum",
+    "safe_cell": "derive the lower and upper midpoint boundaries from the adjacent positive finite binary32 values around the computed root",
+    "formula": "P_safe = Phi((b-mu)/sigma) - Phi((a-mu)/sigma), where (a,b) is the root-error interval that rounds to the computed root",
+    "tie_note": "Boundary inclusivity affects exact midpoint atoms but not the continuous Gaussian integral; observed correctness still uses exact ties-to-even labels."
+  },
+  "metrics": {
+    "hard_invariants": [
+      "computed root bits equal the exact graph oracle",
+      "absolute root error is no greater than B_all and B_inexact for every group"
+    ],
+    "gaussian_shape": [
+      "cross-fitted standardized mean, standard deviation, skew, excess kurtosis, KS distance to standard normal",
+      "absolute standardized p90, p99, and maximum",
+      "pooled and per-width two-sided interval coverage at 90%, 99%, and 99.9%"
+    ],
+    "probability_quality": [
+      "Brier score for correctly-rounded output",
+      "leave-fold training-prevalence Brier baseline",
+      "five-bin reliability table",
+      "certification coverage and observed precision at P_safe thresholds 0.90 and 0.99"
+    ],
+    "rigorous_bound_quality": [
+      "B_all and B_inexact coverage",
+      "bound-to-absolute-error ratio quantiles",
+      "fraction for which the rigorous interval lies strictly inside the computed root rounding cell"
+    ],
+    "macro_diagnostics": [
+      "inexact addition fraction",
+      "inexact energy fraction",
+      "top-8 local ULP-energy concentration",
+      "maximum-leaf/root ratio and effective leaf count"
+    ]
+  },
+  "interpretation_rules": {
+    "implementation_stop": "Any hard-invariant failure invalidates the run and blocks interpretation.",
+    "gaussian_viability": "For the primary cross-fitted model, pooled coverage must be at least 0.88 at nominal 90% and 0.98 at nominal 99%; every width must reach at least 0.85 and 0.95 respectively; absolute-Z p99 must not exceed 3.5.",
+    "probability_usefulness": "P_safe must improve Brier score over the cross-fitted prevalence baseline and either certify at least 10% of groups at threshold 0.90 with observed precision at least 0.90 or expose a useful lower-confidence risk gradient. Otherwise it is descriptive only.",
+    "rigorous_certificate": "B is a deployable certificate only if its derivation remains valid and its strict rounding-cell certification rate is nonzero; looseness must be reported even when coverage is perfect.",
+    "failure_path": "If normal tails or width stability fail, do not repair this run post hoc; the next candidate may use empirical/conformal quantiles, Student-t tails, or a separately frozen width/macro inflation law.",
+    "success_path": "A passing calibration authorizes only a separately preregistered confirmation stage; it is not itself held-out evidence."
+  },
+  "artifacts": {
+    "output_directory": "results/wide_range_online_risk_certificate_calibration_v1/calibration",
+    "overwrite": "forbidden; any existing complete or partial directory blocks execution",
+    "files": [
+      "observations.csv",
+      "model_summary.json",
+      "metadata.json"
+    ]
+  }
+}
