@@ -125,6 +125,13 @@ Artifacts:
 - `calibration/model_summary.json` — model, coverage, probability, bound, and macro summaries;
 - `calibration/metadata.json` — source/protocol hashes and pre-opening Git provenance.
 
+Publication audit note: the clean pre-opening local commit recorded in metadata is
+`54245d610e1a9bc3356bddb1619ce2c5a02ef3f3`, with tree
+`5944681406aa18368cfcf2d7854dbc9d5cc236bd`.  HTTPS credential forwarding was unavailable in the
+execution environment, so the four commits were recreated through the authorized GitHub Git-data
+API.  Remote commit `fe0f6fbecc46d30a4a5bba39d39a05822dc2e9c5` has that exact pre-opening tree;
+the differing commit identity reflects publication metadata, not source-content drift.
+
 Run the source only in a clean committed checkout and only when no `calibration/` directory exists:
 
 ```text
