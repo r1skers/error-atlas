@@ -18,6 +18,7 @@ and the existing test imports stay simple.
 | `wide_range_fixed_k8_beam_v2/` | Does the unchanged fixed-K8/B3 cascade improve wide-range within-input ranking on fresh groups? | Frozen preregistration and completed positive confirmation artifacts |
 | `wide_range_fixed_k8_beam_score_only_v1/` | Can the confirmed selector run without exact-oracle instrumentation, and what does it cost? | Exact 192-group fidelity replay and Python prototype cost benchmark |
 | `wide_range_offline_tree_reuse_v1/` | Can one score-selected tree per width be reused across unseen inputs with zero online selection work? | Completed 96-calibration/192-confirmation run: random-fixed reuse signal passed, balanced-FP32 deployment gate failed |
+| `wide_range_online_risk_certificate_calibration_v1/` | Can one balanced reduction carry a rigorous envelope and Gaussian safe-cell probability without scoring candidate trees? | Completed 192-input calibration: statistical interval passed, exactness-weighted risk gradient emerged, rigorous bound was too loose; no confirmation claim |
 
 CSV files are evidence rather than hand-maintained inputs. JSON metadata records
 the execution environment, registered configuration, and source or artifact

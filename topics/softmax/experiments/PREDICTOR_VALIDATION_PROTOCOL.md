@@ -23,6 +23,15 @@ FP32; even the calibration-label static policy failed that engineering gate.  FP
 correctly rounded on all 192 groups and Kahan FP32 on 189, descriptively.  The frozen deployment
 decision is therefore no-go.  This stage does not reopen or tune the v2 score.
 
+A later calibration-only branch, `wide_range_online_risk_certificate_calibration_v1`, changed the
+question instead of reopening tree ranking.  It executed one fixed balanced reduction and carried
+an online error envelope plus Gaussian variance proxy.  The exactness-weighted proxy produced
+well-calibrated cross-fitted intervals and a correctly-rounded risk gradient on 192 calibration
+inputs, while the rigorous half-ULP sum was too loose to certify any result.  Full-tree exactness
+inspection is not yet a demonstrated cheap kernel, so the calibration does not authorize
+deployment or confirmation.  Its next candidate is a separately frozen sparse high-energy
+exactness correction, not a modification of K8/B3.
+
 Neither stage freezes, completes, or weakens this broader three-family scaffold.  The prohibitions
 below continue to apply to held-out data not explicitly authorized by a stage-specific
 preregistration.

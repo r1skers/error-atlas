@@ -1,5 +1,7 @@
 """Tests for the calibration-only online reduction risk certificate."""
 
+import csv
+import json
 import math
 import unittest
 from fractions import Fraction
@@ -7,6 +9,7 @@ from fractions import Fraction
 from predictor_online_risk_certificate_calibration import (
     EXPECTED_GROUPS_PER_WIDTH,
     EXPECTED_WIDTHS,
+    OUTPUT_DIRECTORY,
     _cross_fit,
     _derived_seed,
     _load_and_validate_preregistration,
@@ -14,6 +17,7 @@ from predictor_online_risk_certificate_calibration import (
     _root_error_cell,
     trace_online_certificate,
 )
+from predictor_wide_range_fixed_k8_beam_v2_heldout import _sha256
 from predictor_shadow_sparse_repair_ablation import _fp32_ulp_fraction
 from summation_graph_predictor import (
     balanced_reduction_graph,
@@ -138,6 +142,43 @@ class OnlineRiskCertificateCalibrationTests(unittest.TestCase):
         )
         self.assertAlmostEqual(fits[0]["beta_standardized"], expected_beta)
         self.assertAlmostEqual(predictions[0].mu, expected_beta)
+
+    def test_completed_artifact_hashes_match_metadata(self) -> None:
+        with (OUTPUT_DIRECTORY / "metadata.json").open(encoding="utf-8") as handle:
+            metadata = json.load(handle)
+        self.assertEqual(metadata["status"], "completed_calibration_only")
+        self.assertEqual(
+            metadata["git_commit_before_opening"],
+            "54245d610e1a9bc3356bddb1619ce2c5a02ef3f3",
+        )
+        for name, record in metadata["artifacts"].items():
+            path = OUTPUT_DIRECTORY / name
+            self.assertEqual(path.stat().st_size, record["bytes"])
+            self.assertEqual(_sha256(path), record["sha256"])
+
+    def test_completed_artifact_cardinality_and_primary_decision(self) -> None:
+        with (OUTPUT_DIRECTORY / "observations.csv").open(
+            encoding="utf-8", newline=""
+        ) as handle:
+            rows = list(csv.DictReader(handle))
+        self.assertEqual(
+            len(rows), len(EXPECTED_WIDTHS) * EXPECTED_GROUPS_PER_WIDTH
+        )
+        self.assertEqual(
+            {int(row["width"]) for row in rows}, set(EXPECTED_WIDTHS)
+        )
+        self.assertEqual(sum(row["correctly_rounded"] == "True" for row in rows), 143)
+
+        with (OUTPUT_DIRECTORY / "model_summary.json").open(
+            encoding="utf-8"
+        ) as handle:
+            summary = json.load(handle)
+        primary = summary["models"]["q_inexact__bias_aware"]
+        self.assertAlmostEqual(primary["coverage"]["90"], 173 / 192)
+        self.assertEqual(primary["coverage"]["99"], 1.0)
+        self.assertTrue(summary["decision"]["primary_gaussian_viable"])
+        self.assertTrue(summary["decision"]["primary_probability_threshold_gate"])
+        self.assertFalse(summary["decision"]["rigorous_cell_certificate_nonzero"])
 
 
 if __name__ == "__main__":
