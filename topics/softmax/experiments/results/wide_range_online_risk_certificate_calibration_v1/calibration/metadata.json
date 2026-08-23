@@ -1,0 +1,29 @@
+{
+  "artifacts": {
+    "model_summary.json": {
+      "bytes": 45999,
+      "sha256": "9183bf087766f01a8ef4cb35ed5dec8df1539ae42dee274b55fe7c6bf24f7500"
+    },
+    "observations.csv": {
+      "bytes": 216591,
+      "sha256": "51c46715d0301da55254e0ca8063ad223a6ba2b8640002398d55908d7530d4bd"
+    }
+  },
+  "experiment_id": "wide_range_online_risk_certificate_calibration_v1",
+  "fold_count": 5,
+  "git_commit_before_opening": "54245d610e1a9bc3356bddb1619ce2c5a02ef3f3",
+  "git_tree_before_opening": "5944681406aa18368cfcf2d7854dbc9d5cc236bd",
+  "groups_per_width": 64,
+  "input_generator": "irregular_stored_fp32_v1/wide_range_random",
+  "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+  "preregistration_sha256": "db6ad179259b70d4465faa478410f2ab04f9ebcd207027ea62f093c0e444e88d",
+  "python": "3.12.13 (main, Aug  7 2026, 02:25:39) [Clang 22.1.3 ]",
+  "schema_version": "1",
+  "source_sha256": "cd79d8e503adb3a013ad7203d577d0ead2bb9cfdb1339dbb75cf8e0d09534464",
+  "status": "completed_calibration_only",
+  "widths": [
+    256,
+    512,
+    1024
+  ]
+}

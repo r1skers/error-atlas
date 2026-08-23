@@ -6,6 +6,9 @@
 *.json text eol=lf
 *.txt text eol=lf
 
+# Preserve one-shot CSV evidence byte-for-byte; csv.DictWriter emits CRLF records.
+topics/softmax/experiments/results/wide_range_online_risk_certificate_calibration_v1/calibration/*.csv -text -diff
+
 *.png binary
 *.jpg binary
 *.jpeg binary
