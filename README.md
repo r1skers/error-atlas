@@ -2,115 +2,68 @@
 
 > An experiment-driven study of approximation error, propagation, numerical stability, and error control.
 
-Error Atlas 是一个按研究主题组织的个人研究项目。它关注“误差”，并持续追问：
+Error Atlas 是按主题组织的个人研究项目。主线是：定义误差 → 识别来源 →
+理解传播 → 估计与控制 → 验证精度和成本。
 
-\[
-\text{误差如何定义}
-\rightarrow
-\text{从哪里产生}
-\rightarrow
-\text{怎样传播}
-\rightarrow
-\text{如何估计与控制}
-\rightarrow
-\text{怎样在精度和成本之间优化}.
-\]
+## 从哪里开始
 
-不同 topic 可以来自数学、数值计算或机器学习；统一它们的是同一套误差分析框架。
+- [NEXT_SESSION.md](NEXT_SESSION.md)：当前状态与下一步；不再把历史日志当成待办。
+- [TOPICS.md](TOPICS.md)：主题注册表。
+- [Softmax 实验索引](topics/softmax/experiments/README.md)：按用途找代码。
+- [结果索引](topics/softmax/experiments/results/README.md)：区分已确认结果、负结果与校准观察。
+- [维护指南](docs/maintenance.md)：测试、目录职责、冻结证据与后续拆分边界。
+- [完整知识谱](KNOWLEDGE_MAP.md)：从误差语言、浮点算术与 Softmax，到统计 predictor validation 和 GPU 数值实验的离线教材；
 
-## 当前里程碑
+知识谱是学习资料，不是最新研究状态或新增实验结论的来源。
 
-Taylor expansion 第一轮已经完成主要推导与实验，覆盖：
+## 当前进度
 
-- Lagrange、integral 与 Peano remainder；
-- actual error、asymptotic order 与 error bound 的区别；
-- bound validity 与 tightness；
-- Richardson extrapolation 与 observed order；
-- 截断误差、cancellation、roundoff 和稳定表示；
-- 确定性误差预算与统计 bias–variance 模型；
-- 带相关噪声的中心差分及最优步长。
+| 主题 / 阶段 | 状态 |
+| --- | --- |
+| [Taylor expansion](topics/taylor-expansion/README.md) | 第一轮推导、实验与闭卷重写完成 |
+| [Softmax 基础与 exact graph oracle](topics/softmax/notes/foundations.md) | 第一轮完成；早期证据等级保持不变 |
+| Fixed-K8/B3 tree ranking | 已完成受控分布上的确认；推理成本仍高 |
+| Offline tree reuse | 相对随机固定树有改善，但未通过 balanced-FP32 部署门槛 |
+| Online risk certificate | 已完成校准；有统计信号，尚无确认或部署结论 |
 
-![Noisy central-difference error curve](topics/taylor-expansion/experiments/results/statistical_noise_error.png)
+最新方向是稀疏高能量节点的 exactness correction；设计与预算仍需重新冻结。
+本轮整理没有开启新实验，GPU 阶段仍暂停。
 
-图中左侧由随机噪声的 \(h^{-1}\) 放大主导，右侧由中心差分的 \(h^2\) 截断偏差主导；理论与 Monte Carlo 结果在最优步长附近吻合。
+## 目录职责
 
-闭卷重写已经验证核心相关噪声构造可以从空白恢复，Taylor expansion
-第一轮正式完成。Softmax 第一轮误差机理也已完成：从多分类 Jacobian、
-概率单纯形切空间和全局 \(1/2\) 界，推进到 exp、求和、除法的一阶浮点
-误差预算，并区分问题条件性、求值算法稳定性与输入表示误差。FP32 输入
-量化边界和第一轮 closed-book rewrite 已形成可复现证据；故障—指标—
-consumer policy—处置链及首个分层求和压力实验也已形成 raw/summary 证据。
+```text
+framework/                 研究纪律与实现学习协议
+docs/                      维护说明与历史续接记录
+tools/                     仓库维护工具和它们的测试
+topics/<topic>/
+    README.md              主题入口
+    notes/                 理论与历史研究笔记
+    experiments/           实验源代码、协议和 results/ 证据
+    tests/                 回归测试
+```
 
-## 仓库结构
+原脚本入口与 results 路径保持稳定，测试已从实验目录分离。
+前三个 coherence 诊断现在共用
+[一份轨迹与分析接口](topics/softmax/experiments/reduction_analysis/README.md)；
+旧函数和 CLI 保留兼容入口，旧源码版本仍可按 Git 记录复现。
 
-    error-atlas/
-    ├── README.md
-    ├── TOPICS.md
-    ├── NEXT_SESSION.md
-    ├── requirements.txt
-    ├── framework/
-    │   ├── error_analysis_protocol.md
-    │   └── implementation_learning_protocol.md
-    └── topics/
-        ├── taylor-expansion/
-            ├── README.md
-            ├── notes/
-            │   ├── 00_error_language.md
-            │   ├── ...
-            │   └── 06_control_and_optimization.md
-            └── experiments/
-                ├── README.md
-                ├── finite_difference.py
-                ├── statistical_noise.py
-                ├── test_statistical_noise.py
-                └── results/
-        └── softmax/
-            ├── README.md
-            └── experiments/
-                ├── README.md
-                ├── fp32_shift_resolution.py
-                ├── fp32_summation_stress.py
-                ├── fp32_softmax_summation.py
-                ├── softmax_failure_triage.py
-                ├── softmax_failure_triage_runner.py
-                ├── rewrite_fp32_shift_resolution.py
-                ├── test_*.py
-                └── results/
-                    ├── shift_resolution/
-                    ├── summation_permutation/
-                    ├── softmax_summation/
-                    └── failure_triage/
+## 开发检查
 
-- [TOPICS.md](TOPICS.md)：主题注册表与候选方向；
-- [error analysis protocol](framework/error_analysis_protocol.md)：每个案例共用的研究循环；
-- [implementation learning protocol](framework/implementation_learning_protocol.md)：核心算法由学习者主写的协作规则；
-- [Taylor expansion](topics/taylor-expansion/README.md)：已完成第一轮的理论笔记与数值实验；
-- [Softmax](topics/softmax/README.md)：当前活跃主题、条件性结论与第一组有限精度证据；
-- [current resume point](NEXT_SESSION.md)：下一次从哪里继续。
+需要 Python 3.10+，依赖见 [requirements.txt](requirements.txt)。
 
-## 快速复现
+```sh
+python -m pip install -r requirements.txt
+python tools/run_tests.py
+python tools/run_tests.py --suite softmax -v
+python tools/run_tests.py --suite softmax -p "test_predictor_fixed_k8_beam_inference.py"
+```
 
-需要 Python 3.10 或更高版本。
-
-    python -m pip install -r requirements.txt
-    python topics/taylor-expansion/experiments/finite_difference.py
-    python topics/taylor-expansion/experiments/statistical_noise.py
-    python -m unittest discover -s topics/taylor-expansion/experiments -p "test_*.py" -v
-    python topics/softmax/experiments/fp32_shift_resolution.py
-    python topics/softmax/experiments/softmax_failure_triage_runner.py --include-stress
-    python -m unittest discover -s topics/softmax/experiments -p "test_*.py" -v
-
-Taylor 实验把 CSV、metadata 和 PNG 写入对应 results 目录；当前 Softmax
-实验写入 CSV 与 metadata。
+测试命令不会调用实验 CLI 重写归档结果。不要把“快速复现”理解为批量重跑
+one-shot runners；执行前先读对应结果目录的 README 与冻结协议。
 
 ## 研究约定
 
-每个 topic 都先确定 reference、metric、assumptions 和 error sources，再进入界、传播、控制与验证。代码实验要求：
-
-1. 运行前写出方向、尺度、边界与失败特征；
-2. 保留原始数据与运行元数据；
-3. 区分理论误差、实现误差、浮点误差与测量噪声；
-4. 用测试覆盖核心 invariant；
-5. 不把“看懂实现”当作“能够独立写出实现”。
-
-实验结果文件会进入版本控制：CSV 保存证据，JSON 保存 provenance，PNG 让关键结论可以直接检查。
+先确定 reference、metric、assumptions 和 error sources，再研究界、传播和控制。
+遵循 [误差分析协议](framework/error_analysis_protocol.md) 与
+[实现学习协议](framework/implementation_learning_protocol.md)：运行前记录预测，
+保留原始数据和 provenance，区分实现、数值、测量与统计误差。

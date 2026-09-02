@@ -207,7 +207,7 @@ h_*\approx0.06694.
 - experiments/results/statistical_noise_comparison.csv：逐步长原始指标；
 - experiments/results/statistical_noise_metadata.json：参数与运行环境；
 - experiments/results/statistical_noise_error.png：理论与经验误差曲线；
-- experiments/test_statistical_noise.py：核心 invariant 与回归测试。
+- tests/test_statistical_noise.py：核心 invariant 与回归测试。
 
 ## 当前限制
 

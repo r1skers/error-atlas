@@ -22,13 +22,16 @@ from __future__ import annotations
 
 import argparse
 import math
-from dataclasses import dataclass
 from fractions import Fraction
 from statistics import mean
 
 from predictor_calibration_inputs import wide_range_random
-from predictor_tree_generator import random_contiguous_split_graph, random_pair_merge_graph
-from summation_graph_predictor import BinaryReductionGraph, predict_fp32_tree_error
+from predictor_tree_generator import (
+    random_contiguous_split_graph,
+    random_pair_merge_graph,
+)
+from summation_graph_predictor import BinaryReductionGraph
+from reduction_analysis import CoherenceTree, CoherenceAnalysis, replay
 
 
 DEFAULT_WIDTH = 256
@@ -37,39 +40,11 @@ DEFAULT_GRAPH_COUNT = 64
 TREE_BASE_SEED = 32_000_000
 
 
-@dataclass(frozen=True)
-class CoherenceTree:
-    graph_family: str
-    graph_seed: int
-    e2: float
-    c_total: float
-    c_parent: float
-    c_far_ancestor: float
-    c_disjoint: float
-    c_gap1: float
-    c_gap2: float
-    c_gap3: float
-    c_gap4plus: float
-    abs_pair_mass: float
-    abs_parent_mass: float
-    abs_far_ancestor_mass: float
-    abs_disjoint_mass: float
-    top1pct_abs_mass_share: float
-    top5pct_abs_mass_share: float
-    top10pct_abs_mass_share: float
-
-    @property
-    def c_ancestor(self) -> float:
-        return self.c_parent + self.c_far_ancestor
-
-
-
 def _graph(width: int, *, graph_index: int, input_index: int):
     seed = TREE_BASE_SEED + input_index * 10_000 + graph_index
     if graph_index % 2 == 0:
         return "contiguous", seed, random_contiguous_split_graph(width, seed=seed)
     return "pair_merge", seed, random_pair_merge_graph(width, seed=seed)
-
 
 
 def _rankdata(values: list[float]) -> list[float]:
@@ -87,7 +62,6 @@ def _rankdata(values: list[float]) -> list[float]:
     return ranks
 
 
-
 def _pearson(x: list[float], y: list[float]) -> float | None:
     if len(x) != len(y) or len(x) < 2:
         return None
@@ -102,10 +76,8 @@ def _pearson(x: list[float], y: list[float]) -> float | None:
     return sum(a * b for a, b in zip(dx, dy, strict=True)) / (sx * sy)
 
 
-
 def _spearman(x: list[float], y: list[float]) -> float | None:
     return _pearson(_rankdata(x), _rankdata(y))
-
 
 
 def _std(values: list[float]) -> float:
@@ -115,68 +87,8 @@ def _std(values: list[float]) -> float:
     return math.sqrt(mean((v - m) ** 2 for v in values))
 
 
-
 def _fmt_rho(value: float | None) -> str:
     return "n/a" if value is None else f"{value:+.3f}"
-
-
-
-def _internal_parent_and_depth(graph: BinaryReductionGraph) -> tuple[dict[int, int], dict[int, int]]:
-    """Return internal-node parent links and root-depth for every internal node."""
-    first_internal = graph.leaf_count
-    parent: dict[int, int] = {}
-    children: dict[int, tuple[int, int]] = {}
-    for offset, node in enumerate(graph.nodes):
-        idx = first_internal + offset
-        children[idx] = (node.left, node.right)
-        for child in (node.left, node.right):
-            if child >= first_internal:
-                parent[child] = idx
-
-    depth = {graph.root: 0}
-    stack = [graph.root]
-    while stack:
-        current = stack.pop()
-        for child in children[current]:
-            if child >= first_internal:
-                depth[child] = depth[current] + 1
-                stack.append(child)
-    if len(depth) != len(graph.nodes):
-        raise AssertionError("failed to assign depth to every internal node")
-    return parent, depth
-
-
-
-def _ancestor_gap(u: int, v: int, parent: dict[int, int]) -> int | None:
-    """Return edge distance if one internal node is ancestor of the other, else None."""
-    # Walk u upward looking for v.
-    current = u
-    gap = 0
-    while current in parent:
-        current = parent[current]
-        gap += 1
-        if current == v:
-            return gap
-
-    # Walk v upward looking for u.
-    current = v
-    gap = 0
-    while current in parent:
-        current = parent[current]
-        gap += 1
-        if current == u:
-            return gap
-    return None
-
-
-
-def _top_share(abs_terms: list[float], fraction: float) -> float:
-    total = sum(abs_terms)
-    if total == 0.0:
-        return 0.0
-    count = max(1, math.ceil(len(abs_terms) * fraction))
-    return sum(sorted(abs_terms, reverse=True)[:count]) / total
-
 
 
 def diagnose_tree(
@@ -186,81 +98,10 @@ def diagnose_tree(
     graph_family: str,
     graph_seed: int,
 ) -> CoherenceTree:
-    prediction = predict_fp32_tree_error(values, graph)
-    deltas_exact = [node.local_rounding_error for node in prediction.node_predictions]
-    deltas = [float(delta) for delta in deltas_exact]
-    node_ids = [node.node_index for node in prediction.node_predictions]
-    parent, _depth = _internal_parent_and_depth(graph)
-
-    e2_exact = prediction.signed_error * prediction.signed_error
-    a_exact = sum((d * d for d in deltas_exact), start=Fraction(0))
-    c_exact = e2_exact - a_exact
-
-    c_parent = 0.0
-    c_far = 0.0
-    c_disjoint = 0.0
-    c_gap1 = 0.0
-    c_gap2 = 0.0
-    c_gap3 = 0.0
-    c_gap4 = 0.0
-    abs_parent = 0.0
-    abs_far = 0.0
-    abs_disjoint = 0.0
-    abs_terms: list[float] = []
-
-    for i in range(len(deltas)):
-        for j in range(i + 1, len(deltas)):
-            term = 2.0 * deltas[i] * deltas[j]
-            abs_term = abs(term)
-            abs_terms.append(abs_term)
-            gap = _ancestor_gap(node_ids[i], node_ids[j], parent)
-            if gap is None:
-                c_disjoint += term
-                abs_disjoint += abs_term
-            elif gap == 1:
-                c_parent += term
-                c_gap1 += term
-                abs_parent += abs_term
-            else:
-                c_far += term
-                abs_far += abs_term
-                if gap == 2:
-                    c_gap2 += term
-                elif gap == 3:
-                    c_gap3 += term
-                else:
-                    c_gap4 += term
-
-    c_total = c_parent + c_far + c_disjoint
-    c_exact_float = float(c_exact)
-    tolerance = max(1e-30, abs(c_exact_float) * 1e-10, sum(abs_terms) * 1e-12)
-    if abs(c_total - c_exact_float) > tolerance:
-        raise AssertionError("structural C partition does not reconstruct total C")
-    if abs((c_gap1 + c_gap2 + c_gap3 + c_gap4) - (c_parent + c_far)) > tolerance:
-        raise AssertionError("ancestor gap partition does not reconstruct ancestor C")
-
-    abs_pair_mass = sum(abs_terms)
-    return CoherenceTree(
-        graph_family=graph_family,
-        graph_seed=graph_seed,
-        e2=float(e2_exact),
-        c_total=c_exact_float,
-        c_parent=c_parent,
-        c_far_ancestor=c_far,
-        c_disjoint=c_disjoint,
-        c_gap1=c_gap1,
-        c_gap2=c_gap2,
-        c_gap3=c_gap3,
-        c_gap4plus=c_gap4,
-        abs_pair_mass=abs_pair_mass,
-        abs_parent_mass=abs_parent,
-        abs_far_ancestor_mass=abs_far,
-        abs_disjoint_mass=abs_disjoint,
-        top1pct_abs_mass_share=_top_share(abs_terms, 0.01),
-        top5pct_abs_mass_share=_top_share(abs_terms, 0.05),
-        top10pct_abs_mass_share=_top_share(abs_terms, 0.10),
-    )
-
+    """Compatibility wrapper; compose multiple views with CoherenceAnalysis instead."""
+    return CoherenceAnalysis(
+        replay(values, graph), graph_family=graph_family, graph_seed=graph_seed
+    ).structure
 
 
 def _component_summary(label: str, trees: list[CoherenceTree]) -> None:
@@ -309,7 +150,6 @@ def _component_summary(label: str, trees: list[CoherenceTree]) -> None:
     )
 
 
-
 def _gap_summary(trees: list[CoherenceTree]) -> None:
     if not trees:
         return
@@ -323,12 +163,13 @@ def _gap_summary(trees: list[CoherenceTree]) -> None:
     )
 
 
-
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--width", type=int, default=DEFAULT_WIDTH)
     parser.add_argument("--graphs", type=int, default=DEFAULT_GRAPH_COUNT)
-    parser.add_argument("--input-seeds", type=int, nargs="+", default=list(DEFAULT_INPUT_SEEDS))
+    parser.add_argument(
+        "--input-seeds", type=int, nargs="+", default=list(DEFAULT_INPUT_SEEDS)
+    )
     args = parser.parse_args()
     if args.width <= 1:
         parser.error("--width must exceed 1")
@@ -337,12 +178,13 @@ def _parse_args() -> argparse.Namespace:
     return args
 
 
-
 def main() -> int:
     args = _parse_args()
     print("Wide-range coherence structure decomposition")
     print("CALIBRATION ONLY — exact local FP32 residuals are intentionally inspected")
-    print("C = parent-child + far-ancestor + disjoint; ancestor also split by graph gap")
+    print(
+        "C = parent-child + far-ancestor + disjoint; ancestor also split by graph gap"
+    )
     print(
         f"width={args.width} graphs_per_input={args.graphs} "
         f"input_seeds={','.join(str(seed) for seed in args.input_seeds)}"
@@ -365,7 +207,9 @@ def main() -> int:
                 )
             )
 
-        print(f"INPUT seed={input_seed} family={generated.family} width={len(generated.values)}")
+        print(
+            f"INPUT seed={input_seed} family={generated.family} width={len(generated.values)}"
+        )
         _component_summary("all", trees)
         _gap_summary(trees)
         contiguous = [t for t in trees if t.graph_family == "contiguous"]

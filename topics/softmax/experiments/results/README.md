@@ -1,8 +1,8 @@
 # Softmax Experiment Artifacts
 
-This directory separates generated evidence by experiment. Source modules and
-their tests remain adjacent in the parent directory so direct script execution
-and the existing test imports stay simple.
+This directory separates generated evidence by experiment. Source modules stay
+in the parent directory; regression tests are in `../../tests/`. Use
+`python tools/run_tests.py --suite softmax` from the repository root for routine checks.
 
 | Directory | Question isolated | Artifacts |
 | --- | --- | --- |
@@ -22,8 +22,10 @@ and the existing test imports stay simple.
 
 CSV files are evidence rather than hand-maintained inputs. JSON metadata records
 the execution environment, registered configuration, and source or artifact
-hashes needed to interpret that evidence. Regenerate artifacts from the
-repository root with the commands documented in the parent `README.md`.
+hashes needed to interpret that evidence. Before any intentional reproduction,
+read the specific stage's README and preregistration. Do not batch-run one-shot
+runners or replace evidence as part of a regression check. The parent README is
+the source index, not blanket authorization to regenerate these directories.
 
 The checked-in `failure_triage/` directory is the 2026-08-08 artifact snapshot
 from the earlier suite. The current source and tests define suite version 3 and

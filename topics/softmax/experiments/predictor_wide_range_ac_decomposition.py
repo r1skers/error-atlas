@@ -22,34 +22,22 @@ from __future__ import annotations
 
 import argparse
 import math
-from dataclasses import dataclass
 from fractions import Fraction
 from statistics import mean
 
 from predictor_calibration_inputs import wide_range_random
-from predictor_tree_generator import random_contiguous_split_graph, random_pair_merge_graph
-from summation_graph_predictor import BinaryReductionGraph, predict_fp32_tree_error
+from predictor_tree_generator import (
+    random_contiguous_split_graph,
+    random_pair_merge_graph,
+)
+from summation_graph_predictor import BinaryReductionGraph
+from reduction_analysis import ACTree, CoherenceAnalysis, replay
 
 
 DEFAULT_WIDTH = 256
 DEFAULT_INPUT_SEEDS = (22260821, 22260822, 22260823, 22260824)
 DEFAULT_GRAPH_COUNT = 64
 TREE_BASE_SEED = 32_000_000
-
-
-@dataclass(frozen=True)
-class ACTree:
-    graph_family: str
-    graph_seed: int
-    e2: Fraction
-    a_local: Fraction
-    c_coherence: Fraction
-
-    @property
-    def c_over_a(self) -> float:
-        if self.a_local == 0:
-            return float("nan")
-        return float(self.c_coherence / self.a_local)
 
 
 def _graph(width: int, *, graph_index: int, input_index: int):
@@ -110,30 +98,10 @@ def diagnose_tree(
     graph_family: str,
     graph_seed: int,
 ) -> ACTree:
-    prediction = predict_fp32_tree_error(values, graph)
-    deltas = [node.local_rounding_error for node in prediction.node_predictions]
-    e2 = prediction.signed_error * prediction.signed_error
-    a_local = sum((delta * delta for delta in deltas), start=Fraction(0))
-    c_coherence = e2 - a_local
-
-    # Exact identity check against the explicit pairwise cross term.
-    pairwise = Fraction(0)
-    prefix = Fraction(0)
-    for delta in deltas:
-        pairwise += 2 * prefix * delta
-        prefix += delta
-    if pairwise != c_coherence:
-        raise AssertionError("C != 2 sum_{u<v} delta_u delta_v")
-    if a_local + c_coherence != e2:
-        raise AssertionError("E^2 != A + C")
-
-    return ACTree(
-        graph_family=graph_family,
-        graph_seed=graph_seed,
-        e2=e2,
-        a_local=a_local,
-        c_coherence=c_coherence,
-    )
+    """Compatibility wrapper; compose multiple views with CoherenceAnalysis instead."""
+    return CoherenceAnalysis(
+        replay(values, graph), graph_family=graph_family, graph_seed=graph_seed
+    ).ac
 
 
 def _summary(label: str, trees: list[ACTree]) -> None:
@@ -149,7 +117,9 @@ def _summary(label: str, trees: list[ACTree]) -> None:
     variation_ratio = float("inf") if std_a == 0 else std_c / std_a
     positive_c = mean(v > 0 for v in c)
     negative_c = mean(v < 0 for v in c)
-    mean_abs_c_over_a = mean(abs(t.c_over_a) for t in trees if math.isfinite(t.c_over_a))
+    mean_abs_c_over_a = mean(
+        abs(t.c_over_a) for t in trees if math.isfinite(t.c_over_a)
+    )
 
     print(
         f"  {label:<10} n={len(trees):2d} "
@@ -176,7 +146,9 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--width", type=int, default=DEFAULT_WIDTH)
     parser.add_argument("--graphs", type=int, default=DEFAULT_GRAPH_COUNT)
-    parser.add_argument("--input-seeds", type=int, nargs="+", default=list(DEFAULT_INPUT_SEEDS))
+    parser.add_argument(
+        "--input-seeds", type=int, nargs="+", default=list(DEFAULT_INPUT_SEEDS)
+    )
     parser.add_argument("--show-extremes", action="store_true")
     args = parser.parse_args()
     if args.width <= 1:
@@ -214,7 +186,9 @@ def main() -> int:
                 )
             )
 
-        print(f"INPUT seed={input_seed} family={generated.family} width={len(generated.values)}")
+        print(
+            f"INPUT seed={input_seed} family={generated.family} width={len(generated.values)}"
+        )
         _summary("all", trees)
         _summary("contiguous", [t for t in trees if t.graph_family == "contiguous"])
         _summary("pair_merge", [t for t in trees if t.graph_family == "pair_merge"])

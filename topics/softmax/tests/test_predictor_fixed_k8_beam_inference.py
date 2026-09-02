@@ -2,6 +2,7 @@
 
 import csv
 import json
+import math
 import unittest
 from pathlib import Path
 
@@ -20,7 +21,7 @@ from predictor_tree_generator import (
 )
 
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parents[1] / "experiments"
 HELDOUT = HERE / "results" / "wide_range_fixed_k8_beam_v2" / "heldout"
 
 
@@ -74,7 +75,9 @@ class FixedK8BeamInferenceTests(unittest.TestCase):
         self.assertEqual(model.feature_scale.shape, (19,))
         self.assertEqual(model.weights.shape, (20, 5))
 
-    def test_first_v2_group_reproduces_every_frozen_score(self) -> None:
+    def test_first_v2_group_preserves_decisions_and_scores_within_8_binary64_ulps(
+        self,
+    ) -> None:
         with (HELDOUT / "input_groups.jsonl").open(encoding="utf-8") as handle:
             input_record = json.loads(next(handle))
         rows = []
@@ -114,7 +117,14 @@ class FixedK8BeamInferenceTests(unittest.TestCase):
             tuple(float(row["fixed_q_score"]) for row in rows),
         )
         for index in result.shortlist_indices:
-            self.assertEqual(result.beam_scores[index], float(rows[index]["beam_score"]))
+            # The learned beam uses NumPy matmul/exp, unlike the exact FP32 oracle.
+            # Allow a small binary64 portability envelope, not an FP32 error tolerance.
+            # The shortlist, selected tree and exact Q scores above must still match.
+            expected = float(rows[index]["beam_score"])
+            with self.subTest(tree=index):
+                self.assertAlmostEqual(
+                    result.beam_scores[index], expected, delta=8 * math.ulp(expected)
+                )
 
 
 if __name__ == "__main__":

@@ -17,12 +17,12 @@ git status
 git pull
 ```
 
-Make or review changes, then run the validation appropriate to the files touched. For Softmax experiment code, the repository-wide test command is:
+Make or review changes, then run the validation appropriate to the files touched.
+The portable repository test entry (also usable on local Windows) is:
 
 ```bash
-python -m unittest discover \
-  -s topics/softmax/experiments \
-  -p "test_*.py" -v
+python tools/run_tests.py
+python tools/run_tests.py --suite softmax -v
 ```
 
 Before publishing changes, inspect the diff and repository state:
@@ -32,7 +32,8 @@ git diff
 git status
 ```
 
-Commit and push only after the change has been reviewed locally.
+Commit and push only after the change has been reviewed locally. See
+[maintenance guidance](maintenance.md) for test selection and evidence-preservation rules.
 
 ## Boundaries
 

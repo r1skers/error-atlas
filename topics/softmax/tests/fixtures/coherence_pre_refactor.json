@@ -1,0 +1,3532 @@
+{
+  "schema_version": 1,
+  "purpose": "Refactor regression fixture only; not calibration or confirmation evidence.",
+  "source_revision": "ad1fe8726196dcc725a4ab98b7b9acc97c7139d7",
+  "source_git_blobs": {
+    "topics/softmax/experiments/predictor_wide_range_ac_decomposition.py": "6ca6b14012b58de994c38eb40b23141ff39d3f27",
+    "topics/softmax/experiments/predictor_wide_range_coherence_structure.py": "57a63e075fe70ee768f9f3648878735ff8e52e46",
+    "topics/softmax/experiments/predictor_wide_range_ancestor_history_decomposition.py": "03d41021b48162bbc4234165fe2e629316155eed"
+  },
+  "capture_environment": {
+    "python": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "cases": [
+    {
+      "name": "zeros_sequential",
+      "values": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 4,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 4,
+            "right": 2
+          },
+          {
+            "left": 5,
+            "right": 3
+          }
+        ],
+        "root": 6
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "0"
+          },
+          "a_local": {
+            "fraction": "0"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "zeros_balanced",
+      "values": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 4,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 4,
+            "right": 5
+          }
+        ],
+        "root": 6
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "0"
+          },
+          "a_local": {
+            "fraction": "0"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "exact_sequential",
+      "values": [
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 8,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 8,
+            "right": 2
+          },
+          {
+            "left": 9,
+            "right": 3
+          },
+          {
+            "left": 10,
+            "right": 4
+          },
+          {
+            "left": 11,
+            "right": 5
+          },
+          {
+            "left": 12,
+            "right": 6
+          },
+          {
+            "left": 13,
+            "right": 7
+          }
+        ],
+        "root": 14
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "0"
+          },
+          "a_local": {
+            "fraction": "0"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "exact_balanced",
+      "values": [
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 8,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 8,
+            "right": 9
+          },
+          {
+            "left": 4,
+            "right": 5
+          },
+          {
+            "left": 6,
+            "right": 7
+          },
+          {
+            "left": 11,
+            "right": 12
+          },
+          {
+            "left": 10,
+            "right": 13
+          }
+        ],
+        "root": 14
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "0"
+          },
+          "a_local": {
+            "fraction": "0"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "midpoint_sequential",
+      "values": [
+        "1",
+        "1/16777216",
+        "1/16777216",
+        "1/33554432"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 4,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 4,
+            "right": 2
+          },
+          {
+            "left": 5,
+            "right": 3
+          }
+        ],
+        "root": 6
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "25/1125899906842624"
+          },
+          "a_local": {
+            "fraction": "9/1125899906842624"
+          },
+          "c_coherence": {
+            "fraction": "1/70368744177664"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.9000000000000p-46"
+          },
+          "c_total": {
+            "float_hex": "0x1.0000000000000p-46"
+          },
+          "c_parent": {
+            "float_hex": "0x1.8000000000000p-47"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.0000000000000p-48"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.8000000000000p-47"
+          },
+          "c_gap2": {
+            "float_hex": "0x1.0000000000000p-48"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.0000000000000p-46"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.8000000000000p-47"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.0000000000000p-48"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.0000000000000p-1"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.0000000000000p-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.0000000000000p-1"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "1/70368744177664"
+          },
+          "k_total": {
+            "fraction": "1/70368744177664"
+          },
+          "c_total": {
+            "fraction": "1/70368744177664"
+          },
+          "abs_k_mass": {
+            "fraction": "1/70368744177664"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            },
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            },
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            },
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            },
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            },
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            },
+            {
+              "float_hex": "0x1.0000000000000p-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "-0x1.0000000000000p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.bb67ae8584cabp-1"
+          }
+        }
+      }
+    },
+    {
+      "name": "midpoint_balanced",
+      "values": [
+        "1",
+        "1/16777216",
+        "1/16777216",
+        "1/33554432"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 4,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 4,
+            "right": 5
+          }
+        ],
+        "root": 6
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "1/1125899906842624"
+          },
+          "a_local": {
+            "fraction": "5/1125899906842624"
+          },
+          "c_coherence": {
+            "fraction": "-1/281474976710656"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.0000000000000p-50"
+          },
+          "c_total": {
+            "float_hex": "-0x1.0000000000000p-48"
+          },
+          "c_parent": {
+            "float_hex": "-0x1.0000000000000p-48"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "-0x1.0000000000000p-48"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.0000000000000p-48"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.0000000000000p-48"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.0000000000000p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.0000000000000p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.0000000000000p+0"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "-1/281474976710656"
+          },
+          "k_total": {
+            "fraction": "-1/281474976710656"
+          },
+          "c_total": {
+            "fraction": "-1/281474976710656"
+          },
+          "abs_k_mass": {
+            "fraction": "1/281474976710656"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x0.0p+0"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.0000000000000p+0"
+          }
+        }
+      }
+    },
+    {
+      "name": "nonuniform_sequential",
+      "values": [
+        "1/33554432",
+        "1/67108864",
+        "1/67108864",
+        "1/134217728",
+        "1"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 5,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 5,
+            "right": 2
+          },
+          {
+            "left": 6,
+            "right": 3
+          },
+          {
+            "left": 7,
+            "right": 4
+          }
+        ],
+        "root": 8
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "49/18014398509481984"
+          },
+          "a_local": {
+            "fraction": "49/18014398509481984"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.8800000000000p-49"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "nonuniform_balanced",
+      "values": [
+        "1/33554432",
+        "1/67108864",
+        "1/67108864",
+        "1/134217728",
+        "1"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 5,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 3,
+            "right": 4
+          },
+          {
+            "left": 2,
+            "right": 6
+          },
+          {
+            "left": 5,
+            "right": 7
+          }
+        ],
+        "root": 8
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "81/18014398509481984"
+          },
+          "a_local": {
+            "fraction": "41/18014398509481984"
+          },
+          "c_coherence": {
+            "fraction": "5/2251799813685248"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.4400000000000p-48"
+          },
+          "c_total": {
+            "float_hex": "0x1.4000000000000p-49"
+          },
+          "c_parent": {
+            "float_hex": "0x1.c000000000000p-50"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.8000000000000p-51"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.c000000000000p-50"
+          },
+          "c_gap2": {
+            "float_hex": "0x1.8000000000000p-51"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.4000000000000p-49"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.c000000000000p-50"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.8000000000000p-51"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.3333333333333p-1"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.3333333333333p-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.3333333333333p-1"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "5/2251799813685248"
+          },
+          "k_total": {
+            "fraction": "5/2251799813685248"
+          },
+          "c_total": {
+            "fraction": "5/2251799813685248"
+          },
+          "abs_k_mass": {
+            "fraction": "5/2251799813685248"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            },
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            },
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            },
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            },
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            },
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            },
+            {
+              "float_hex": "0x1.ccccccccccccdp-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.e5b9d136c6d96p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.0000000000000p+0"
+          }
+        }
+      }
+    },
+    {
+      "name": "subnormal_sequential",
+      "values": [
+        "8388607/713623846352979940529142984724747568191373312",
+        "1/713623846352979940529142984724747568191373312",
+        "1/713623846352979940529142984724747568191373312",
+        "1/713623846352979940529142984724747568191373312"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 4,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 4,
+            "right": 2
+          },
+          {
+            "left": 5,
+            "right": 3
+          }
+        ],
+        "root": 6
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "0"
+          },
+          "a_local": {
+            "fraction": "0"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "subnormal_balanced",
+      "values": [
+        "8388607/713623846352979940529142984724747568191373312",
+        "1/713623846352979940529142984724747568191373312",
+        "1/713623846352979940529142984724747568191373312",
+        "1/713623846352979940529142984724747568191373312"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 4,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 4,
+            "right": 5
+          }
+        ],
+        "root": 6
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "0"
+          },
+          "a_local": {
+            "fraction": "0"
+          },
+          "c_coherence": {
+            "fraction": "0"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_total": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_parent": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap2": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap3": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x0.0p+0"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "0"
+          },
+          "k_total": {
+            "fraction": "0"
+          },
+          "c_total": {
+            "fraction": "0"
+          },
+          "abs_k_mass": {
+            "fraction": "0"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            },
+            {
+              "float_hex": "0x1.0000000000000p+0"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            },
+            {
+              "float_hex": "nan"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "nan"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "nan"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide16_sequential",
+      "values": [
+        "4504275/18014398509481984",
+        "14703043/2199023255552",
+        "8486111/1048576",
+        "9119049/268435456",
+        "13709415/35184372088832",
+        "10623219/4503599627370496",
+        "10086779/8388608",
+        "7092865/9007199254740992",
+        "1125617/65536",
+        "6646295/68719476736",
+        "2026407/4194304",
+        "1885017/4194304",
+        "1578199/67108864",
+        "13526967/524288",
+        "9939767/35184372088832",
+        "4873693/2251799813685248"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 16,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 16,
+            "right": 2
+          },
+          {
+            "left": 17,
+            "right": 3
+          },
+          {
+            "left": 18,
+            "right": 4
+          },
+          {
+            "left": 19,
+            "right": 5
+          },
+          {
+            "left": 20,
+            "right": 6
+          },
+          {
+            "left": 21,
+            "right": 7
+          },
+          {
+            "left": 22,
+            "right": 8
+          },
+          {
+            "left": 23,
+            "right": 9
+          },
+          {
+            "left": 24,
+            "right": 10
+          },
+          {
+            "left": 25,
+            "right": 11
+          },
+          {
+            "left": 26,
+            "right": 12
+          },
+          {
+            "left": 27,
+            "right": 13
+          },
+          {
+            "left": 28,
+            "right": 14
+          },
+          {
+            "left": 29,
+            "right": 15
+          }
+        ],
+        "root": 30
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "1371352728264938120529/324518553658426726783156020576256"
+          },
+          "a_local": {
+            "fraction": "1580538115185366874813/324518553658426726783156020576256"
+          },
+          "c_coherence": {
+            "fraction": "-52296346730107188571/81129638414606681695789005144064"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.295d5e6279a9bp-38"
+          },
+          "c_total": {
+            "float_hex": "-0x1.6ae0f922f559ap-41"
+          },
+          "c_parent": {
+            "float_hex": "-0x1.48ec31b976a71p-40"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.26f76a4ff7f4cp-41"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "-0x1.48ec31b976a71p-40"
+          },
+          "c_gap2": {
+            "float_hex": "0x1.f23a21207dd14p-41"
+          },
+          "c_gap3": {
+            "float_hex": "-0x1.516cbcc788868p-42"
+          },
+          "c_gap4plus": {
+            "float_hex": "-0x1.1462c3660ccc0p-44"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.4bc743c1a1bd9p-36"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.2ec4f39559c02p-38"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.001606dc4b4d9p-36"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.e46d000ada591p-3"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.ffd50182a96f6p-2"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.5c9cce2ecb8e9p-1"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "-52296346730107188571/81129638414606681695789005144064"
+          },
+          "k_total": {
+            "fraction": "-52296346730107188571/81129638414606681695789005144064"
+          },
+          "c_total": {
+            "fraction": "-52296346730107188571/81129638414606681695789005144064"
+          },
+          "abs_k_mass": {
+            "fraction": "350135666953100946085/81129638414606681695789005144064"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.11c61bdd77c72p-2"
+            },
+            {
+              "float_hex": "0x1.11c61bdd77c72p-2"
+            },
+            {
+              "float_hex": "0x1.ff31fd04c6728p-2"
+            },
+            {
+              "float_hex": "0x1.446579064d445p-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.ca3e850ef0d63p+0"
+            },
+            {
+              "float_hex": "0x1.ca3e850ef0d63p+0"
+            },
+            {
+              "float_hex": "0x1.e6c68c6945657p-3"
+            },
+            {
+              "float_hex": "0x1.23288c59513bbp+0"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.bc38c980afdb6p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.3c469f1c3b488p-2"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide16_balanced",
+      "values": [
+        "4504275/18014398509481984",
+        "14703043/2199023255552",
+        "8486111/1048576",
+        "9119049/268435456",
+        "13709415/35184372088832",
+        "10623219/4503599627370496",
+        "10086779/8388608",
+        "7092865/9007199254740992",
+        "1125617/65536",
+        "6646295/68719476736",
+        "2026407/4194304",
+        "1885017/4194304",
+        "1578199/67108864",
+        "13526967/524288",
+        "9939767/35184372088832",
+        "4873693/2251799813685248"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 16,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 16,
+            "right": 17
+          },
+          {
+            "left": 4,
+            "right": 5
+          },
+          {
+            "left": 6,
+            "right": 7
+          },
+          {
+            "left": 19,
+            "right": 20
+          },
+          {
+            "left": 18,
+            "right": 21
+          },
+          {
+            "left": 8,
+            "right": 9
+          },
+          {
+            "left": 10,
+            "right": 11
+          },
+          {
+            "left": 23,
+            "right": 24
+          },
+          {
+            "left": 12,
+            "right": 13
+          },
+          {
+            "left": 14,
+            "right": 15
+          },
+          {
+            "left": 26,
+            "right": 27
+          },
+          {
+            "left": 25,
+            "right": 28
+          },
+          {
+            "left": 22,
+            "right": 29
+          }
+        ],
+        "root": 30
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "1004110125890339104081/324518553658426726783156020576256"
+          },
+          "a_local": {
+            "fraction": "586651551346631277245/324518553658426726783156020576256"
+          },
+          "c_coherence": {
+            "fraction": "104364643635926956709/81129638414606681695789005144064"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.b3769e3bf3536p-39"
+          },
+          "c_total": {
+            "float_hex": "0x1.6a166c9c1d6a2p-40"
+          },
+          "c_parent": {
+            "float_hex": "0x1.9b23426632560p-44"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.0bc2e2c760000p-40"
+          },
+          "c_disjoint": {
+            "float_hex": "0x1.128556b96912ep-42"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.9b23426632560p-44"
+          },
+          "c_gap2": {
+            "float_hex": "-0x1.ab45c9e840000p-41"
+          },
+          "c_gap3": {
+            "float_hex": "0x1.e165c7bb80000p-40"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.eafdce861443ap-38"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.d3388f4e41492p-41"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.edf091f8f0000p-39"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x1.733ce73fa834fp-39"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.47577da064261p-2"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.45045fdb2d93fp-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.b9ebdfe31672dp-1"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "165201819029883583/158456325028528675187087900672"
+          },
+          "k_total": {
+            "fraction": "165201819029883583/158456325028528675187087900672"
+          },
+          "c_total": {
+            "fraction": "104364643635926956709/81129638414606681695789005144064"
+          },
+          "abs_k_mass": {
+            "fraction": "323461529049861391/158456325028528675187087900672"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.81461f5a48958p-1"
+            },
+            {
+              "float_hex": "0x1.81461f5a48958p-1"
+            },
+            {
+              "float_hex": "0x1.d88464bbfdd71p-1"
+            },
+            {
+              "float_hex": "0x1.fe86dba0752fbp-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.792dce362df35p+0"
+            },
+            {
+              "float_hex": "0x1.792dce362df35p+0"
+            },
+            {
+              "float_hex": "0x1.23c4ccbb8dc6cp+0"
+            },
+            {
+              "float_hex": "0x1.fd1d906882d31p-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.086484eeb9654p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.4bcc626761c8bp-1"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide16_contiguous",
+      "values": [
+        "4504275/18014398509481984",
+        "14703043/2199023255552",
+        "8486111/1048576",
+        "9119049/268435456",
+        "13709415/35184372088832",
+        "10623219/4503599627370496",
+        "10086779/8388608",
+        "7092865/9007199254740992",
+        "1125617/65536",
+        "6646295/68719476736",
+        "2026407/4194304",
+        "1885017/4194304",
+        "1578199/67108864",
+        "13526967/524288",
+        "9939767/35184372088832",
+        "4873693/2251799813685248"
+      ],
+      "graph": {
+        "name": "random_contiguous_split_v1_seed_32000001",
+        "leaf_count": 16,
+        "nodes": [
+          {
+            "left": 1,
+            "right": 2
+          },
+          {
+            "left": 0,
+            "right": 16
+          },
+          {
+            "left": 5,
+            "right": 6
+          },
+          {
+            "left": 4,
+            "right": 18
+          },
+          {
+            "left": 3,
+            "right": 19
+          },
+          {
+            "left": 7,
+            "right": 8
+          },
+          {
+            "left": 9,
+            "right": 10
+          },
+          {
+            "left": 22,
+            "right": 11
+          },
+          {
+            "left": 21,
+            "right": 23
+          },
+          {
+            "left": 13,
+            "right": 14
+          },
+          {
+            "left": 12,
+            "right": 25
+          },
+          {
+            "left": 26,
+            "right": 15
+          },
+          {
+            "left": 24,
+            "right": 27
+          },
+          {
+            "left": 20,
+            "right": 28
+          },
+          {
+            "left": 17,
+            "right": 29
+          }
+        ],
+        "root": 30
+      },
+      "graph_family": "contiguous",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "contiguous",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "1371352728264938120529/324518553658426726783156020576256"
+          },
+          "a_local": {
+            "fraction": "1739104386026167974589/324518553658426726783156020576256"
+          },
+          "c_coherence": {
+            "fraction": "-91937914440307463515/81129638414606681695789005144064"
+          }
+        },
+        "structure": {
+          "graph_family": "contiguous",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.295d5e6279a9bp-38"
+          },
+          "c_total": {
+            "float_hex": "-0x1.3ef94584d5321p-40"
+          },
+          "c_parent": {
+            "float_hex": "0x1.d3701e6927a05p-39"
+          },
+          "c_far_ancestor": {
+            "float_hex": "-0x1.4ad5959e769b4p-38"
+          },
+          "c_disjoint": {
+            "float_hex": "0x1.15f3508ad7e94p-42"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.d3701e6927a05p-39"
+          },
+          "c_gap2": {
+            "float_hex": "-0x1.00a6fd96da6d1p-40"
+          },
+          "c_gap3": {
+            "float_hex": "-0x1.c8cdeb5880000p-39"
+          },
+          "c_gap4plus": {
+            "float_hex": "-0x1.3227046400000p-41"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.012d8f1208ecep-36"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.1fce015e0bd03p-38"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.413c6530c4b26p-37"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x1.89bdc22239fa5p-40"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.a2138565cbd8ap-2"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.970b51f4a3974p-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.dfc99ea090b2cp-1"
+          }
+        },
+        "history": {
+          "graph_family": "contiguous",
+          "c_ancestor": {
+            "fraction": "-109342143520910433/79228162514264337593543950336"
+          },
+          "k_total": {
+            "fraction": "-109342143520910433/79228162514264337593543950336"
+          },
+          "c_total": {
+            "fraction": "-91937914440307463515/81129638414606681695789005144064"
+          },
+          "abs_k_mass": {
+            "fraction": "199464529870302643/79228162514264337593543950336"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.3c8a3a2eb8b5cp-1"
+            },
+            {
+              "float_hex": "0x1.3c8a3a2eb8b5cp-1"
+            },
+            {
+              "float_hex": "0x1.af9c816f64a08p-1"
+            },
+            {
+              "float_hex": "0x1.f5d0000d69a69p-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.20b8476f95635p+0"
+            },
+            {
+              "float_hex": "0x1.20b8476f95635p+0"
+            },
+            {
+              "float_hex": "0x1.6f86118b68181p-1"
+            },
+            {
+              "float_hex": "0x1.ef96184e6118ap-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.7319238a914fep-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.5c192f5040639p-1"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide16_pair_merge",
+      "values": [
+        "4504275/18014398509481984",
+        "14703043/2199023255552",
+        "8486111/1048576",
+        "9119049/268435456",
+        "13709415/35184372088832",
+        "10623219/4503599627370496",
+        "10086779/8388608",
+        "7092865/9007199254740992",
+        "1125617/65536",
+        "6646295/68719476736",
+        "2026407/4194304",
+        "1885017/4194304",
+        "1578199/67108864",
+        "13526967/524288",
+        "9939767/35184372088832",
+        "4873693/2251799813685248"
+      ],
+      "graph": {
+        "name": "random_pair_merge_v1_seed_32000002",
+        "leaf_count": 16,
+        "nodes": [
+          {
+            "left": 4,
+            "right": 8
+          },
+          {
+            "left": 5,
+            "right": 15
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 10,
+            "right": 14
+          },
+          {
+            "left": 6,
+            "right": 18
+          },
+          {
+            "left": 9,
+            "right": 13
+          },
+          {
+            "left": 11,
+            "right": 17
+          },
+          {
+            "left": 20,
+            "right": 21
+          },
+          {
+            "left": 7,
+            "right": 12
+          },
+          {
+            "left": 0,
+            "right": 23
+          },
+          {
+            "left": 16,
+            "right": 24
+          },
+          {
+            "left": 1,
+            "right": 26
+          },
+          {
+            "left": 25,
+            "right": 27
+          },
+          {
+            "left": 22,
+            "right": 28
+          },
+          {
+            "left": 19,
+            "right": 29
+          }
+        ],
+        "root": 30
+      },
+      "graph_family": "pair_merge",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "pair_merge",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "10081600489255030515025/324518553658426726783156020576256"
+          },
+          "a_local": {
+            "fraction": "2968925901182210627325/324518553658426726783156020576256"
+          },
+          "c_coherence": {
+            "fraction": "1778168647018204971925/81129638414606681695789005144064"
+          }
+        },
+        "structure": {
+          "graph_family": "pair_merge",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.114327fb2f353p-35"
+          },
+          "c_total": {
+            "float_hex": "0x1.8194304d49844p-36"
+          },
+          "c_parent": {
+            "float_hex": "0x1.0626c7f7bbcdbp-37"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.d1da7b72647d9p-37"
+          },
+          "c_disjoint": {
+            "float_hex": "0x1.5938e98395ea2p-40"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.0626c7f7bbcdbp-37"
+          },
+          "c_gap2": {
+            "float_hex": "0x1.07e95ef9b5365p-39"
+          },
+          "c_gap3": {
+            "float_hex": "0x1.345754c6ee300p-37"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x1.6e233bb424000p-39"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.b28b7e8ee8eedp-35"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.5c97b45844cdbp-37"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.0a284df61138ap-35"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x1.44f50e0b1a0b3p-37"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.9842f8ce78cf3p-3"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.c8572506a3c0ap-2"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.442acd488eaafp-1"
+          }
+        },
+        "history": {
+          "graph_family": "pair_merge",
+          "c_ancestor": {
+            "fraction": "52458284057675647019/2535301200456458802993406410752"
+          },
+          "k_total": {
+            "fraction": "52458284057675647019/2535301200456458802993406410752"
+          },
+          "c_total": {
+            "fraction": "1778168647018204971925/81129638414606681695789005144064"
+          },
+          "abs_k_mass": {
+            "fraction": "55567326043599317035/2535301200456458802993406410752"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.443acd65025fcp-1"
+            },
+            {
+              "float_hex": "0x1.443acd65025fcp-1"
+            },
+            {
+              "float_hex": "0x1.e36a3e51e5d0dp-1"
+            },
+            {
+              "float_hex": "0x1.ee8f3b279d25ep-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.57721fdbc0142p-1"
+            },
+            {
+              "float_hex": "0x1.57721fdbc0142p-1"
+            },
+            {
+              "float_hex": "0x1.000863af45f64p+0"
+            },
+            {
+              "float_hex": "0x1.f442b40ba49bep-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.6c4b5ce915231p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.7e36b5f211282p-1"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide32_sequential",
+      "values": [
+        "12017821/134217728",
+        "3375461/262144",
+        "2811531/549755813888",
+        "5738675/4503599627370496",
+        "8570489/17179869184",
+        "13883703/68719476736",
+        "4587465/8796093022208",
+        "6663765/17592186044416",
+        "11399947/16777216",
+        "12482269/1125899906842624",
+        "12111473/18014398509481984",
+        "3615533/1125899906842624",
+        "7912343/268435456",
+        "15744231/18014398509481984",
+        "11833371/36028797018963968",
+        "2543275/2251799813685248",
+        "15884367/8796093022208",
+        "6497135/8589934592",
+        "5870831/2097152",
+        "204467/35184372088832",
+        "13808349/33554432",
+        "7532587/33554432",
+        "5008417/17592186044416",
+        "14413243/8388608",
+        "2579917/281474976710656",
+        "3102421/34359738368",
+        "12467501/17179869184",
+        "402139/4294967296",
+        "6543005/8388608",
+        "4221911/2097152",
+        "12048839/67108864",
+        "9293601/1125899906842624"
+      ],
+      "graph": {
+        "name": "sequential_left_to_right",
+        "leaf_count": 32,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 32,
+            "right": 2
+          },
+          {
+            "left": 33,
+            "right": 3
+          },
+          {
+            "left": 34,
+            "right": 4
+          },
+          {
+            "left": 35,
+            "right": 5
+          },
+          {
+            "left": 36,
+            "right": 6
+          },
+          {
+            "left": 37,
+            "right": 7
+          },
+          {
+            "left": 38,
+            "right": 8
+          },
+          {
+            "left": 39,
+            "right": 9
+          },
+          {
+            "left": 40,
+            "right": 10
+          },
+          {
+            "left": 41,
+            "right": 11
+          },
+          {
+            "left": 42,
+            "right": 12
+          },
+          {
+            "left": 43,
+            "right": 13
+          },
+          {
+            "left": 44,
+            "right": 14
+          },
+          {
+            "left": 45,
+            "right": 15
+          },
+          {
+            "left": 46,
+            "right": 16
+          },
+          {
+            "left": 47,
+            "right": 17
+          },
+          {
+            "left": 48,
+            "right": 18
+          },
+          {
+            "left": 49,
+            "right": 19
+          },
+          {
+            "left": 50,
+            "right": 20
+          },
+          {
+            "left": 51,
+            "right": 21
+          },
+          {
+            "left": 52,
+            "right": 22
+          },
+          {
+            "left": 53,
+            "right": 23
+          },
+          {
+            "left": 54,
+            "right": 24
+          },
+          {
+            "left": 55,
+            "right": 25
+          },
+          {
+            "left": 56,
+            "right": 26
+          },
+          {
+            "left": 57,
+            "right": 27
+          },
+          {
+            "left": 58,
+            "right": 28
+          },
+          {
+            "left": 59,
+            "right": 29
+          },
+          {
+            "left": 60,
+            "right": 30
+          },
+          {
+            "left": 61,
+            "right": 31
+          }
+        ],
+        "root": 62
+      },
+      "graph_family": "sequential",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "619722930907858721449/1298074214633706907132624082305024"
+          },
+          "a_local": {
+            "fraction": "6421718729938861198177/1298074214633706907132624082305024"
+          },
+          "c_coherence": {
+            "fraction": "-725249474878875309591/162259276829213363391578010288128"
+          }
+        },
+        "structure": {
+          "graph_family": "sequential",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.0cc31111d2b6fp-41"
+          },
+          "c_total": {
+            "float_hex": "-0x1.3a86ddd6ed6fap-38"
+          },
+          "c_parent": {
+            "float_hex": "0x1.50b2620b86e70p-42"
+          },
+          "c_far_ancestor": {
+            "float_hex": "-0x1.4f9203f7a5de0p-38"
+          },
+          "c_disjoint": {
+            "float_hex": "0x0.0p+0"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.50b2620b86e70p-42"
+          },
+          "c_gap2": {
+            "float_hex": "-0x1.c261f2b497f20p-44"
+          },
+          "c_gap3": {
+            "float_hex": "-0x1.6414c1c8b9c08p-39"
+          },
+          "c_gap4plus": {
+            "float_hex": "-0x1.2cfc3690ed3c2p-39"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.3f820fd1845c8p-34"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.8879fb5d65196p-38"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.26fa701bae0afp-34"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x0.0p+0"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.85c3accadec33p-4"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.5266cd957fb66p-2"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.0bb67b43a456cp-1"
+          }
+        },
+        "history": {
+          "graph_family": "sequential",
+          "c_ancestor": {
+            "fraction": "-725249474878875309591/162259276829213363391578010288128"
+          },
+          "k_total": {
+            "fraction": "-725249474878875309591/162259276829213363391578010288128"
+          },
+          "c_total": {
+            "fraction": "-725249474878875309591/162259276829213363391578010288128"
+          },
+          "abs_k_mass": {
+            "fraction": "1060884962939627854959/162259276829213363391578010288128"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.705dfe8e25a15p-3"
+            },
+            {
+              "float_hex": "0x1.4efa0a1e60e32p-2"
+            },
+            {
+              "float_hex": "0x1.0d767586bcac3p-1"
+            },
+            {
+              "float_hex": "0x1.5b95b1932160bp-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.0d6bd49f7be09p-2"
+            },
+            {
+              "float_hex": "0x1.e9ffd48daf7b4p-2"
+            },
+            {
+              "float_hex": "0x1.8a2a97cbe0562p-1"
+            },
+            {
+              "float_hex": "0x1.bcedf788216b9p-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.9817beaf24f27p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.9dbaa1dbaa1dcp-2"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide32_balanced",
+      "values": [
+        "12017821/134217728",
+        "3375461/262144",
+        "2811531/549755813888",
+        "5738675/4503599627370496",
+        "8570489/17179869184",
+        "13883703/68719476736",
+        "4587465/8796093022208",
+        "6663765/17592186044416",
+        "11399947/16777216",
+        "12482269/1125899906842624",
+        "12111473/18014398509481984",
+        "3615533/1125899906842624",
+        "7912343/268435456",
+        "15744231/18014398509481984",
+        "11833371/36028797018963968",
+        "2543275/2251799813685248",
+        "15884367/8796093022208",
+        "6497135/8589934592",
+        "5870831/2097152",
+        "204467/35184372088832",
+        "13808349/33554432",
+        "7532587/33554432",
+        "5008417/17592186044416",
+        "14413243/8388608",
+        "2579917/281474976710656",
+        "3102421/34359738368",
+        "12467501/17179869184",
+        "402139/4294967296",
+        "6543005/8388608",
+        "4221911/2097152",
+        "12048839/67108864",
+        "9293601/1125899906842624"
+      ],
+      "graph": {
+        "name": "balanced_contiguous_floor_half",
+        "leaf_count": 32,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 2,
+            "right": 3
+          },
+          {
+            "left": 32,
+            "right": 33
+          },
+          {
+            "left": 4,
+            "right": 5
+          },
+          {
+            "left": 6,
+            "right": 7
+          },
+          {
+            "left": 35,
+            "right": 36
+          },
+          {
+            "left": 34,
+            "right": 37
+          },
+          {
+            "left": 8,
+            "right": 9
+          },
+          {
+            "left": 10,
+            "right": 11
+          },
+          {
+            "left": 39,
+            "right": 40
+          },
+          {
+            "left": 12,
+            "right": 13
+          },
+          {
+            "left": 14,
+            "right": 15
+          },
+          {
+            "left": 42,
+            "right": 43
+          },
+          {
+            "left": 41,
+            "right": 44
+          },
+          {
+            "left": 38,
+            "right": 45
+          },
+          {
+            "left": 16,
+            "right": 17
+          },
+          {
+            "left": 18,
+            "right": 19
+          },
+          {
+            "left": 47,
+            "right": 48
+          },
+          {
+            "left": 20,
+            "right": 21
+          },
+          {
+            "left": 22,
+            "right": 23
+          },
+          {
+            "left": 50,
+            "right": 51
+          },
+          {
+            "left": 49,
+            "right": 52
+          },
+          {
+            "left": 24,
+            "right": 25
+          },
+          {
+            "left": 26,
+            "right": 27
+          },
+          {
+            "left": 54,
+            "right": 55
+          },
+          {
+            "left": 28,
+            "right": 29
+          },
+          {
+            "left": 30,
+            "right": 31
+          },
+          {
+            "left": 57,
+            "right": 58
+          },
+          {
+            "left": 56,
+            "right": 59
+          },
+          {
+            "left": 53,
+            "right": 60
+          },
+          {
+            "left": 46,
+            "right": 61
+          }
+        ],
+        "root": 62
+      },
+      "graph_family": "balanced",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "1920651822597438036649/1298074214633706907132624082305024"
+          },
+          "a_local": {
+            "fraction": "443455017634050303641/1298074214633706907132624082305024"
+          },
+          "c_coherence": {
+            "fraction": "92324800310211733313/81129638414606681695789005144064"
+          }
+        },
+        "structure": {
+          "graph_family": "balanced",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.a0799802695b7p-40"
+          },
+          "c_total": {
+            "float_hex": "0x1.4050e52e5c42ep-40"
+          },
+          "c_parent": {
+            "float_hex": "0x1.ef56054ac8406p-44"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.705ba56cf9c00p-42"
+          },
+          "c_disjoint": {
+            "float_hex": "0x1.8a8936fce29dcp-41"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.ef56054ac8406p-44"
+          },
+          "c_gap2": {
+            "float_hex": "0x1.3b16d60673800p-43"
+          },
+          "c_gap3": {
+            "float_hex": "0x1.a5a074d380000p-43"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x0.0p+0"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.593e7813404c1p-39"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.a3ab1d6096715p-42"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.2e57206c4b200p-41"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x1.b2669898356bbp-40"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.233911de9fc78p-2"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.7f3d0ba89ebaap-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.e199bb833cb78p-1"
+          }
+        },
+        "history": {
+          "graph_family": "balanced",
+          "c_ancestor": {
+            "fraction": "70932342290365035927/162259276829213363391578010288128"
+          },
+          "k_total": {
+            "fraction": "70932342290365035927/162259276829213363391578010288128"
+          },
+          "c_total": {
+            "fraction": "92324800310211733313/81129638414606681695789005144064"
+          },
+          "abs_k_mass": {
+            "fraction": "111573020975148782825/162259276829213363391578010288128"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.66adb69dc733ep-2"
+            },
+            {
+              "float_hex": "0x1.2301cba4ef0bdp-1"
+            },
+            {
+              "float_hex": "0x1.cb47e395f2a2fp-1"
+            },
+            {
+              "float_hex": "0x1.ff4930f26e8ecp-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.1a177a42d03efp-1"
+            },
+            {
+              "float_hex": "0x1.c9bd4cdc33815p-1"
+            },
+            {
+              "float_hex": "0x1.c6ebf0f489238p-1"
+            },
+            {
+              "float_hex": "0x1.fee0e02b62feep-1"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.50f19e6b47bd4p-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.9f948fc321c0ap-1"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide32_contiguous",
+      "values": [
+        "12017821/134217728",
+        "3375461/262144",
+        "2811531/549755813888",
+        "5738675/4503599627370496",
+        "8570489/17179869184",
+        "13883703/68719476736",
+        "4587465/8796093022208",
+        "6663765/17592186044416",
+        "11399947/16777216",
+        "12482269/1125899906842624",
+        "12111473/18014398509481984",
+        "3615533/1125899906842624",
+        "7912343/268435456",
+        "15744231/18014398509481984",
+        "11833371/36028797018963968",
+        "2543275/2251799813685248",
+        "15884367/8796093022208",
+        "6497135/8589934592",
+        "5870831/2097152",
+        "204467/35184372088832",
+        "13808349/33554432",
+        "7532587/33554432",
+        "5008417/17592186044416",
+        "14413243/8388608",
+        "2579917/281474976710656",
+        "3102421/34359738368",
+        "12467501/17179869184",
+        "402139/4294967296",
+        "6543005/8388608",
+        "4221911/2097152",
+        "12048839/67108864",
+        "9293601/1125899906842624"
+      ],
+      "graph": {
+        "name": "random_contiguous_split_v1_seed_32000001",
+        "leaf_count": 32,
+        "nodes": [
+          {
+            "left": 0,
+            "right": 1
+          },
+          {
+            "left": 4,
+            "right": 5
+          },
+          {
+            "left": 3,
+            "right": 33
+          },
+          {
+            "left": 2,
+            "right": 34
+          },
+          {
+            "left": 32,
+            "right": 35
+          },
+          {
+            "left": 6,
+            "right": 7
+          },
+          {
+            "left": 8,
+            "right": 9
+          },
+          {
+            "left": 11,
+            "right": 12
+          },
+          {
+            "left": 10,
+            "right": 39
+          },
+          {
+            "left": 38,
+            "right": 40
+          },
+          {
+            "left": 14,
+            "right": 15
+          },
+          {
+            "left": 13,
+            "right": 42
+          },
+          {
+            "left": 41,
+            "right": 43
+          },
+          {
+            "left": 17,
+            "right": 18
+          },
+          {
+            "left": 19,
+            "right": 20
+          },
+          {
+            "left": 21,
+            "right": 22
+          },
+          {
+            "left": 46,
+            "right": 47
+          },
+          {
+            "left": 45,
+            "right": 48
+          },
+          {
+            "left": 23,
+            "right": 24
+          },
+          {
+            "left": 50,
+            "right": 25
+          },
+          {
+            "left": 49,
+            "right": 51
+          },
+          {
+            "left": 16,
+            "right": 52
+          },
+          {
+            "left": 27,
+            "right": 28
+          },
+          {
+            "left": 26,
+            "right": 54
+          },
+          {
+            "left": 53,
+            "right": 55
+          },
+          {
+            "left": 30,
+            "right": 31
+          },
+          {
+            "left": 29,
+            "right": 57
+          },
+          {
+            "left": 56,
+            "right": 58
+          },
+          {
+            "left": 44,
+            "right": 59
+          },
+          {
+            "left": 37,
+            "right": 60
+          },
+          {
+            "left": 36,
+            "right": 61
+          }
+        ],
+        "root": 62
+      },
+      "graph_family": "contiguous",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "contiguous",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "1920651822597438036649/1298074214633706907132624082305024"
+          },
+          "a_local": {
+            "fraction": "678781433984647145481/1298074214633706907132624082305024"
+          },
+          "c_coherence": {
+            "fraction": "38808449644149715349/40564819207303340847894502572032"
+          }
+        },
+        "structure": {
+          "graph_family": "contiguous",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.a0799802695b7p-40"
+          },
+          "c_total": {
+            "float_hex": "0x1.0d49a7aaed96ep-40"
+          },
+          "c_parent": {
+            "float_hex": "0x1.2e8d61865ddbap-42"
+          },
+          "c_far_ancestor": {
+            "float_hex": "-0x1.33b15b4bc8096p-44"
+          },
+          "c_disjoint": {
+            "float_hex": "0x1.a9c2c9fc25410p-41"
+          },
+          "c_gap1": {
+            "float_hex": "0x1.2e8d61865ddbap-42"
+          },
+          "c_gap2": {
+            "float_hex": "-0x1.bcfe84931ebcdp-43"
+          },
+          "c_gap3": {
+            "float_hex": "-0x1.e9176c80682c6p-44"
+          },
+          "c_gap4plus": {
+            "float_hex": "0x1.0bd8c696b7672p-42"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.0713ffb5e2d33p-38"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.c1b24a94adbabp-41"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.2406862bb6522p-40"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x1.0bb829b0bf0ecp-39"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.2a279fdebcde1p-2"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.6420c548bb41ap-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.be08c6a9950b9p-1"
+          }
+        },
+        "history": {
+          "graph_family": "contiguous",
+          "c_ancestor": {
+            "fraction": "65033151582036111363/324518553658426726783156020576256"
+          },
+          "k_total": {
+            "fraction": "65033151582036111363/324518553658426726783156020576256"
+          },
+          "c_total": {
+            "fraction": "38808449644149715349/40564819207303340847894502572032"
+          },
+          "abs_k_mass": {
+            "fraction": "187101992668978417861/324518553658426726783156020576256"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.b5353e3c89177p-2"
+            },
+            {
+              "float_hex": "0x1.4d59920d9c18dp-1"
+            },
+            {
+              "float_hex": "0x1.c877cdcae977ap-1"
+            },
+            {
+              "float_hex": "0x1.fc88e51b92c38p-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.3a76ed1d1c364p+0"
+            },
+            {
+              "float_hex": "0x1.df8727b9e6462p+0"
+            },
+            {
+              "float_hex": "0x1.2e6bc8f60f309p+0"
+            },
+            {
+              "float_hex": "0x1.0066385d593abp+0"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.5121f1d345e9ap-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.86f47c3a7de45p-1"
+          }
+        }
+      }
+    },
+    {
+      "name": "wide32_pair_merge",
+      "values": [
+        "12017821/134217728",
+        "3375461/262144",
+        "2811531/549755813888",
+        "5738675/4503599627370496",
+        "8570489/17179869184",
+        "13883703/68719476736",
+        "4587465/8796093022208",
+        "6663765/17592186044416",
+        "11399947/16777216",
+        "12482269/1125899906842624",
+        "12111473/18014398509481984",
+        "3615533/1125899906842624",
+        "7912343/268435456",
+        "15744231/18014398509481984",
+        "11833371/36028797018963968",
+        "2543275/2251799813685248",
+        "15884367/8796093022208",
+        "6497135/8589934592",
+        "5870831/2097152",
+        "204467/35184372088832",
+        "13808349/33554432",
+        "7532587/33554432",
+        "5008417/17592186044416",
+        "14413243/8388608",
+        "2579917/281474976710656",
+        "3102421/34359738368",
+        "12467501/17179869184",
+        "402139/4294967296",
+        "6543005/8388608",
+        "4221911/2097152",
+        "12048839/67108864",
+        "9293601/1125899906842624"
+      ],
+      "graph": {
+        "name": "random_pair_merge_v1_seed_32000002",
+        "leaf_count": 32,
+        "nodes": [
+          {
+            "left": 8,
+            "right": 17
+          },
+          {
+            "left": 10,
+            "right": 16
+          },
+          {
+            "left": 5,
+            "right": 33
+          },
+          {
+            "left": 4,
+            "right": 21
+          },
+          {
+            "left": 22,
+            "right": 30
+          },
+          {
+            "left": 13,
+            "right": 29
+          },
+          {
+            "left": 6,
+            "right": 31
+          },
+          {
+            "left": 18,
+            "right": 24
+          },
+          {
+            "left": 25,
+            "right": 39
+          },
+          {
+            "left": 37,
+            "right": 38
+          },
+          {
+            "left": 9,
+            "right": 28
+          },
+          {
+            "left": 14,
+            "right": 19
+          },
+          {
+            "left": 2,
+            "right": 15
+          },
+          {
+            "left": 27,
+            "right": 32
+          },
+          {
+            "left": 36,
+            "right": 41
+          },
+          {
+            "left": 7,
+            "right": 40
+          },
+          {
+            "left": 42,
+            "right": 43
+          },
+          {
+            "left": 3,
+            "right": 35
+          },
+          {
+            "left": 34,
+            "right": 44
+          },
+          {
+            "left": 45,
+            "right": 47
+          },
+          {
+            "left": 49,
+            "right": 50
+          },
+          {
+            "left": 12,
+            "right": 20
+          },
+          {
+            "left": 46,
+            "right": 48
+          },
+          {
+            "left": 0,
+            "right": 51
+          },
+          {
+            "left": 1,
+            "right": 26
+          },
+          {
+            "left": 23,
+            "right": 53
+          },
+          {
+            "left": 56,
+            "right": 57
+          },
+          {
+            "left": 52,
+            "right": 58
+          },
+          {
+            "left": 54,
+            "right": 55
+          },
+          {
+            "left": 11,
+            "right": 60
+          },
+          {
+            "left": 59,
+            "right": 61
+          }
+        ],
+        "root": 62
+      },
+      "graph_family": "pair_merge",
+      "graph_seed": 32000001,
+      "expected": {
+        "ac": {
+          "graph_family": "pair_merge",
+          "graph_seed": 32000001,
+          "e2": {
+            "fraction": "619722930907858721449/1298074214633706907132624082305024"
+          },
+          "a_local": {
+            "fraction": "315689093665581345953/1298074214633706907132624082305024"
+          },
+          "c_coherence": {
+            "fraction": "38004229655284671937/162259276829213363391578010288128"
+          }
+        },
+        "structure": {
+          "graph_family": "pair_merge",
+          "graph_seed": 32000001,
+          "e2": {
+            "float_hex": "0x1.0cc31111d2b6fp-41"
+          },
+          "c_total": {
+            "float_hex": "0x1.07b512c21acdfp-42"
+          },
+          "c_parent": {
+            "float_hex": "-0x1.ed375525ac34ap-47"
+          },
+          "c_far_ancestor": {
+            "float_hex": "0x1.6115c8da4af4bp-43"
+          },
+          "c_disjoint": {
+            "float_hex": "0x1.9a4fa3f88ad50p-44"
+          },
+          "c_gap1": {
+            "float_hex": "-0x1.ed375525ac34ap-47"
+          },
+          "c_gap2": {
+            "float_hex": "0x1.624cb42a1df10p-43"
+          },
+          "c_gap3": {
+            "float_hex": "0x1.63767313388d0p-51"
+          },
+          "c_gap4plus": {
+            "float_hex": "-0x1.4d30e1731a6dbp-50"
+          },
+          "abs_pair_mass": {
+            "float_hex": "0x1.1a1e2cca14c4cp-40"
+          },
+          "abs_parent_mass": {
+            "float_hex": "0x1.cb03f8e8af6e7p-45"
+          },
+          "abs_far_ancestor_mass": {
+            "float_hex": "0x1.950e839f178c9p-43"
+          },
+          "abs_disjoint_mass": {
+            "float_hex": "0x1.b248791dd8af7p-41"
+          },
+          "top1pct_abs_mass_share": {
+            "float_hex": "0x1.b45b1c025e105p-2"
+          },
+          "top5pct_abs_mass_share": {
+            "float_hex": "0x1.94c3f79881fb4p-1"
+          },
+          "top10pct_abs_mass_share": {
+            "float_hex": "0x1.d42d9a226635ap-1"
+          }
+        },
+        "history": {
+          "graph_family": "pair_merge",
+          "c_ancestor": {
+            "fraction": "181415738062430927/1267650600228229401496703205376"
+          },
+          "k_total": {
+            "fraction": "181415738062430927/1267650600228229401496703205376"
+          },
+          "c_total": {
+            "fraction": "38004229655284671937/162259276829213363391578010288128"
+          },
+          "abs_k_mass": {
+            "fraction": "1773077580288139331/10141204801825835211973625643008"
+          },
+          "top_abs_k_mass": [
+            {
+              "float_hex": "0x1.937e812ae166bp-1"
+            },
+            {
+              "float_hex": "0x1.b574833fa073cp-1"
+            },
+            {
+              "float_hex": "0x1.ea6114dfbd62bp-1"
+            },
+            {
+              "float_hex": "0x1.fc5d1f0170a09p-1"
+            }
+          ],
+          "top_signed_k_recovery": [
+            {
+              "float_hex": "0x1.ecf260d71baebp-1"
+            },
+            {
+              "float_hex": "0x1.0b37e6f73c9dcp+0"
+            },
+            {
+              "float_hex": "0x1.081b460e21045p+0"
+            },
+            {
+              "float_hex": "0x1.004c5d6a06eafp+0"
+            }
+          ],
+          "rho_abs_k_vs_abs_delta": {
+            "float_hex": "0x1.693f10387ddcfp-1"
+          },
+          "rho_abs_k_vs_abs_history": {
+            "float_hex": "0x1.1bb05cf88a20cp-1"
+          }
+        }
+      }
+    }
+  ],
+  "cli": {
+    "ac": {
+      "argv": [
+        "--width",
+        "64",
+        "--graphs",
+        "4",
+        "--input-seeds",
+        "22260821"
+      ],
+      "exit_code": 0,
+      "stdout": "Wide-range A/C error decomposition\nCALIBRATION ONLY — exact local FP32 residuals are intentionally inspected\nA=sum(delta^2), C=E^2-A=2*sum_{u<v}(delta_u delta_v)\nwidth=64 graphs_per_input=4 input_seeds=22260821\n\nINPUT seed=22260821 family=wide_range_random width=64\n  all        n= 4 rho_A_vs_E2=+0.894 rho_C_vs_E2=+0.447 stdC/stdA=0.543 mean|C/A|=0.207 frac_C_pos=0.250 frac_C_neg=0.750\n  contiguous n= 2 rho_A_vs_E2=n/a rho_C_vs_E2=n/a stdC/stdA=1.000 mean|C/A|=0.308 frac_C_pos=0.000 frac_C_neg=1.000\n  pair_merge n= 2 rho_A_vs_E2=n/a rho_C_vs_E2=n/a stdC/stdA=1.000 mean|C/A|=0.106 frac_C_pos=0.500 frac_C_neg=0.500\n\nSEED SUMMARY all-tree decomposition mean/min/max\n  rho_A_vs_E2 mean=+0.894 min=+0.894 max=+0.894\n  rho_C_vs_E2 mean=+0.447 min=+0.447 max=+0.447\n  stdC/stdA mean=0.543 min=0.543 max=0.543\n"
+    },
+    "structure": {
+      "argv": [
+        "--width",
+        "64",
+        "--graphs",
+        "4",
+        "--input-seeds",
+        "22260821"
+      ],
+      "exit_code": 0,
+      "stdout": "Wide-range coherence structure decomposition\nCALIBRATION ONLY — exact local FP32 residuals are intentionally inspected\nC = parent-child + far-ancestor + disjoint; ancestor also split by graph gap\nwidth=64 graphs_per_input=4 input_seeds=22260821\n\nINPUT seed=22260821 family=wide_range_random width=64\n  all        n= 4 rho_parent=+0.000 rho_farAnc=+0.447 rho_ancestor=+0.447 rho_disjoint=-0.447\n    std/component_vs_C parent=1.411 farAnc=1.594 ancestor=1.418 disjoint=0.421 mean_abs_pair_mass_share ancestor=0.675 disjoint=0.325\n    top_pair_abs_mass_share top1%=0.552 top5%=0.932 top10%=0.987\n    ancestor_gap_rho_vs_E2 gap1=+0.000 gap2=+0.000 gap3=+0.447 gap4+=-0.447\n  contiguous n= 2 rho_parent=n/a rho_farAnc=n/a rho_ancestor=n/a rho_disjoint=n/a\n    std/component_vs_C parent=0.389 farAnc=1.773 ancestor=1.384 disjoint=0.384 mean_abs_pair_mass_share ancestor=0.620 disjoint=0.380\n    top_pair_abs_mass_share top1%=0.513 top5%=0.938 top10%=0.989\n    ancestor_gap_rho_vs_E2 gap1=n/a gap2=n/a gap3=n/a gap4+=n/a\n  pair_merge n= 2 rho_parent=n/a rho_farAnc=n/a rho_ancestor=n/a rho_disjoint=n/a\n    std/component_vs_C parent=2.633 farAnc=1.108 ancestor=1.525 disjoint=0.525 mean_abs_pair_mass_share ancestor=0.730 disjoint=0.270\n    top_pair_abs_mass_share top1%=0.590 top5%=0.927 top10%=0.984\n    ancestor_gap_rho_vs_E2 gap1=n/a gap2=n/a gap3=n/a gap4+=n/a\n\n"
+    },
+    "history": {
+      "argv": [
+        "--width",
+        "64",
+        "--graphs",
+        "4",
+        "--input-seeds",
+        "22260821"
+      ],
+      "exit_code": 0,
+      "stdout": "Wide-range ancestor/history coherence decomposition\nCALIBRATION ONLY — exact FP32 residuals/history are intentionally inspected\nTesting C_ancestor == 2 sum_v delta_v H_v and concentration of K_v\nwidth=64 graphs_per_input=4 input_seeds=22260821\n\nINPUT seed=22260821 family=wide_range_random width=64\n  all        n= 4 identity=4/4 mean_Cancestor/C=+5.585\n    top|K|_absMass[1/5/10/20%]=0.503/0.873/0.954/0.995 top|K|_signedRecovery[1/5/10/20%]=2.917/1.120/1.069/1.010\n    mean_node_rho |K|~|delta|=+0.727 |K|~|H|=+0.853\n  contiguous n= 2 identity=2/2 mean_Cancestor/C=+10.144\n    top|K|_absMass[1/5/10/20%]=0.443/0.882/0.969/0.999 top|K|_signedRecovery[1/5/10/20%]=4.169/1.098/1.168/0.995\n    mean_node_rho |K|~|delta|=+0.718 |K|~|H|=+0.835\n  pair_merge n= 2 identity=2/2 mean_Cancestor/C=+1.027\n    top|K|_absMass[1/5/10/20%]=0.563/0.863/0.940/0.991 top|K|_signedRecovery[1/5/10/20%]=1.665/1.142/0.970/1.025\n    mean_node_rho |K|~|delta|=+0.737 |K|~|H|=+0.871\n\n"
+    }
+  }
+}

@@ -51,7 +51,10 @@
 
 从仓库根目录运行：
 
-    python -m unittest discover -s topics/taylor-expansion/experiments -p "test_*.py" -v
+    python tools/run_tests.py --suite taylor -v
+
+Regression tests live in `../tests/`; the older full unittest discovery command
+remains supported by the compatibility entry in this directory.
 
 测试覆盖相关噪声的极端情形、固定种子可复现性、无噪声极限、MSE 分解、经验—理论方差一致性和非法输入。
 
