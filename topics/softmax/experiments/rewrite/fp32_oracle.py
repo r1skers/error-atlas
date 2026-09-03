@@ -10,12 +10,13 @@ Explain-back
 误差来源（oracle 记账的是哪一种误差、不记哪一种）：oracle 只记录树中的加法行为中计算产生的舍入误差，而不考虑加法元素前身的元输入的表示误差。
 伪代码：
 
-Prediction record（跑差分测试前写）
+Prediction record（跑差分测试后回填）
 ------------------------------------
-Direction：
-Scale：
-Boundary（哪类输入最可能让实现出错）：目前看是
-Failure signature（如果错了，最可能先看到什么）：
+Direction：舍入结果落在离 value 最近的 FP32 格点上，误差绝对值不超过半个量子。
+Scale：单次舍入误差在 O(半个 ULP) 量级；整树最终误差是各节点 δ 之和。
+Boundary（哪类输入最可能让实现出错）：tie（正中间）、次正规区、进位跨 binade。
+Failure signature（如果错了，最可能先看到什么）：强制 tie 的用例最先报错，
+  或次正规区量子用错导致小值成片偏移。实测第一次实现即通过，三类边界都没出错。
 
 可以直接使用的 binary32 格式事实（格式常识，不是算法）
 ------------------------------------------------------------
@@ -78,12 +79,17 @@ def round_to_fp32(value: Fraction) -> Fraction:
     subnormals and the carry into the next binade. Raise ``ValueError`` for negative
     input and ``OverflowError`` when the rounded result would exceed ``MAX_FINITE``.
 
-    需要自己想清楚的点（不是伪代码）：
-      - 零怎么处理；  --> 不用处理？
-      - 给定 value，它落在哪个 binade，这个 binade 的量子（最小间隔）是多少； -->这个就看舍入的方法函数？
-      - 次正规区的量子和正规区有什么不同；  -->不同的幂？
-      - 把 value/量子 舍入成整数时，tie 的判定和偶数选择；  --> 最后一位保持偶数
-      - 舍入后有效数字变成 2^24 时会发生什么。 -->超过可以表示的上限
+    需要自己想清楚的点（回填后的理解）：
+      - 零怎么处理；  --> 提前返回 0，因为 0 没有 binade（log2 无定义）。
+      - 给定 value，它落在哪个 binade，量子是多少；  --> e = floor(log2 value)，
+        用分子分母 bit_length 之差先猜再校正一次；正规区量子 = 2^(e-23)。
+      - 次正规区的量子和正规区有什么不同；  --> e < -126 时量子不再随 e 缩小，
+        固定为 2^-149（即两者取大）。
+      - value/量子 舍入成整数时的 tie 与偶数选择；  --> r=1/2 时取偶，
+        这里直接依赖 Fraction 上 round() 的 half-to-even 语义。
+      - 舍入后有效数字变成 2^24 时会发生什么。  --> 不是溢出，是自然进位到
+        下一个 binade（2^24 * 2^(e-23) = 2^(e+1)），无需特殊处理；真正的溢出
+        只在结果超过 MAX_FINITE 时发生，最后统一检查一次。
     """
     if value < 0:
         raise ValueError("Input must be nonnegative.")
@@ -119,9 +125,12 @@ def is_stored_fp32(value: Fraction) -> bool:
 
     这是输入合同：为什么 oracle 要求叶子已经是 FP32？答案写进 explain-back。
     """
-    if round_to_fp32(value) != value:
+    if value < 0:
         return False
-    return True
+    try:
+        return round_to_fp32(value) == value
+    except OverflowError:
+        return False
 
 
 def reduce_tree(values: tuple[Fraction, ...], tree: Tree) -> Trace:
