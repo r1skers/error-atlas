@@ -154,7 +154,8 @@ score-only 不等于生产低成本；成本结论只能用于记录的 Python �
 | --- | --- |
 | [rewrite package](rewrite/__init__.py) | 重写分区入口 |
 | [rewrite/fp32_oracle](rewrite/fp32_oracle.py) | RN-even 舍入与整树精确求值（已通过差分测试） |
-| [rewrite/coherence](rewrite/coherence.py) | A/C 分解与 C 主导统计（骨架，待用户实现） |
+| [rewrite/coherence](rewrite/coherence.py) | A/C 分解与 C 主导统计（已通过差分与复现测试） |
+| [rewrite/generators](rewrite/generators.py) | 树与受控输入生成器，seed schedule 为冻结边界（骨架，待用户实现） |
 
 ## 新增代码的规则
 

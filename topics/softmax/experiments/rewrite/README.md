@@ -18,7 +18,7 @@
 | --- | --- | --- | --- |
 | 1 | [fp32_oracle.py](fp32_oracle.py)：RN-even 舍入与整树精确求值 | 旧 oracle 与硬件 float32 | 通过差分测试（2026-09-03） |
 | 2 | [coherence.py](coherence.py)：A/C 分解，复现"C 主导"发现 | reduction_analysis 的 A/C；宽度 256 上 std C / std A > 1.5 | 通过差分与复现测试（2026-09-03） |
-| 3 | 树生成器与受控输入（seed schedule 必须精确一致） | 旧生成器 | 未开始 |
+| 3 | [generators.py](generators.py)：树与受控输入生成器 | 旧生成器；冻结 v2 的 192 组 stored_leaf_bits 与 graph_sha256 | 骨架已建 |
 | 4 | Q_8/12 分数与 B=3 cell beam | 192 个冻结 v2 组的决策与分数 | 未开始 |
 | 5 | 独立重算 v2 的 paired regret 与 bootstrap 区间 | 冻结 heldout 汇总 | 未开始 |
 
