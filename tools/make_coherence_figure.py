@@ -49,12 +49,12 @@ def measure() -> list[dict]:
 
 
 def render(rows: list[dict]) -> str:
-    W, H = 720, 420
-    pad_l, pad_r, pad_t, pad_b = 70, 24, 70, 70
+    W, H = 720, 450
+    pad_l, pad_r, pad_t, pad_b = 70, 24, 104, 74
     plot_w = W - pad_l - pad_r
     plot_h = H - pad_t - pad_b
     scale = 1e10  # display units: 1e-10
-    ymax = max(max(r["std_a"], r["std_c"]) for r in rows) * scale * 1.18
+    ymax = max(max(r["std_a"], r["std_c"]) for r in rows) * scale * 1.15
     n = len(rows)
     group_w = plot_w / n
     bar_w = group_w * 0.30
@@ -79,6 +79,13 @@ def render(rows: list[dict]) -> str:
         f"Std. dev. across {TREES} trees per input, width {WIDTH}. "
         f"E² = A (local energy) + C (sign coherence).</text>"
     )
+    # horizontal legend row on its own line, above the plot (no bar overlap)
+    ly = 70
+    p.append(f'<rect x="{pad_l}" y="{ly}" width="12" height="12" fill="{A_COLOR}" rx="2"/>')
+    p.append(f'<text x="{pad_l+18}" y="{ly+11}" fill="{INK}">std(A) local energy</text>')
+    lx2 = pad_l + 165
+    p.append(f'<rect x="{lx2}" y="{ly}" width="12" height="12" fill="{C_COLOR}" rx="2"/>')
+    p.append(f'<text x="{lx2+18}" y="{ly+11}" fill="{INK}">std(C) sign coherence</text>')
     # y grid + ticks
     ticks = 4
     for i in range(ticks + 1):
@@ -120,14 +127,8 @@ def render(rows: list[dict]) -> str:
             f'<text x="{cx:.1f}" y="{pad_t+plot_h+20:.1f}" text-anchor="middle" '
             f'fill="{MUTE}" font-size="11">{label}</text>'
         )
-    # legend
-    lx, ly = W - pad_r - 210, pad_t + 6
-    p.append(f'<rect x="{lx}" y="{ly}" width="12" height="12" fill="{A_COLOR}" rx="2"/>')
-    p.append(f'<text x="{lx+18}" y="{ly+11}" fill="{INK}">std(A) local energy</text>')
-    p.append(f'<rect x="{lx}" y="{ly+20}" width="12" height="12" fill="{C_COLOR}" rx="2"/>')
-    p.append(f'<text x="{lx+18}" y="{ly+31}" fill="{INK}">std(C) sign coherence</text>')
     p.append(
-        f'<text x="{pad_l}" y="{H-18}" fill="{MUTE}" font-size="11">'
+        f'<text x="{pad_l}" y="{H-16}" fill="{MUTE}" font-size="11">'
         f"The number above each pair is std(C)/std(A): C varies 2.5–3.6× more than A, "
         f"so it decides which tree is best.</text>"
     )
