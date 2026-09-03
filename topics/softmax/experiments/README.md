@@ -146,6 +146,16 @@ score-only 不等于生产低成本；成本结论只能用于记录的 Python �
 | [ulp_energy_convergence_diagnostic ](predictor_ulp_energy_convergence_diagnostic.py) | ULP energy convergence |
 | [ulp_energy_cost_pareto_diagnostic ](predictor_ulp_energy_cost_pareto_diagnostic.py) | cost / quality Pareto |
 
+## 闭卷重写（进行中）
+
+独立复现分区，用户主写核心，旧模块只作测试参考；规则与顺序见 [rewrite/README.md](rewrite/README.md)。
+
+| 模块 | 用途 |
+| --- | --- |
+| [rewrite package](rewrite/__init__.py) | 重写分区入口 |
+| [rewrite/fp32_oracle](rewrite/fp32_oracle.py) | RN-even 舍入与整树精确求值（已通过差分测试） |
+| [rewrite/coherence](rewrite/coherence.py) | A/C 分解与 C 主导统计（骨架，待用户实现） |
+
 ## 新增代码的规则
 
 新增 module 时同时更新本索引并添加测试。维护测试会检查 source coverage，
