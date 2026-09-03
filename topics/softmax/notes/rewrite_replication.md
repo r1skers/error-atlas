@@ -66,3 +66,31 @@
   属工程管线，由 test_predictor_fixed_k8_beam_inference 的 8-ULP 测试独立守住，本次不重写。
 - **验证**：全部 192 组、每组 64 棵树逐值复现冻结 v2 的 fixed_q_score、fixed_energy_capture、
   shortlisted、q_selected。
+
+## 第 5 步：regret、paired improvement 与分层 bootstrap（收官）
+
+- **target = (E / root_ulp)²**：误差换成「几个根 ULP」再平方，无量纲、跨宽度可比，
+  平方延续 E² 框架并突出大误差。越小越好。
+- **normalized regret**：一组内 (target[选中]-best)/(worst-best)，选到最好=0、最差=1；
+  归一化让不同组（误差绝对尺度不同）可比。
+- **paired improvement**：每组 q_regret - beam_regret 再平均。组内相减消掉「这组本身好不好选」
+  的巨大组间方差，只留「同题上 beam 比 Q 好多少」，是 v2 的 primary 指标。
+- **stratified group bootstrap**：按宽度分层、层内对组有放回重采样、算均值、重复 20000 次、
+  取 2.5/97.5 分位；分层保持三个宽度的组数不变。下界 > 0 即 positive evidence。RNG 序列
+  （seed 20260823、层的遍历顺序、每层 choice 次数）是冻结边界。
+- **独立性**：target 由重写 oracle 算、q_selected 由重写 Q 选、beam_selected 从冻结 CSV 取；
+  regret/primary/bootstrap 全部独立重算，不读 CSV 现成的 q_regret/beam_regret。
+- **源码与冻结 artifact 漂移（1 ULP）**：冻结 CSV 的 target 是 `float((E/root_ulp)**2)`
+  （精确平方再舍入一次），而当前 `_beam_tree` 源码是 `float(E/root_ulp)**2`（舍入两次），
+  在个别行差 1 ULP。这意味着当前旧源码今天重跑也无法逐位重现冻结 CSV，冻结证据早于该源码状态。
+  复现按冻结定义（精确平方）计算 target。这是「源码可能漂移、以冻结 artifact 为准」的实例。
+- **验证**：重算的 primary 与 95% CI 逐位等于冻结 metric_summary overall 的
+  +0.057699 与 [+0.018713, +0.097991]，下界 > 0。「beam 窄赢 Q」独立确认，不依赖实现 bug。
+
+## 复现结论
+
+五步全部通过：exact oracle、A/C 分解与 C 主导、受控生成器与冻结 seed、Q_8/12 分数与
+shortlist、regret 与分层 bootstrap headline，均由闭卷重写独立复现冻结 v2 证据。
+过程中在重写侧抓到 4 个实现 bug（ulp 返回值、root-band size 下标、手写求和 vs 内置 sum、
+target 平方浮点路径），全部由差分/冻结对照发现，结构测试挡不住。v2 的确认结论
+「beam 在受控分布上窄赢 Q」经独立复现成立，不依赖任何被检查的实现错误。

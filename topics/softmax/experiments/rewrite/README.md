@@ -21,7 +21,7 @@
 | 3 | [generators.py](generators.py)：树与受控输入生成器 | 旧生成器；冻结 v2 的 192 组 stored_leaf_bits 与 graph_sha256 | 骨架已建 |
 | 4a | [macro_score.py](macro_score.py)：Q_8/12 分数与 shortlist | 冻结 v2 CSV 的 q_score/capture/shortlist/q_selected | 通过复现测试（2026-09-04） |
 | 4b | B=3 cell beam（训练 probe，不重写） | 由 test_predictor_fixed_k8_beam_inference 守住 | 范围外 |
-| 5 | 独立重算 v2 的 paired regret 与 bootstrap 区间 | 冻结 heldout 汇总 | 未开始 |
+| 5 | [regret_stats.py](regret_stats.py)：regret 与分层 bootstrap | 冻结 metric_summary overall 的 primary 与 95% CI | 通过复现测试（2026-09-04） |
 
 ## 复现记录
 

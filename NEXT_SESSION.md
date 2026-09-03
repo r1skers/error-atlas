@@ -21,21 +21,26 @@
 
 上述 stages 的负结果、校准和确认等级不因代码整理而改变。
 
-## 当前阶段：独立复现重写（2026-09-02 决定）
+## 当前阶段：独立复现重写（2026-09-02 决定，2026-09-04 完成）
 
 继承既有研究路线，用闭卷重写的实现重新走一遍核心链，并对照冻结 artifact 的数字。
 目的是独立验证现有代码，不产生新的研究结论；结果记录为 replication，不是 confirmation。
+详细笔记见 [rewrite 复现笔记](topics/softmax/notes/rewrite_replication.md)。
 
-- 范围：exact oracle、树生成器、受控输入、Q_8/12 分数、B=3 cell beam、oracle-free 推理，
-  约 1,200 行核心。历史校准脚本、results 目录和两份 checkpoint 文档原样冻结，不重构。
+- 范围：exact oracle、A/C 分解、树与受控输入生成器、Q_8/12 分数与 shortlist、
+  regret 与分层 bootstrap。B=3 cell beam（训练 probe）范围外，由既有 8-ULP 测试守住。
+  历史校准脚本、results 目录和两份 checkpoint 文档原样冻结，不重构。
 - 方法：按[实现学习协议](framework/implementation_learning_protocol.md)由用户主写；
-  每个模块用旧实现做 differential test；新包从一开始按带边权重、多误差通道的 trace 设计接口，
-  以便后续阶段直接复用。
-- 已完成：oracle 对照硬件 float32 的差分审计，见
-  `topics/softmax/tests/test_oracle_hardware_differential.py`；逐对加法与整树状态零不匹配。
-- 进行中：[rewrite 分区](topics/softmax/experiments/rewrite/README.md)已建骨架，第一步 oracle 待用户实现。
-- 复现检查点：(A) oracle 对硬件；(B) 分数与 beam 在 192 个冻结 v2 组上精确复现决策与分数；
-  (C) 独立重算 v2 的 paired regret 与 stratified group bootstrap 区间。
+  每个模块用旧实现或冻结 artifact 做 differential test。代码见
+  [rewrite 分区](topics/softmax/experiments/rewrite/README.md)。
+- **五步全部通过**：(1) oracle 对旧实现与硬件 float32；(2) A/C 与 C 主导；
+  (3) 生成器从 seed 精确重建 192 组 stored_leaf_bits 与 12288 个 graph_sha256；
+  (4) Q 分数/capture/shortlist/q_selected 逐值复现冻结 v2；(5) 重算 primary 与 95% CI
+  逐位等于冻结的 +0.057699 与 [+0.018713, +0.097991]。
+- 过程中在重写侧抓到 4 个实现 bug（ulp 返回值、root-band size 下标、手写求和 vs 内置 sum、
+  target 平方浮点路径），全部由差分/冻结对照发现。另发现冻结 CSV 的 target 与当前
+  `_beam_tree` 源码差 1 ULP（精确平方 vs 二次舍入），即冻结证据早于该源码状态。
+- 结论：v2「beam 在受控分布上窄赢 Q」经独立复现成立，不依赖任何被检查的实现错误。
 
 ## 后续研究入口（复现完成后决定）
 

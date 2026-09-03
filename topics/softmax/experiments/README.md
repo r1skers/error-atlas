@@ -156,6 +156,7 @@ score-only 不等于生产低成本；成本结论只能用于记录的 Python �
 | [rewrite/fp32_oracle](rewrite/fp32_oracle.py) | RN-even 舍入与整树精确求值（已通过差分测试） |
 | [rewrite/coherence](rewrite/coherence.py) | A/C 分解与 C 主导统计（已通过差分与复现测试） |
 | [rewrite/macro_score](rewrite/macro_score.py) | Q_8/12 分数与 shortlist（已通过冻结复现） |
+| [rewrite/regret_stats](rewrite/regret_stats.py) | regret 与分层 bootstrap，重算 v2 headline（已通过冻结复现） |
 | [rewrite/generators](rewrite/generators.py) | 树与受控输入生成器，seed schedule 为冻结边界（已通过差分与冻结复现） |
 
 ## 新增代码的规则
