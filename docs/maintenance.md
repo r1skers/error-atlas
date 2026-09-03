@@ -95,3 +95,21 @@ float hex、NaN 约定、seed schedule 与输出字段。快照是维护测试�
 
 每次变更后检查 git diff、测试结果和结果目录是否仍原样。
 文档更新只维护 NEXT_SESSION 的当前状态，其他入口链接它，避免再次多处漂移。
+
+## 复现分区与原实验：为什么两套都保留
+
+`experiments/rewrite/` 是 2026-09 的独立复现分区，`experiments/` 根目录下的
+oracle、生成器与校准脚本是原实验。看起来像重复，但两者职责不同，**都不删、不合并**：
+
+- 原模块是**冻结证据的生成源**。results/ 各 artifact 的 metadata 用 SHA-256 锁定它们的
+  源码路径与内容，preregistration 也引用它们。删除或重构会破坏 provenance，
+  这与「以冻结 artifact 为准」的仓库原则冲突。
+- rewrite 分区是**独立验证**。它由用户从空白重写，配差分测试，逐值对照旧实现与冻结
+  artifact，是「冻结结果不是实现 bug」的保证。删除等于丢弃验证工作与其回归测试。
+
+因此这不是可去重的重复代码，而是「生成」与「独立核对」两条相互印证的实现。
+根目录 40 余个历史校准脚本互相 import 私有 helper，且被 metadata hash 锁定；
+「优化」它们等于改动冻结源码边界。正确的整理路径见上一节的版本化提取顺序，
+那是带差分测试的大工程，不是随手重构。在那之前，两套并存是有意的设计，不是待清理的乱。
+
+复现结论与要点见 [rewrite 复现笔记](../topics/softmax/notes/rewrite_replication.md)。
