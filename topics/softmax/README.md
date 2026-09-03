@@ -1,39 +1,45 @@
 # Softmax
 
-研究输入扰动和有限精度误差如何经过 normalization 与 reduction 传播，
-并区分问题条件性、算法稳定性、输入表示误差和统计预测能力。
+How input perturbation and finite-precision error propagate through normalization
+and reduction, separating problem conditioning, algorithm stability, input
+representation error, and statistical predictability.
 
-## 导航
+## Navigation
 
-- [当前续接点](../../NEXT_SESSION.md)：当前状态和待冻结的下一步。
-- [基础与 exact-oracle 笔记](notes/foundations.md)：Jacobian、方向性、浮点预算、P0–P5。
-- [早期实验说明](notes/early_experiments.md)：shift resolution、summation 与 failure triage。
-- [实验代码索引](experiments/README.md)：按模块角色查找入口。
-- [结果索引](experiments/results/README.md)：按证据等级引用研究结论。
-- [回归测试](tests/)：与实验实现分离。
+- [Current resume point](../../NEXT_SESSION.md) — current status and the next step to freeze.
+- [Foundations & exact-oracle notes](notes/foundations.md) — Jacobian, directionality, floating-point budget, P0–P5.
+- [Early experiment notes](notes/early_experiments.md) — shift resolution, summation, and failure triage.
+- [Replication notes](notes/rewrite_replication.md) — the independent blank-slate rewrite and what it verified.
+- [Experiment code index](experiments/README.md) — find entry points by module role.
+- [Results index](experiments/results/README.md) — cite conclusions by evidence grade.
+- [Regression tests](tests/) — separate from the experiment implementations.
 
-## 研究阶段
+## Research stages
 
-| 阶段 | 已建立的范围 |
+| Stage | Established scope |
 | --- | --- |
-| 基础与 exact oracle | 显式非负 FP32 reduction tree 的精确语义；保留早期 accepted/provisional 划分 |
-| Depth-margin baseline | 已归档 universal ordering 反例 |
-| Calibration diagnostics | 结构特征、second moment、history/phase、beam 与成本探索；不是确认数据 |
-| Energy beam v1 → fixed-K8 v2 | v1 primary negative；v2 在新受控输入上通过 pooled 确认 |
-| Score-only → offline reuse | oracle-free prototype 仍贵；offline reuse 未过 balanced-FP32 门槛 |
-| Online risk certificate | 最新完成阶段是 calibration，有统计信号，但未通过新确认或部署 |
+| Foundations & exact oracle | Exact semantics of an explicit nonnegative FP32 reduction tree; early accepted/provisional split preserved |
+| Depth-margin baseline | Archived universal-ordering counterexample |
+| Calibration diagnostics | Structural features, second moment, history/phase, beam and cost exploration; not confirmation data |
+| Energy beam v1 → fixed-K8 v2 | v1 primary negative; v2 passes pooled confirmation on fresh controlled inputs |
+| Score-only → offline reuse | Oracle-free prototype still costly; offline reuse fails the balanced-FP32 gate |
+| Online risk certificate | Latest completed stage is calibration: statistical signal, but no new confirmation or deployment |
 
-最新方向是稀疏 exactness correction，不是继续堆叠全局拓扑分数。
-具体结论与边界以 [NEXT_SESSION.md](../../NEXT_SESSION.md) 链接的 artifacts 为准。
+The main finding is that the reduction error is dominated by the **sign coherence**
+between local rounding errors, so a magnitude-only score cannot rank trees; a
+coherence-aware beam wins only narrowly and not yet cheaply. The latest direction is
+sparse exactness correction rather than stacking more global topology scores. For exact
+conclusions and boundaries, defer to the artifacts linked from
+[NEXT_SESSION.md](../../NEXT_SESSION.md).
 
-## 回归与边界
+## Regression and boundaries
 
-从仓库根目录运行：
+From the repository root:
 
 ```sh
 python tools/run_tests.py --suite softmax
 ```
 
-测试成功不代表未测量的 repeatability、跨分布泛化或 GPU 性能已被验证。
-研究核心的 ownership 继续遵循
-[实现学习协议](../../framework/implementation_learning_protocol.md)。
+Passing tests do not certify unmeasured repeatability, cross-distribution
+generalization, or GPU performance. Ownership of the research core continues to follow
+the [implementation-learning protocol](../../framework/implementation_learning_protocol.md).

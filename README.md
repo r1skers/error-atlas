@@ -36,6 +36,12 @@ independently reproduced from a blank-slate reimplementation.
   to deploy. This motivated the shift from *ranking trees* toward *carrying a risk
   state* alongside a single reduction.
 
+![Std. dev. of the coherence term C is 2.5-3.6x that of the local-energy term A across trees, for each controlled input](docs/figures/coherence_dominance.svg)
+
+*Across 32 candidate trees on each fixed input, the tree-to-tree spread of the
+coherence term C is 2.5-3.6x that of the local energy A. A magnitude-only score sees
+only A. Regenerate with `python tools/make_coherence_figure.py`.*
+
 ## What makes it rigorous
 
 - **Exact oracle.** An integer/rational (`Fraction`) implementation of round-to-nearest,
@@ -59,6 +65,19 @@ attention accumulators: the same rounding coherence that this work isolates in p
 FP32 summation reappears, weighted by online rescaling factors, in the (m, ℓ) state of
 FlashAttention-style kernels. The exact-oracle-plus-preregistration method is designed
 to extend to that setting.
+
+## Taylor expansion (first topic, complete)
+
+The first topic establishes the shared error vocabulary on a clean object: the Taylor
+remainder R_n = f(x) - P_n(x). It works through Lagrange, integral, and Peano remainders;
+the difference between actual error, asymptotic order, and a worst-case bound; bound
+validity versus tightness; and error propagation through a computation chain. The applied
+capstone is numerical differentiation, where truncation error (O(h^2) for a central
+difference) trades off against amplified rounding and statistical noise (O(u/h)); a
+deterministic budget and a bias-variance model both predict the optimal step, validated
+against a reproducible Monte Carlo experiment. The line closes with a closed-book rewrite
+of the core, the same replicate-from-scratch discipline later applied to softmax. See
+[the topic README](topics/taylor-expansion/README.md).
 
 ## Repository guide
 
