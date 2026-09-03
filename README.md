@@ -1,69 +1,117 @@
 # Error Atlas
 
-> An experiment-driven study of approximation error, propagation, numerical stability, and error control.
+> An experiment-driven study of how approximation and finite-precision error is
+> defined, propagated, estimated, controlled, and traded off against cost.
 
-Error Atlas 是按主题组织的个人研究项目。主线是：定义误差 → 识别来源 →
-理解传播 → 估计与控制 → 验证精度和成本。
+## Abstract
 
-## 从哪里开始
+Error Atlas investigates a single question across mathematical and computational
+objects: how does error enter a computation, how does structure propagate it, and
+what can be predicted or controlled before it happens. The main line of work studies
+**FP32 rounding error in the summation reduction trees** that form the denominator of
+a softmax. Given stored FP32 inputs and an explicit addition tree, an exact rational
+oracle reproduces the hardware result bit-for-bit and attributes the final error to
+each node, enabling controlled study of how the *shape* of the reduction changes the
+error. Every stage is preregistered, its evidence is frozen and versioned, negative
+results are recorded as first-class outcomes, and the headline confirmation has been
+independently reproduced from a blank-slate reimplementation.
 
-- [NEXT_SESSION.md](NEXT_SESSION.md)：当前状态与下一步；不再把历史日志当成待办。
-- [TOPICS.md](TOPICS.md)：主题注册表。
-- [Softmax 实验索引](topics/softmax/experiments/README.md)：按用途找代码。
-- [结果索引](topics/softmax/experiments/results/README.md)：区分已确认结果、负结果与校准观察。
-- [维护指南](docs/maintenance.md)：测试、目录职责、冻结证据与后续拆分边界。
-- [完整知识谱](KNOWLEDGE_MAP.md)：从误差语言、浮点算术与 Softmax，到统计 predictor validation 和 GPU 数值实验的离线教材；
+## Headline findings
 
-知识谱是学习资料，不是最新研究状态或新增实验结论的来源。
+- **The final reduction error is dominated by the sign coherence between local
+  rounding errors, not by their magnitude.** Writing E² = A + C (local energy plus
+  pairwise cross term), the tree-to-tree spread of the error is driven by C: across
+  trees on a fixed input, the standard deviation of C is 2.5–3.6× that of A.
+- **A cheap magnitude-only score cannot rank trees reliably**, because it estimates
+  only A and is blind to the coherence term C that actually separates good trees from
+  bad ones. This is a confirmed negative result, not a tuning failure.
+- **A coherence-aware beam narrowly beats the cheap score** on a preregistered,
+  frozen synthetic distribution: paired normalized-regret improvement +0.058, 95%
+  bootstrap CI [+0.019, +0.098]. The win is genuine but narrow (per-width intervals
+  for widths 512 and 1024 cross zero) and its inference cost is not yet cheap enough
+  for production; an offline-reuse variant failed its preregistered deployment gate,
+  and an online risk certificate reached calibration only.
+- **Net:** magnitude-only tree selection is infeasible; making selection feasible
+  requires paying to observe the coherence term, and that cost is not yet low enough
+  to deploy. This motivated the shift from *ranking trees* toward *carrying a risk
+  state* alongside a single reduction.
 
-## 当前进度
+## What makes it rigorous
 
-| 主题 / 阶段 | 状态 |
+- **Exact oracle.** An integer/rational (`Fraction`) implementation of round-to-nearest,
+  ties-to-even reproduces hardware binary32 addition exactly, including subnormals and
+  carry, verified against NumPy float32 over hundreds of thousands of cases.
+- **Preregistration and frozen evidence.** Each stage freezes its protocol, seeds, and
+  budgets before execution; artifacts are versioned CSV/JSON with SHA-256 provenance and
+  are never silently overwritten. See the [results index](topics/softmax/experiments/results/README.md).
+- **Honest negatives.** Depth-margin screening, energy-beam v1, offline tree reuse, and
+  the online certificate are all recorded with their exact evidence grade, including the
+  ones that failed.
+- **Independent replication.** The confirmed pipeline was re-implemented from a blank
+  skeleton and reproduced the frozen headline bit-for-bit, catching four implementation
+  bugs and one source-vs-artifact drift along the way. See the
+  [replication notes](topics/softmax/notes/rewrite_replication.md).
+
+## Why it matters for systems
+
+The reduction-tree object is the kernel of online/blockwise softmax and, ultimately,
+attention accumulators: the same rounding coherence that this work isolates in plain
+FP32 summation reappears, weighted by online rescaling factors, in the (m, ℓ) state of
+FlashAttention-style kernels. The exact-oracle-plus-preregistration method is designed
+to extend to that setting.
+
+## Repository guide
+
+| Topic / stage | Status |
 | --- | --- |
-| [Taylor expansion](topics/taylor-expansion/README.md) | 第一轮推导、实验与闭卷重写完成 |
-| [Softmax 基础与 exact graph oracle](topics/softmax/notes/foundations.md) | 第一轮完成；早期证据等级保持不变 |
-| Fixed-K8/B3 tree ranking | 已完成受控分布上的确认；推理成本仍高 |
-| Offline tree reuse | 相对随机固定树有改善，但未通过 balanced-FP32 部署门槛 |
-| Online risk certificate | 已完成校准；有统计信号，尚无确认或部署结论 |
-
-最新方向是稀疏高能量节点的 exactness correction；设计与预算仍需重新冻结。
-本轮整理没有开启新实验，GPU 阶段仍暂停。
-
-## 目录职责
+| [Taylor expansion](topics/taylor-expansion/README.md) | First pass complete: derivations, experiments, closed-book rewrite |
+| [Softmax foundations & exact graph oracle](topics/softmax/notes/foundations.md) | First pass complete; early evidence grades preserved |
+| Fixed-K8/B3 tree ranking | Confirmed on a controlled distribution; inference cost still high |
+| Offline tree reuse | Beats a random fixed tree but fails the balanced-FP32 deployment gate (no-go) |
+| Online risk certificate | Calibration complete; statistical signal, no confirmation or deployment claim |
 
 ```text
-framework/                 研究纪律与实现学习协议
-docs/                      维护说明与历史续接记录
-tools/                     仓库维护工具和它们的测试
+framework/                 research discipline and the implementation-learning protocol
+docs/                      maintenance guide and historical handoffs
+tools/                     the single test entry and its own tests
 topics/<topic>/
-    README.md              主题入口
-    notes/                 理论与历史研究笔记
-    experiments/           实验源代码、协议和 results/ 证据
-    tests/                 回归测试
+    README.md              topic entry
+    notes/                 theory and research notes
+    experiments/           source, frozen protocols, results/ evidence, rewrite/ replication
+    tests/                 regression tests
 ```
 
-原脚本入口与 results 路径保持稳定，测试已从实验目录分离。
-前三个 coherence 诊断现在共用
-[一份轨迹与分析接口](topics/softmax/experiments/reduction_analysis/README.md)；
-旧函数和 CLI 保留兼容入口，旧源码版本仍可按 Git 记录复现。
+- [Softmax experiment index](topics/softmax/experiments/README.md) — find code by role.
+- [Results index](topics/softmax/experiments/results/README.md) — confirmed results,
+  negatives, and calibration observations, each with its evidence boundary.
+- [Replication partition](topics/softmax/experiments/reduction_analysis/README.md) and
+  the [rewrite package](topics/softmax/experiments/rewrite/README.md) — the independent
+  reimplementation and its differential tests.
+- [KNOWLEDGE_MAP.md](KNOWLEDGE_MAP.md) — a standalone teaching text; learning material,
+  not a source of current research status.
+- [NEXT_SESSION.md](NEXT_SESSION.md) — current status and the next research entry.
 
-## 开发检查
+## Reproducing the checks
 
-需要 Python 3.10+，依赖见 [requirements.txt](requirements.txt)。
+Requires Python 3.10+; dependencies in [requirements.txt](requirements.txt).
 
 ```sh
 python -m pip install -r requirements.txt
 python tools/run_tests.py
 python tools/run_tests.py --suite softmax -v
-python tools/run_tests.py --suite softmax -p "test_predictor_fixed_k8_beam_inference.py"
 ```
 
-测试命令不会调用实验 CLI 重写归档结果。不要把“快速复现”理解为批量重跑
-one-shot runners；执行前先读对应结果目录的 README 与冻结协议。
+The test entry runs regression and replication tests only; it never re-runs the
+one-shot experiment CLIs that publish frozen artifacts. Before any intentional
+reproduction, read the specific stage's results README and preregistration.
 
-## 研究约定
+## Method conventions
 
-先确定 reference、metric、assumptions 和 error sources，再研究界、传播和控制。
-遵循 [误差分析协议](framework/error_analysis_protocol.md) 与
-[实现学习协议](framework/implementation_learning_protocol.md)：运行前记录预测，
-保留原始数据和 provenance，区分实现、数值、测量与统计误差。
+Fix the reference, metric, assumptions, and error sources first; then study bounds,
+propagation, and control. Follow the
+[error-analysis protocol](framework/error_analysis_protocol.md) and the
+[implementation-learning protocol](framework/implementation_learning_protocol.md):
+record predictions before running, preserve raw data and provenance, and separate
+implementation, numerical, measurement, and statistical error. Topic registry:
+[TOPICS.md](TOPICS.md). Structure and evidence-preservation rules:
+[maintenance guide](docs/maintenance.md).
