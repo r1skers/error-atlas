@@ -100,6 +100,18 @@ frozen-weight reference 只消费 $\hat w$ 和 $\hat\ell$ 的**数值**，不关
 
 **结论：上 GPU 不必失去逐位 oracle。** 这一点是 §3 的 frozen-weight 划分换来的。
 
+**但恒等式本身不能验证 kernel 做了什么。** 残差按定义是 $\hat\ell_v-\text{exact}$，
+所以 §4 的恒等式对**任意** $\hat\ell_v$ 都成立——它是记账一致性，不是"kernel 实现了 §2 递推"
+的证明。因此 dump 回来之后必须**另外**核对自洽性：
+
+1. $\hat w=\mathrm{Exp}(m_{\rm child}\ominus m_v)$，即 $\Delta$ 确实走了 FP32 减法而非精确相减；
+2. $\hat\ell_v$ 等于按 §2 第 4、5 步重算的结果；
+3. fused 变体确实只舍一次。
+
+这三条在 CPU 侧由 `test_online_merge` 守住（是变异测试逼出来的——只有恒等式时，
+"谎报 fused 实则舍两次"的变异存活）。GPU 侧必须重跑同样三条，不能因为恒等式过了就认为
+kernel 是对的。
+
 ## 7. CUDA 可表达的 schedule 族
 
 真实 kernel 的合并顺序不是自由设计，由编程模型决定：

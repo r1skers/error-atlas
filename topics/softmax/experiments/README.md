@@ -183,6 +183,8 @@ in [online/README.md](online/README.md).
 | --- | --- |
 | [online package](online/__init__.py) | Online normalizer partition entry |
 | [online/fp32_signed](online/fp32_signed.py) | Signed RN-even rounding and the add / sub / mul / fma rounded operators (passed differential tests) |
+| [online/schedules](online/schedules.py) | Merge schedules a CUDA kernel can express: chain, balanced, warp shuffles, split-K |
+| [online/merge](online/merge.py) | The (m, l) recurrence, the GPU-fillable dump, and the frozen-weight weighted identity |
 
 ## Rules for new code
 
