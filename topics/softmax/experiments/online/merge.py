@@ -42,6 +42,7 @@ from typing import Callable
 
 from .fp32_signed import is_stored_fp32, round_to_fp32
 from .schedules import Schedule, check_schedule
+from .fp32_signed import fp32_add, fp32_fma, fp32_mul, fp32_sub
 
 ExpImpl = Callable[[Fraction], Fraction]
 
@@ -166,7 +167,62 @@ def merge_reduce(
 
     非 stored-FP32 的叶输入按合同直接拒收（``ValueError``），与旧 oracle 一致。
     """
-    raise NotImplementedError
+    if len(leaf_max) != len(leaf_ell):
+        raise ValueError("Leaf count mismatch.")
+    if not all(is_stored_fp32(v) for v in leaf_max + leaf_ell):
+        raise ValueError("All leaves must be stored FP32.")
+    if len(leaf_max) != schedule.leaf_count:
+        raise ValueError("Leaf count mismatch with schedule.")
+
+    check_schedule(schedule)
+    
+    node_max = []
+    gap_left = []
+    gap_right = []
+    weight_left = []
+    weight_right = []
+    node_ell = []
+
+    for left, right in schedule.nodes:
+        m_a = leaf_max[left] if left < schedule.leaf_count else node_max[left - schedule.leaf_count]
+        m_b = leaf_max[right] if right < schedule.leaf_count else node_max[right - schedule.leaf_count]
+        l_a = leaf_ell[left] if left < schedule.leaf_count else node_ell[left - schedule.leaf_count]
+        l_b = leaf_ell[right] if right < schedule.leaf_count else node_ell[right - schedule.leaf_count]
+
+        m_v = max(m_a, m_b)
+        (delta_a, _), (delta_b, _) = fp32_sub(m_a, m_v), fp32_sub(m_b, m_v)
+        w_a, w_b = exp_impl(delta_a), exp_impl(delta_b)
+
+        if fused:
+            if w_a == 1:
+                l_v, _ = fp32_fma(l_b, w_b, l_a)
+            elif w_b == 1:
+                l_v, _ = fp32_fma(l_a, w_a, l_b)
+            else:
+                raise ValueError("Fused branch requires one weight to be 1.")
+        else:
+            p_a, p_b = fp32_mul(l_a, w_a), fp32_mul(l_b, w_b)
+            l_v, _ = fp32_add(p_a[0], p_b[0])
+
+        node_max.append(m_v)
+        gap_left.append(delta_a)
+        gap_right.append(delta_b)
+        weight_left.append(w_a)
+        weight_right.append(w_b)
+        node_ell.append(l_v)
+
+    return MergeDump(
+        schedule=schedule,
+        leaf_max=leaf_max,
+        leaf_ell=leaf_ell,
+        node_max=tuple(node_max),
+        gap_left=tuple(gap_left),
+        gap_right=tuple(gap_right),
+        weight_left=tuple(weight_left),
+        weight_right=tuple(weight_right),
+        node_ell=tuple(node_ell),
+        fused=fused
+    )
 
 
 def frozen_weight_reference(dump: MergeDump) -> Fraction:
@@ -179,7 +235,20 @@ def frozen_weight_reference(dump: MergeDump) -> Fraction:
 
     返回根的 ``l_tilde``。全程不得调用任何舍入函数——一旦舍入，这就不再是参考了。
     """
-    raise NotImplementedError
+    leaf_count = dump.schedule.leaf_count
+    node_count = len(dump.schedule.nodes)
+    l_tilde = [Fraction(0)] * (leaf_count + node_count)
+
+    for i in range(leaf_count):
+        l_tilde[i] = dump.leaf_ell[i]
+
+    for k, (left, right) in enumerate(dump.schedule.nodes):
+        node_index = leaf_count + k
+        w_a, w_b = dump.weights_at(node_index)
+        l_a, l_b = l_tilde[left], l_tilde[right]
+        l_tilde[node_index] = l_a * w_a + l_b * w_b
+
+    return l_tilde[dump.schedule.root]
 
 
 def weighted_residuals(dump: MergeDump) -> tuple[Fraction, ...]:
@@ -197,4 +266,23 @@ def weighted_residuals(dump: MergeDump) -> tuple[Fraction, ...]:
 
     并且必须**逐位**成立，不是近似成立。
     """
-    raise NotImplementedError
+    leaf_count = dump.schedule.leaf_count
+    node_count = len(dump.schedule.nodes)
+    W = [Fraction(1)] * (leaf_count + node_count)
+    weighted_deltas = []
+
+    for k in reversed(range(node_count)):
+        v = leaf_count + k
+        left, right = dump.schedule.nodes[k]
+        w_a, w_b = dump.weights_at(v)
+        W[left] *= w_a * W[v]
+        W[right] *= w_b * W[v]
+
+    for k in range(node_count):
+        v = leaf_count + k
+        delta_v = dump.ell_at(v) - (dump.ell_at(dump.schedule.nodes[k][0]) * dump.weights_at(v)[0] + dump.ell_at(dump.schedule.nodes[k][1]) * dump.weights_at(v)[1])
+        weighted_deltas.append(W[v] * delta_v)
+
+    return tuple(weighted_deltas)
+
+    

@@ -252,11 +252,15 @@ class IdentityTests(unittest.TestCase):
 class AbsorptionTests(unittest.TestCase):
     def setUp(self) -> None:
         self.schedule = schedules.balanced_pairwise(2)
-        _skip_unless_implemented(
-            self,
-            lambda: merge_reduce((Fraction(0), Fraction(0)), (Fraction(1), Fraction(1)),
-                                 self.schedule),
-        )
+        # Guard on the whole chain these tests use, not just merge_reduce, or they
+        # error out instead of skipping while the analysis half is still unwritten.
+        def probe() -> None:
+            dump = merge_reduce((Fraction(0), Fraction(0)), (Fraction(1), Fraction(1)),
+                                self.schedule)
+            frozen_weight_reference(dump)
+            weighted_residuals(dump)
+
+        _skip_unless_implemented(self, probe)
 
     def test_total_absorption_loses_the_whole_downweighted_block(self) -> None:
         """Contract section 5: the residual is the full magnitude of the losing side."""
