@@ -102,8 +102,6 @@ def round_to_fp32(value: Fraction) -> Fraction:
 
     if value < pow2(e):
         e -= 1
-    # elif value >= pow2(e + 1):
-        # e += 1
 
     if e < -126:
         quantum = pow2(-149)
