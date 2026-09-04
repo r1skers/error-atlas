@@ -172,6 +172,18 @@ test references. Rules and order are in [rewrite/README.md](rewrite/README.md).
 | [rewrite/regret_stats](rewrite/regret_stats.py) | Regret and stratified bootstrap, recomputing the v2 headline (passed frozen replication) |
 | [rewrite/generators](rewrite/generators.py) | Tree and controlled-input generators, seed schedule is a frozen boundary (passed differential and frozen replication) |
 
+## Online normalizer stage
+
+New research code for the (m, ℓ) stage, kept out of `rewrite/` so the replication partition
+stays frozen. Arithmetic contract is
+[online_normalizer_contract.md](../notes/online_normalizer_contract.md); order and status are
+in [online/README.md](online/README.md).
+
+| Module | Role |
+| --- | --- |
+| [online package](online/__init__.py) | Online normalizer partition entry |
+| [online/fp32_signed](online/fp32_signed.py) | Signed RN-even rounding and the add / sub / mul / fma rounded operators (passed differential tests) |
+
 ## Rules for new code
 
 When adding a module, update this index and add a test at the same time. The maintenance

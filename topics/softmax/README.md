@@ -10,6 +10,7 @@ representation error, and statistical predictability.
 - [Foundations & exact-oracle notes](notes/foundations.md) — Jacobian, directionality, floating-point budget, P0–P5.
 - [Early experiment notes](notes/early_experiments.md) — shift resolution, summation, and failure triage.
 - [Replication notes](notes/rewrite_replication.md) — the independent blank-slate rewrite and what it verified.
+- [Online normalizer contract](notes/online_normalizer_contract.md) — arithmetic contract, the frozen-weight weighted identity, and what a CUDA measurement would need.
 - [Experiment code index](experiments/README.md) — find entry points by module role.
 - [Results index](experiments/results/README.md) — cite conclusions by evidence grade.
 - [Regression tests](tests/) — separate from the experiment implementations.

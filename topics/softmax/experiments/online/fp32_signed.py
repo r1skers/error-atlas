@@ -198,7 +198,3 @@ def fp32_fma(a: Fraction, b: Fraction, c: Fraction) -> tuple[Fraction, Fraction]
     """
     return rounded(a * b + c)
 
-
-# 预测题（写实现前先答，答完再看测试）：
-# 上面四个算子，每个需要几行？如果超过一行，回到合同 §2 想想
-# round_to_fp32 对"是哪个算子产生的这个精确值"是否知情。
