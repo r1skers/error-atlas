@@ -89,7 +89,15 @@ _NEAR_MIDPOINT = (
     "-0x1.5a12840000000p+6",
 )
 
-GOLDEN_ARGUMENTS = tuple(Fraction(float.fromhex(h)) for h in _NEAR_MIDPOINT) + tuple(
+# The two adjacent FP32 arguments straddling the underflow transition: exp crosses half
+# the smallest subnormal at -150*ln2 = -103.972, so this is where the result stops being
+# representable as anything but zero.
+_LAST_NONZERO = "-0x1.9fe3680000000p+6"
+_FIRST_ZERO = "-0x1.9fe36a0000000p+6"
+
+GOLDEN_ARGUMENTS = tuple(
+    Fraction(float.fromhex(h)) for h in _NEAR_MIDPOINT + (_LAST_NONZERO, _FIRST_ZERO)
+) + tuple(
     Fraction(v) for v in (0, -1, -2, -10, -30, -87, -100, -103, -104, -105, -200)
 ) + (Fraction(-1, 2), Fraction(-1, 4), Fraction(-1, 1024))
 
@@ -195,6 +203,18 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
         for argument in GOLDEN_ARGUMENTS:
             with self.subTest(argument=float(argument)):
                 self.assertEqual(fp32_exp.correctly_rounded_exp(argument), _golden(argument))
+
+    def test_the_zero_shortcut_stays_below_the_real_transition(self) -> None:
+        """MIN_USEFUL_ARGUMENT lets the implementation skip the decimal path entirely,
+        which is not optional: without it _decimal_exp builds a seven-million-bit
+        denominator at x = -5e6 and takes half a second, and logit gaps are unbounded
+        FP32 values. The shortcut is only sound while it sits below the argument where
+        exp actually stops rounding to zero.
+        """
+        last_nonzero = Fraction(float.fromhex(_LAST_NONZERO))
+        self.assertGreater(fp32_exp.correctly_rounded_exp(last_nonzero), 0)
+        self.assertLess(fp32_exp.MIN_USEFUL_ARGUMENT, last_nonzero)
+        self.assertEqual(fp32_exp.correctly_rounded_exp(fp32_exp.MIN_USEFUL_ARGUMENT), 0)
 
     def test_the_precision_budget_is_actually_honoured(self) -> None:
         """The prescribed three-digit intervals cannot decide these nonzero cases.

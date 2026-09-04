@@ -79,6 +79,7 @@ from decimal import ROUND_HALF_EVEN, Context, Decimal, DivisionByZero, InvalidOp
 from fractions import Fraction
 
 from .fp32_signed import is_stored_fp32
+from .fp32_signed import round_to_fp32  
 
 DEFAULT_PRECISION = 60
 DECIMAL_SLACK_DIGITS = 2
@@ -109,7 +110,21 @@ def correctly_rounded_exp(
 
     第 4 步要用 ``round_to_fp32``，本模块没有导入它，自己从 ``.fp32_signed`` 加一行。
     """
-    raise NotImplementedError
+    if not is_stored_fp32(argument):
+        raise ValueError("correctly_rounded_exp only accepts stored FP32 inputs.")
+    if argument <= MIN_USEFUL_ARGUMENT:
+        return Fraction(0)
+    approx = _decimal_exp(argument, precision)
+    slack = abs(approx) * Fraction(10) ** (DECIMAL_SLACK_DIGITS - precision)
+    lower = approx - slack
+    upper = approx + slack
+    lower_fp32 = round_to_fp32(lower)
+    upper_fp32 = round_to_fp32(upper)
+    if lower_fp32 == upper_fp32:
+        return lower_fp32
+    else:
+        raise ValueError("Failed to compute correctly rounded exponential.")
+
 
 
 def ulp_distance(value: Fraction, reference: Fraction) -> int:

@@ -40,6 +40,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Callable
 
+from .fp32_exp import correctly_rounded_exp
 from .fp32_signed import is_stored_fp32, round_to_fp32
 from .schedules import Schedule, check_schedule
 from .fp32_signed import fp32_add, fp32_fma, fp32_mul, fp32_sub
@@ -135,12 +136,12 @@ class MergeDump:
 def provisional_fp32_exp(argument: Fraction) -> Fraction:
     """Scaffolding placeholder for the exp reference semantics.
 
-    Rounds the platform's double-precision ``math.exp`` to FP32. This is **not** the
-    correctly-rounded FP32 exp that contract section 3 requires as the specified-exp
-    reference; step 1a replaces it with a ``decimal`` implementation plus a measured ULP
-    profile. It is adequate here only because the frozen-weight identity freezes whatever
-    this returns as data, so the identity cannot depend on which exp produced it — which
-    is exactly the property step 1b exists to demonstrate.
+    Rounds the platform's double-precision ``math.exp`` to FP32. Step 1a has since
+    replaced it as the default: ``merge_reduce`` now uses
+    :func:`online.fp32_exp.correctly_rounded_exp`, the specified-exp reference of contract
+    section 3. This one is kept because it is a *subject* of measurement rather than a
+    reference — :func:`online.fp32_exp.exp_ulp_profile` profiles it, and it is the cheap
+    path whose agreement with correct rounding cannot be assumed.
     """
     return round_to_fp32(Fraction(math.exp(float(argument))))
 
@@ -149,7 +150,7 @@ def merge_reduce(
     leaf_max: tuple[Fraction, ...],
     leaf_ell: tuple[Fraction, ...],
     schedule: Schedule,
-    exp_impl: ExpImpl = provisional_fp32_exp,
+    exp_impl: ExpImpl = correctly_rounded_exp,
     *,
     fused: bool = False,
 ) -> MergeDump:

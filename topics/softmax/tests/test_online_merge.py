@@ -11,12 +11,8 @@ from fractions import Fraction
 
 from online import schedules
 from online.fp32_signed import fp32_add, fp32_fma, fp32_mul, fp32_sub, round_to_fp32
-from online.merge import (
-    frozen_weight_reference,
-    merge_reduce,
-    provisional_fp32_exp,
-    weighted_residuals,
-)
+from online.fp32_exp import correctly_rounded_exp
+from online.merge import frozen_weight_reference, merge_reduce, weighted_residuals
 
 SEED = 20260904
 GROUPS = 12
@@ -144,10 +140,10 @@ class MergeDumpTests(unittest.TestCase):
                 for k in range(len(schedule.nodes)):
                     with self.subTest(kind=schedule.kind, spread=spread, node=k):
                         self.assertEqual(
-                            dump.weight_left[k], provisional_fp32_exp(dump.gap_left[k])
+                            dump.weight_left[k], correctly_rounded_exp(dump.gap_left[k])
                         )
                         self.assertEqual(
-                            dump.weight_right[k], provisional_fp32_exp(dump.gap_right[k])
+                            dump.weight_right[k], correctly_rounded_exp(dump.gap_right[k])
                         )
 
     def test_node_ell_is_the_rounded_merge_of_its_children(self) -> None:
@@ -224,7 +220,7 @@ class IdentityTests(unittest.TestCase):
                     error = dump.ell_at(schedule.root) - frozen_weight_reference(dump)
                     root_max = dump.max_at(schedule.root)
                     analytic = sum(
-                        provisional_fp32_exp(fp32_sub(dump.node_max[k], root_max)[0]) * residual
+                        correctly_rounded_exp(fp32_sub(dump.node_max[k], root_max)[0]) * residual
                         for k, residual in enumerate(_expected_residuals(dump))
                     )
                     if error != 0:

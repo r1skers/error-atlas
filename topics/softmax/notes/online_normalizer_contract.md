@@ -193,7 +193,7 @@ RN-even 本身符号对称，扩展是平凡的，但**合同边界必须显式�
 2. 叶的定义：块内 $\ell_{\rm leaf}$ 本身如何计算（顺序、是否也是子树），及其是否进入本合同。
 3. FTZ 与 gradual underflow 两种模式各自的合同实例。
 4. dtype 分轴：输入 / $(m,\ell)$ 状态 / $\mathrm{Exp}$ 输出 / accumulator，主合同只实例化 FP32。
-5. primary metric：v2 的 normalized regret 依赖大候选集，此处不适用；需另定。
+5. primary metric：v2 的 normalized regret 依赖大候选集，此处不适用。**首轮已定，见 §12。**
 6. 研究假设与效应量门槛：**pilot 之后再冻结**，本文不预设。
 7. **实验设计约束（已定）**：研究合并顺序时，必须固定同一批叶块、只改 schedule。
    同时改分块内容会把"顺序的影响"和"块本身不同"混在一起，任何差异都归因不了。
@@ -210,3 +210,51 @@ RN-even 本身符号对称，扩展是平凡的，但**合同边界必须显式�
 - **高精度计算不得继承调用方或 `DefaultContext` 的 decimal 设置。** 使用字段完整的
   独立 `Context`，显式固定精度、指数范围、舍入模式与异常设置等。
   输入用 `Decimal.from_float` 精确转换，避免触发外层 `FloatOperation` 或改变其标志。
+
+## 12. Pilot 首轮设计（已定）
+
+### 叶块：块内零舍入
+
+第 $b$ 块放 $n_b$ 个**相同**的 logit $c_b$。于是
+
+$$m_b=c_b,\qquad \ell_b=\sum_{j=1}^{n_b}e^{c_b-c_b}=n_b,$$
+
+而 $n_b\le2^{24}$ 时 FP32 累加 $n_b$ 个 1 **逐位精确**（已实测 $n_b=32$）。
+这样块内不产生任何舍入，首轮就专答一个问题：**同一批块，换合并顺序会怎样。**
+
+限制要写明：所有 $\ell_b$ 若取同一个 $n$，则唯一的自变量是 max 轨迹。
+让 $n_b$ 随块变化可以在不破坏精确性的前提下加第二根轴。
+块内元素不同的一般情形推后，届时须固定一套块内算法、**算一次存下来给所有 schedule 共用**。
+
+### primary metric：对**实数** exp 参照的相对误差
+
+$$\ell_*=\sum_b n_b\,e^{c_b-M},\qquad M=\max_b c_b,\qquad
+A_T=rac{|\hat\ell_T-\ell_*|}{\ell_*}.$$
+
+比较两个 schedule 时取同一输入上的配对差 $A_{T_1}-A_{T_2}$ 再汇总。
+它不依赖候选集的最好/最坏值，两个候选也能用。
+
+**$\ell_*$ 必须用实数 exp 的区间求和**，指数取 $c_b-M$ 的**精确有理差**。
+不能把正确舍入的 FP32 exp 加起来当作精确分母——那是 §3 的 specified-exp 量，
+自带量化，不是真值。区间机械已存在（`test_online_fp32_exp` 的
+`_independent_exp_interval`，精确 Fraction 泰勒 + 反复平方），
+但它按 $|x|\le104$ 固定了折半次数，搬进模块时要按参数自适应。
+
+### frozen_weight_reference 不能当尺子
+
+它的参考值**随 schedule 的计算权重改变**——同一批 8 个块实测：
+
+| schedule | $\hat\ell$ | frozen_ref |
+| --- | ---: | ---: |
+| sequential_chain | 33.684009552 | 33.684008476 |
+| balanced_pairwise | 33.684005737 | 33.684008484 |
+| split_k_4 | 33.684009552 | 33.684008476 |
+
+所以它是**每次执行各自的分解基准**，用来回答"这次的误差来自哪些乘加节点"，
+不能用来回答"哪个 schedule 的最终分母更准"。后者只能对共同的 $\ell_*$ 比。
+
+### exp 实现
+
+`merge_reduce` 的默认 `exp_impl` 已从 `provisional_fp32_exp` 改为
+`correctly_rounded_exp`（§3 的 specified-exp reference）。`provisional_fp32_exp` 保留，
+但它现在是**被测对象**而不是参照。
