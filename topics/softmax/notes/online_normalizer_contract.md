@@ -204,8 +204,9 @@ RN-even 本身符号对称，扩展是平凡的，但**合同边界必须显式�
 [fp32_exp.py](../experiments/online/fp32_exp.py) 实现 §3 的 specified-exp reference。
 两条已定的合同细节：
 
-- **精度不足时抛 `ValueError`，不自动升精度。** 参考实现要确定性；自动升精度会把
-  "这个点的界确实很紧"藏起来，而那正是 table-maker's dilemma 真正发生的地方，
-  且遇到精确平局时会无限循环。
-- **高精度计算不得继承调用方的 decimal 上下文。** `localcontext()` 只覆盖 `prec`，
-  外层若收窄过 `Emin`，`exp(-10)` 会静默返回 0（真值 4.54e-05）。用显式 `Context`。
+- **精度不足时抛 `ValueError`，不自动升精度。** `precision` 是本次计算的固定预算，
+  预算内无法证明就报告失败，由调用方决定是否重试。自动升精度也可以是确定性的算法；
+  这里选择固定预算。`exp(0) = 1` 等已有精确证明的特殊值可以直接返回。
+- **高精度计算不得继承调用方或 `DefaultContext` 的 decimal 设置。** 使用字段完整的
+  独立 `Context`，显式固定精度、指数范围、舍入模式与异常设置等。
+  输入用 `Decimal.from_float` 精确转换，避免触发外层 `FloatOperation` 或改变其标志。

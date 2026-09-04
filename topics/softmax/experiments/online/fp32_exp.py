@@ -19,9 +19,9 @@ Explain-back
 2. 因此不能只算一个数就返回。要怎么**证明**这次精度够了？
    （提示：给近似值加减一个误差上界得到一个区间，看区间两端是否舍到同一个 FP32。）
 3. 证明不了的时候应该怎么办？**本合同规定：抛 ``ValueError``，不自动提高精度。**
-   理由有三条，值得想明白而不是照做：参考实现必须确定性，同样的输入同样的 precision
-   永远给同样的结果；自动升精度会把"这个点的界确实很紧"这一事实藏起来，而那正是
-   table-maker's dilemma 真正发生的地方；真的遇到精确的平局时，升精度会无限循环。
+   这里把 ``precision`` 定义为本次计算的固定预算，预算内证明不了就报告失败，
+   由调用方决定是否重试。自动升精度也可以是确定性的算法，本合同只是选择固定预算。
+   已经有精确证明的特殊值（例如 ``exp(0) = 1``）可以直接返回，无需制造近似误差。
    抛错的类型也定死为 ``ValueError``，这样真正的程序 bug（比如 TypeError）不会被
    误当成"有原则的拒答"。
 4. 输入合同：``argument`` 必须已经是 stored FP32 吗？为什么？
@@ -39,20 +39,23 @@ decimal 最小示范（陌生 API，agent 提供，可直接运行）
 ``decimal`` 是标准库的十进制浮点，精度可调，且 ``Decimal.exp()`` 按文档是
 **正确舍入到当前上下文精度**的。两个容易踩的点：
 
-- ``Decimal(some_float)`` 是**精确**转换，不受上下文精度影响；而 ``Decimal(a)/Decimal(b)``
-  是一次**运算**，会按上下文精度舍入。FP32 值转成 Python float 是精确的，所以
-  ``Decimal(float(x))`` 就是 x 的精确十进制表示，不要走分子除分母。
-- 精度用 ``localcontext()`` 临时设置，不要改全局。
+- ``Decimal.from_float(some_float)`` 是**精确**转换，不受上下文精度影响，也不会触发
+  外层的 ``FloatOperation``。而 ``Decimal(a)/Decimal(b)`` 是一次会舍入的运算。
+  FP32 值转成 Python float 是精确的，所以用 ``Decimal.from_float(float(x))`` 保留输入。
+- 用设置完整的独立 ``Context`` 计算，不修改全局，也不继承外层或 ``DefaultContext``
+  的设置。核心可直接调用下面已经封装好的 ``_decimal_exp``。
 
-    >>> from decimal import ROUND_HALF_EVEN, Context, Decimal
-    >>> with localcontext() as ctx:
-    ...     ctx.prec = 60
-    ...     value = Decimal(float(-2.5)).exp()
+    >>> from decimal import Context, Decimal, ROUND_HALF_EVEN
+    >>> from decimal import DivisionByZero, InvalidOperation, Overflow
+    >>> ctx = Context(prec=60, rounding=ROUND_HALF_EVEN,
+    ...               Emin=-999_999_999, Emax=999_999_999, capitals=1, clamp=0,
+    ...               flags=[], traps=[DivisionByZero, InvalidOperation, Overflow])
+    >>> value = ctx.exp(Decimal.from_float(-2.5))
     >>> str(value)[:20]
     '0.082084998623898795'
 
-``Decimal.exp()`` 的结果误差不超过末位的半个单位，即相对误差约 ``10 ** -(prec - 1) / 2``；
-下面 :data:`DECIMAL_SLACK_DIGITS` 用的是一个宽松得多的界。
+对于没有发生 Decimal 下溢的正的有限结果，``Decimal.exp()`` 的误差不超过末位的半个
+单位。下面 :data:`DECIMAL_SLACK_DIGITS` 用的是一个更宽松的界。
 
 本仓库已实测（随机采样 20000 个参数，范围 [-104, 0]，seed 20260905）
 --------------------------------------------------------------------
@@ -72,7 +75,7 @@ from __future__ import annotations
 
 import struct
 from collections import Counter
-from decimal import ROUND_HALF_EVEN, Context, Decimal
+from decimal import ROUND_HALF_EVEN, Context, Decimal, DivisionByZero, InvalidOperation, Overflow
 from fractions import Fraction
 
 from .fp32_signed import is_stored_fp32
@@ -91,14 +94,18 @@ def correctly_rounded_exp(
 
     步骤：
       1. 拒收非 stored-FP32 的输入；
-      2. ``Decimal(float(argument)).exp()`` 在 ``precision`` 位下算出近似值；
-      3. 给它加减一个误差上界，得到一个包住真值的区间；
+      2. 调用 ``_decimal_exp(argument, precision)``，在指定精度下算出近似值；
+      3. 用 Fraction 精确地加减一个误差上界，得到包住真值的区间；
       4. 区间两端各自舍到 FP32；两端相同才算证明成功，返回那个值；
       5. 证明不了时抛 ``ValueError``（设计问题 3），不要自动提高精度。
-         ``precision`` 是调用方给的预算，必须真正被使用，不能忽略它另用一个值。
+         ``precision`` 是正整数预算，不能忽略它另用一个值。
+         ``exp(0) = 1`` 有精确证明，可以直接返回；也允许统一走区间检查。
 
-    误差上界用 ``abs(approx) * Fraction(1, 10 ** (precision - DECIMAL_SLACK_DIGITS))``
-    就够宽松了——``Decimal.exp`` 的实际误差比这小两个数量级以上。
+    在合并使用的非正输入范围内，应先处理必然舍为 FP32 零的输入（参见
+    ``MIN_USEFUL_ARGUMENT``），避免为极小的 exp 构造巨大的 Fraction 分母。
+    余下的输入在 ``_decimal_exp`` 的指数范围内不会发生 Decimal 下溢。
+    此时可用 ``abs(approx) * Fraction(10) ** (DECIMAL_SLACK_DIGITS - precision)``
+    作误差上界；它至少是半个十进制末位单位的 20 倍。Fraction 的幂也支持负指数。
 
     第 4 步要用 ``round_to_fp32``，本模块没有导入它，自己从 ``.fp32_signed`` 加一行。
     """
@@ -141,15 +148,22 @@ def exp_ulp_profile(implementation, arguments) -> Counter[int]:
 def _decimal_exp(argument: Fraction, precision: int) -> Fraction:
     """Scaffolding. The high-precision value alone, without the certification step.
 
-    Uses an explicit ``Context`` rather than ``localcontext()``. ``localcontext()`` copies
-    the caller's settings and only ``prec`` gets overridden, so a caller that had narrowed
-    ``Emin`` would make this silently underflow: with ``Emin = 0`` it returns 0 for
-    exp(-10), whose true FP32 rounding is 4.54e-05. A reference must not inherit anything
-    from ambient state.
+    All Context fields, including traps, are explicit: omitted fields would inherit
+    DefaultContext. The exact from_float conversion neither consults the caller's
+    FloatOperation trap nor changes its flags. The core handles FP32 underflow before
+    using this helper on the remaining nonpositive inputs.
     """
-    context = Context(prec=precision, Emin=-999_999_999, Emax=999_999_999,
-                      rounding=ROUND_HALF_EVEN)
-    return Fraction(context.exp(Decimal(float(argument))))
+    context = Context(
+        prec=precision,
+        rounding=ROUND_HALF_EVEN,
+        Emin=-999_999_999,
+        Emax=999_999_999,
+        capitals=1,
+        clamp=0,
+        flags=[],
+        traps=[DivisionByZero, InvalidOperation, Overflow],
+    )
+    return Fraction(context.exp(Decimal.from_float(float(argument))))
 
 
 __all__ = [

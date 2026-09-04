@@ -4,10 +4,12 @@ Tests for the core skip while it still raises NotImplementedError; the scaffoldi
 tests run either way.
 """
 
+import doctest
 import math
 import random
 import struct
 import unittest
+from decimal import ROUND_UP, DefaultContext, FloatOperation, Inexact, localcontext
 from fractions import Fraction
 
 from online import fp32_exp
@@ -33,16 +35,14 @@ def _double_rounded_exp(argument: Fraction) -> Fraction:
     return round_to_fp32(Fraction(math.exp(float(argument))))
 
 
-
 # --- an exp route that shares no code with the implementation under test ---------------
 #
-# The weighted identity is checked against the implementation's own default precision,
-# which cannot tell a certified result from one that is uniformly one ULP off. These
+# Comparing two precisions of the same implementation cannot detect a shared bias. These
 # helpers compute exp a second way, with no `decimal` involved at all: exact Fraction
 # Taylor after argument reduction, then repeated squaring, carrying a rigorous bracket
 # throughout. Agreement is then a differential result rather than a restatement.
 
-_HALVINGS = 7          # |x| / 128 < 1 for every argument in the supported domain
+_HALVINGS = 7          # keeps the reduced arguments small for all fixtures, including -200
 _TERMS = 80
 _GRID = 1 << 600       # widen the bracket onto this grid so the Fractions stay bounded
 
@@ -60,7 +60,8 @@ def _independent_exp_interval(argument: Fraction) -> tuple[Fraction, Fraction]:
     for n in range(_TERMS + 1):
         total += term
         term = term * reduced / (n + 1)
-    # |remainder| <= |y|^(N+1)/(N+1)! * e^|y|, and e^|y| < 3 because |y| < 1
+    # For y <= 0, Taylor's remainder has e^c <= 1 (y <= c <= 0).
+    # Thus |remainder| <= |next term|; the factor of three is conservative even at -200.
     bound = abs(term) * 3
     low, high = total - bound, total + bound
     for _ in range(_HALVINGS):
@@ -92,11 +93,37 @@ GOLDEN_ARGUMENTS = tuple(Fraction(float.fromhex(h)) for h in _NEAR_MIDPOINT) + t
     Fraction(v) for v in (0, -1, -2, -10, -30, -87, -100, -103, -104, -105, -200)
 ) + (Fraction(-1, 2), Fraction(-1, 4), Fraction(-1, 1024))
 
+
 def _skip_unless_implemented(test: unittest.TestCase, call) -> None:
     try:
         call()
     except NotImplementedError:
         test.skipTest("correctly_rounded_exp not implemented yet")
+
+
+class DecimalScaffoldingTests(unittest.TestCase):
+    """The Decimal plumbing is implemented and checked even while the core is blank."""
+
+    def test_ambient_context_does_not_change_result_or_flags(self) -> None:
+        with localcontext() as context:
+            context.prec = 1
+            context.Emin = 0
+            context.Emax = 1
+            context.rounding = ROUND_UP
+            context.traps[FloatOperation] = True
+            context.traps[Inexact] = True
+            context.clear_flags()
+            before = repr(context)
+            self.assertEqual(fp32_exp._decimal_exp(Fraction(-10), 3), Fraction(227, 5_000_000))
+            self.assertEqual(repr(context), before)
+
+    def test_default_context_traps_are_not_inherited(self) -> None:
+        saved_traps = DefaultContext.traps.copy()
+        try:
+            DefaultContext.traps[Inexact] = True
+            self.assertEqual(fp32_exp._decimal_exp(Fraction(-10), 3), Fraction(227, 5_000_000))
+        finally:
+            DefaultContext.traps = saved_traps
 
 
 class UlpDistanceTests(unittest.TestCase):
@@ -164,26 +191,18 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
         self.assertEqual(fp32_exp.correctly_rounded_exp(Fraction(-200)), 0)
 
     def test_matches_an_independently_computed_reference(self) -> None:
-        """The one check that does not go through decimal at all.
-
-        Every other test here is satisfied by an implementation that is uniformly one ULP
-        off on negative arguments, because exp(0), the underflow boundary, monotonicity
-        and a one-ULP profile tolerance all survive such a shift. Only a second,
-        independently derived value pins the answer.
-        """
+        """At the default budget every fixture must agree with the independent route."""
         for argument in GOLDEN_ARGUMENTS:
             with self.subTest(argument=float(argument)):
                 self.assertEqual(fp32_exp.correctly_rounded_exp(argument), _golden(argument))
 
     def test_the_precision_budget_is_actually_honoured(self) -> None:
-        """Three digits can never separate two FP32 candidates, so a non-underflowing
-        argument must be refused at that budget.
+        """The prescribed three-digit intervals cannot decide these nonzero cases.
 
-        Without this, an implementation that ignores ``precision`` and always computes at
-        the default passes everything: its answers are right, they are simply unproven.
-        A reference has to do the proof it claims to do.
+        Returning exp(0) = 1 analytically is allowed, so zero is deliberately excluded.
+        Refusing these cases also catches implementations that silently use 60 digits.
         """
-        for argument in (Fraction(0), Fraction(-1), Fraction(-30), Fraction(-87)):
+        for argument in (Fraction(-1), Fraction(-30), Fraction(-87)):
             with self.subTest(argument=float(argument)):
                 with self.assertRaises(ValueError):
                     fp32_exp.correctly_rounded_exp(argument, precision=3)
@@ -192,22 +211,23 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             fp32_exp.correctly_rounded_exp(Fraction(1, 3))
 
-    def test_low_precision_never_returns_a_wrong_value(self) -> None:
-        """Refusing is fine, escalating is fine; silently answering from a bound that
-        did not separate two FP32 candidates is not.
+    def test_limited_precision_never_returns_a_wrong_value(self) -> None:
+        """Every returned value must match the independent route, at each fixed budget.
 
-        This is the certification step itself, so it holds whichever way the design
-        question about the failure mode was answered. Refusal must be a ``ValueError``,
-        so that a genuine bug is not mistaken for a principled refusal.
+        Testing only 3 and 60 digits misses a plausible shortcut: reject fewer than 8
+        digits, otherwise round Decimal.exp without a proof. The midpoint fixtures
+        expose wrong answers at 8, 9, 10 and 11 digits. Refusal must be ValueError.
         """
-        reference = fp32_exp.correctly_rounded_exp
-        for _ in range(200):
-            argument = _random_argument(self.rng)
-            try:
-                value = fp32_exp.correctly_rounded_exp(argument, precision=3)
-            except ValueError:  # refusing to answer is an allowed outcome
-                continue
-            self.assertEqual(value, reference(argument))
+        arguments = GOLDEN_ARGUMENTS + tuple(_random_argument(self.rng) for _ in range(200))
+        for argument in arguments:
+            reference = _golden(argument)
+            for precision in (3, 8, 9, 10, 11):
+                with self.subTest(argument=float(argument), precision=precision):
+                    try:
+                        value = fp32_exp.correctly_rounded_exp(argument, precision=precision)
+                    except ValueError:  # refusing to answer is an allowed outcome
+                        continue
+                    self.assertEqual(value, reference)
 
 
 class ExpProfileTests(unittest.TestCase):
@@ -231,6 +251,11 @@ class ExpProfileTests(unittest.TestCase):
         """
         histogram = fp32_exp.exp_ulp_profile(_double_rounded_exp, self.arguments)
         self.assertLessEqual(max(abs(d) for d in histogram), 1)
+
+
+def load_tests(loader, tests, pattern):
+    tests.addTests(doctest.DocTestSuite(fp32_exp))
+    return tests
 
 
 if __name__ == "__main__":
