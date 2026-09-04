@@ -195,3 +195,17 @@ RN-even 本身符号对称，扩展是平凡的，但**合同边界必须显式�
 4. dtype 分轴：输入 / $(m,\ell)$ 状态 / $\mathrm{Exp}$ 输出 / accumulator，主合同只实例化 FP32。
 5. primary metric：v2 的 normalized regret 依赖大候选集，此处不适用；需另定。
 6. 研究假设与效应量门槛：**pilot 之后再冻结**，本文不预设。
+7. **实验设计约束（已定）**：研究合并顺序时，必须固定同一批叶块、只改 schedule。
+   同时改分块内容会把"顺序的影响"和"块本身不同"混在一起，任何差异都归因不了。
+   §9 那个 max 排最前 / 最后的例子就是这个形式：同一批 33 个块，只换位置。
+
+## 11. specified-exp reference 的实现状态
+
+[fp32_exp.py](../experiments/online/fp32_exp.py) 实现 §3 的 specified-exp reference。
+两条已定的合同细节：
+
+- **精度不足时抛 `ValueError`，不自动升精度。** 参考实现要确定性；自动升精度会把
+  "这个点的界确实很紧"藏起来，而那正是 table-maker's dilemma 真正发生的地方，
+  且遇到精确平局时会无限循环。
+- **高精度计算不得继承调用方的 decimal 上下文。** `localcontext()` 只覆盖 `prec`，
+  外层若收窄过 `Emin`，`exp(-10)` 会静默返回 0（真值 4.54e-05）。用显式 `Context`。

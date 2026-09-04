@@ -18,8 +18,12 @@ Explain-back
    （提示：真值恰好落在两个 FP32 的正中间附近时。这叫 table-maker's dilemma。）
 2. 因此不能只算一个数就返回。要怎么**证明**这次精度够了？
    （提示：给近似值加减一个误差上界得到一个区间，看区间两端是否舍到同一个 FP32。）
-3. 证明不了的时候应该怎么办——自动提高精度重试，还是直接抛错？
-   参考实现要的是确定性还是便利？先决定，再写。
+3. 证明不了的时候应该怎么办？**本合同规定：抛 ``ValueError``，不自动提高精度。**
+   理由有三条，值得想明白而不是照做：参考实现必须确定性，同样的输入同样的 precision
+   永远给同样的结果；自动升精度会把"这个点的界确实很紧"这一事实藏起来，而那正是
+   table-maker's dilemma 真正发生的地方；真的遇到精确的平局时，升精度会无限循环。
+   抛错的类型也定死为 ``ValueError``，这样真正的程序 bug（比如 TypeError）不会被
+   误当成"有原则的拒答"。
 4. 输入合同：``argument`` 必须已经是 stored FP32 吗？为什么？
    （提示：本模块只对"exp 这一步的舍入"负责，与 oracle 的输入合同一致。）
 
@@ -40,7 +44,7 @@ decimal 最小示范（陌生 API，agent 提供，可直接运行）
   ``Decimal(float(x))`` 就是 x 的精确十进制表示，不要走分子除分母。
 - 精度用 ``localcontext()`` 临时设置，不要改全局。
 
-    >>> from decimal import Decimal, localcontext
+    >>> from decimal import ROUND_HALF_EVEN, Context, Decimal
     >>> with localcontext() as ctx:
     ...     ctx.prec = 60
     ...     value = Decimal(float(-2.5)).exp()
@@ -50,20 +54,25 @@ decimal 最小示范（陌生 API，agent 提供，可直接运行）
 ``Decimal.exp()`` 的结果误差不超过末位的半个单位，即相对误差约 ``10 ** -(prec - 1) / 2``；
 下面 :data:`DECIMAL_SLACK_DIGITS` 用的是一个宽松得多的界。
 
-本仓库已实测（20000 个参数，范围 [-104, 0]）
---------------------------------------------
+本仓库已实测（随机采样 20000 个参数，范围 [-104, 0]，seed 20260905）
+--------------------------------------------------------------------
 - ``numpy`` 的 float32 exp 只有 66.6% 正确舍入，最大偏差 2 ULP；
-- ``math.exp`` 转 double 再舍到 FP32，20000 个参数全部与正确舍入一致。
+- ``math.exp`` 转 double 再舍到 FP32，**该样本中**全部与正确舍入一致。
 
-第一条是把 exp 当作独立测量通道的理由；第二条说明在此之前用
-``merge.provisional_fp32_exp`` 做的工作没有受影响。
+第一条是把 exp 当作独立测量通道的理由。第二条只是"这批样本里没发现差异"，
+不能推出过去每一次实际用到的 exp 输入都正确——那要重放当时真正出现的参数才能说。
+不过 frozen-weight 恒等式（合同 §4）**本来就不要求 exp 正确舍入**：$\\hat w$ 是被冻结的
+数据，恒等式对任何 exp 实现都成立。所以已有结果不因这一步而动摇，理由是合同的结构，
+不是这次的采样。
+
+同样地，``DEFAULT_PRECISION`` 在该样本中全部证明成功，不能推出证明失败的分支永不触发。
 """
 
 from __future__ import annotations
 
 import struct
 from collections import Counter
-from decimal import Decimal, localcontext
+from decimal import ROUND_HALF_EVEN, Context, Decimal
 from fractions import Fraction
 
 from .fp32_signed import is_stored_fp32
@@ -85,7 +94,8 @@ def correctly_rounded_exp(
       2. ``Decimal(float(argument)).exp()`` 在 ``precision`` 位下算出近似值；
       3. 给它加减一个误差上界，得到一个包住真值的区间；
       4. 区间两端各自舍到 FP32；两端相同才算证明成功，返回那个值；
-      5. 证明不了时按设计问题 3 的决定处理。
+      5. 证明不了时抛 ``ValueError``（设计问题 3），不要自动提高精度。
+         ``precision`` 是调用方给的预算，必须真正被使用，不能忽略它另用一个值。
 
     误差上界用 ``abs(approx) * Fraction(1, 10 ** (precision - DECIMAL_SLACK_DIGITS))``
     就够宽松了——``Decimal.exp`` 的实际误差比这小两个数量级以上。
@@ -98,20 +108,21 @@ def correctly_rounded_exp(
 def ulp_distance(value: Fraction, reference: Fraction) -> int:
     """Scaffolding. Signed distance from ``reference`` to ``value``, counted in FP32 steps.
 
-    Both must be stored FP32. Consecutive FP32 values of the same sign have consecutive
-    bit patterns, so the difference of the patterns counts the representable values in
-    between: 0 means identical, +1 means one step up, and so on. Sign is kept because the
-    direction of a library's error is itself informative.
+    Both must be stored FP32. Raw bit patterns are monotonic only for nonnegative floats:
+    a larger magnitude on the negative side means a larger pattern but a smaller value, so
+    subtracting patterns directly reports the wrong sign there. Negating the magnitude for
+    negative inputs restores a single monotonic ordering across zero, which also lets the
+    two arguments straddle zero. Sign is kept because the direction of a library's error is
+    itself informative.
     """
     if not (is_stored_fp32(value) and is_stored_fp32(reference)):
         raise ValueError("ulp_distance compares stored FP32 values.")
-    if (value < 0) != (reference < 0):
-        raise ValueError("ulp_distance is only defined within one sign.")
 
-    def pattern(number: Fraction) -> int:
-        return struct.unpack("<I", struct.pack("<f", float(number)))[0]
+    def order_key(number: Fraction) -> int:
+        bits = struct.unpack("<I", struct.pack("<f", float(number)))[0]
+        return -(bits & 0x7FFFFFFF) if bits & 0x80000000 else bits
 
-    return pattern(value) - pattern(reference)
+    return order_key(value) - order_key(reference)
 
 
 def exp_ulp_profile(implementation, arguments) -> Counter[int]:
@@ -128,10 +139,17 @@ def exp_ulp_profile(implementation, arguments) -> Counter[int]:
 
 
 def _decimal_exp(argument: Fraction, precision: int) -> Fraction:
-    """Scaffolding. The high-precision value alone, without the certification step."""
-    with localcontext() as context:
-        context.prec = precision
-        return Fraction(Decimal(float(argument)).exp())
+    """Scaffolding. The high-precision value alone, without the certification step.
+
+    Uses an explicit ``Context`` rather than ``localcontext()``. ``localcontext()`` copies
+    the caller's settings and only ``prec`` gets overridden, so a caller that had narrowed
+    ``Emin`` would make this silently underflow: with ``Emin = 0`` it returns 0 for
+    exp(-10), whose true FP32 rounding is 4.54e-05. A reference must not inherit anything
+    from ambient state.
+    """
+    context = Context(prec=precision, Emin=-999_999_999, Emax=999_999_999,
+                      rounding=ROUND_HALF_EVEN)
+    return Fraction(context.exp(Decimal(float(argument))))
 
 
 __all__ = [

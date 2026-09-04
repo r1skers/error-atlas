@@ -33,6 +33,65 @@ def _double_rounded_exp(argument: Fraction) -> Fraction:
     return round_to_fp32(Fraction(math.exp(float(argument))))
 
 
+
+# --- an exp route that shares no code with the implementation under test ---------------
+#
+# The weighted identity is checked against the implementation's own default precision,
+# which cannot tell a certified result from one that is uniformly one ULP off. These
+# helpers compute exp a second way, with no `decimal` involved at all: exact Fraction
+# Taylor after argument reduction, then repeated squaring, carrying a rigorous bracket
+# throughout. Agreement is then a differential result rather than a restatement.
+
+_HALVINGS = 7          # |x| / 128 < 1 for every argument in the supported domain
+_TERMS = 80
+_GRID = 1 << 600       # widen the bracket onto this grid so the Fractions stay bounded
+
+
+def _widen(low: Fraction, high: Fraction) -> tuple[Fraction, Fraction]:
+    lower = low.numerator * _GRID // low.denominator
+    upper = -((-high.numerator * _GRID) // high.denominator)
+    return Fraction(lower, _GRID), Fraction(upper, _GRID)
+
+
+def _independent_exp_interval(argument: Fraction) -> tuple[Fraction, Fraction]:
+    """A rigorous bracket for exp(argument), for argument <= 0."""
+    reduced = argument / (1 << _HALVINGS)
+    total, term = Fraction(0), Fraction(1)
+    for n in range(_TERMS + 1):
+        total += term
+        term = term * reduced / (n + 1)
+    # |remainder| <= |y|^(N+1)/(N+1)! * e^|y|, and e^|y| < 3 because |y| < 1
+    bound = abs(term) * 3
+    low, high = total - bound, total + bound
+    for _ in range(_HALVINGS):
+        low, high = _widen(low * low, high * high)
+    return low, high
+
+
+def _golden(argument: Fraction) -> Fraction:
+    low, high = _independent_exp_interval(argument)
+    lower, upper = round_to_fp32(low), round_to_fp32(high)
+    if lower != upper:
+        raise AssertionError(f"the independent route could not certify exp({float(argument)})")
+    return lower
+
+
+# Six arguments whose true exp lands unusually close to an FP32 rounding midpoint, found
+# by searching the domain with the independent route; these are where a careless
+# implementation goes wrong first.
+_NEAR_MIDPOINT = (
+    "-0x1.264b2c0000000p+4",
+    "-0x1.52ab7c0000000p+6",
+    "-0x1.a338860000000p+5",
+    "-0x1.1805800000000p+6",
+    "-0x1.5369720000000p+6",
+    "-0x1.5a12840000000p+6",
+)
+
+GOLDEN_ARGUMENTS = tuple(Fraction(float.fromhex(h)) for h in _NEAR_MIDPOINT) + tuple(
+    Fraction(v) for v in (0, -1, -2, -10, -30, -87, -100, -103, -104, -105, -200)
+) + (Fraction(-1, 2), Fraction(-1, 4), Fraction(-1, 1024))
+
 def _skip_unless_implemented(test: unittest.TestCase, call) -> None:
     try:
         call()
@@ -53,11 +112,29 @@ class UlpDistanceTests(unittest.TestCase):
             self.assertEqual(fp32_exp.ulp_distance(above, value), 1)
             self.assertEqual(fp32_exp.ulp_distance(value, above), -1)
 
-    def test_mixed_signs_and_unrepresentable_values_are_rejected(self) -> None:
-        with self.assertRaises(ValueError):
-            fp32_exp.ulp_distance(Fraction(1), Fraction(-1))
+    def test_direction_is_by_value_on_the_negative_side_too(self) -> None:
+        """Raw bit patterns run backwards for negatives, so this is where a naive
+        implementation reports the wrong sign: -0.5 is above -1, not below it."""
+        half, one = Fraction(-1, 2), Fraction(-1)
+        self.assertEqual(fp32_exp.ulp_distance(half, one), 2**23)
+        self.assertEqual(fp32_exp.ulp_distance(one, half), -(2**23))
+        self.assertEqual(
+            fp32_exp.ulp_distance(Fraction(-1), Fraction(-2)),
+            fp32_exp.ulp_distance(Fraction(2), Fraction(1)),
+        )
+
+    def test_arguments_may_straddle_zero(self) -> None:
+        self.assertGreater(fp32_exp.ulp_distance(Fraction(1), Fraction(-1)), 0)
+        self.assertEqual(
+            fp32_exp.ulp_distance(Fraction(1), Fraction(-1)),
+            -fp32_exp.ulp_distance(Fraction(-1), Fraction(1)),
+        )
+
+    def test_unrepresentable_values_are_rejected(self) -> None:
         with self.assertRaises(ValueError):
             fp32_exp.ulp_distance(Fraction(1, 3), Fraction(1))
+        with self.assertRaises(ValueError):
+            fp32_exp.ulp_distance(Fraction(1), Fraction(-1, 3))
 
 
 class CorrectlyRoundedExpTests(unittest.TestCase):
@@ -86,6 +163,31 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
         self.assertEqual(fp32_exp.correctly_rounded_exp(Fraction(-105)), 0)
         self.assertEqual(fp32_exp.correctly_rounded_exp(Fraction(-200)), 0)
 
+    def test_matches_an_independently_computed_reference(self) -> None:
+        """The one check that does not go through decimal at all.
+
+        Every other test here is satisfied by an implementation that is uniformly one ULP
+        off on negative arguments, because exp(0), the underflow boundary, monotonicity
+        and a one-ULP profile tolerance all survive such a shift. Only a second,
+        independently derived value pins the answer.
+        """
+        for argument in GOLDEN_ARGUMENTS:
+            with self.subTest(argument=float(argument)):
+                self.assertEqual(fp32_exp.correctly_rounded_exp(argument), _golden(argument))
+
+    def test_the_precision_budget_is_actually_honoured(self) -> None:
+        """Three digits can never separate two FP32 candidates, so a non-underflowing
+        argument must be refused at that budget.
+
+        Without this, an implementation that ignores ``precision`` and always computes at
+        the default passes everything: its answers are right, they are simply unproven.
+        A reference has to do the proof it claims to do.
+        """
+        for argument in (Fraction(0), Fraction(-1), Fraction(-30), Fraction(-87)):
+            with self.subTest(argument=float(argument)):
+                with self.assertRaises(ValueError):
+                    fp32_exp.correctly_rounded_exp(argument, precision=3)
+
     def test_non_stored_arguments_are_rejected(self) -> None:
         with self.assertRaises(ValueError):
             fp32_exp.correctly_rounded_exp(Fraction(1, 3))
@@ -95,14 +197,15 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
         did not separate two FP32 candidates is not.
 
         This is the certification step itself, so it holds whichever way the design
-        question about the failure mode was answered.
+        question about the failure mode was answered. Refusal must be a ``ValueError``,
+        so that a genuine bug is not mistaken for a principled refusal.
         """
         reference = fp32_exp.correctly_rounded_exp
         for _ in range(200):
             argument = _random_argument(self.rng)
             try:
                 value = fp32_exp.correctly_rounded_exp(argument, precision=3)
-            except Exception:  # noqa: BLE001 - refusing to answer is an allowed outcome
+            except ValueError:  # refusing to answer is an allowed outcome
                 continue
             self.assertEqual(value, reference(argument))
 
