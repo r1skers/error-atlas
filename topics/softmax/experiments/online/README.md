@@ -13,7 +13,7 @@
 | 3 | [fp32_signed.py](fp32_signed.py)：有符号 RN-even 与四个受舍入算子 | `rewrite.fp32_oracle`（非负子集）、硬件 float32 | 通过差分测试（2026-09-04）；explain-back 待回填 |
 | 1c | [schedules.py](schedules.py)：CUDA 可表达的 schedule 族 | 结构性质自检 | agent 脚手架，已通过 |
 | 1b | [merge.py](merge.py)：(m, ℓ) 递推、`MergeDump`、frozen-weight 恒等式 | 独立重算的残差；解析权重负控制 | 通过（2026-09-05） |
-| 1a | 正确舍入的 FP32 exp（`decimal`），即 specified-exp reference | 硬件 float32 exp 的实测 ULP 分布 | 未开始 |
+| 1a | [fp32_exp.py](fp32_exp.py)：正确舍入的 FP32 exp，即 specified-exp reference | `math.exp` 双舍入路径；ULP 分布 | 骨架已建 |
 | 2a | dump 传输层与硬件 provenance | — | 未开始 |
 
 ## 为什么需要第 3 步
