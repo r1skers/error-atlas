@@ -160,6 +160,10 @@ class OperatorTests(unittest.TestCase):
                     (signed.fp32_mul, fa * fb),
                 ):
                     if not np.isfinite(hw):
+                        # Hardware overflowed, so the oracle must too. Skipping here
+                        # would let a saturating operator through unnoticed.
+                        with self.assertRaises(OverflowError):
+                            op(a, b)
                         continue
                     try:
                         result, _ = op(a, b)
@@ -206,11 +210,36 @@ class FusedMultiplyAddTests(unittest.TestCase):
         for _ in range(PAIR_CASES):
             a, b, c = (_random_fp32(self.rng) for _ in range(3))
             try:
-                fused, residual = signed.fp32_fma(a, b, c)
+                expected = signed.round_to_fp32(a * b + c)
             except OverflowError:
+                with self.assertRaises(OverflowError):
+                    signed.fp32_fma(a, b, c)
                 continue
+            fused, residual = signed.fp32_fma(a, b, c)
+            self.assertEqual(fused, expected)
             self.assertEqual(residual, fused - (a * b + c))
-            self.assertEqual(fused, signed.round_to_fp32(a * b + c))
+
+    def test_fma_tolerates_an_overflowing_intermediate_product(self) -> None:
+        """Only ``a*b + c`` may overflow; the unrounded product never does.
+
+        Fixed counterexamples rather than random draws, because the band where the
+        product exceeds MAX_FINITE while the sum comes back inside it is narrow: it
+        needs ``c`` to cancel almost all of the product, and ``c`` must itself be a
+        representable FP32 value.
+        """
+        maximum = signed.MAX_FINITE
+        two, half = Fraction(2), Fraction(3, 2)
+        for a, b, c, expected in (
+            (maximum, two, -maximum, maximum),
+            (-maximum, two, maximum, -maximum),
+            (maximum, half, -maximum, signed.round_to_fp32(maximum / 2)),
+        ):
+            with self.subTest(a=float(a), b=float(b)):
+                with self.assertRaises(OverflowError):  # the product alone is too big
+                    signed.round_to_fp32(a * b)
+                self.assertEqual(signed.fp32_fma(a, b, c)[0], expected)
+        with self.assertRaises(OverflowError):  # but a genuinely overflowing sum raises
+            signed.fp32_fma(maximum, two, Fraction(0))
 
     def test_fma_differs_from_separate_rounding_somewhere(self) -> None:
         """If this never fires, the FMA arm of the contract would be vacuous."""

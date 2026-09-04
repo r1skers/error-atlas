@@ -15,7 +15,9 @@ Explain-back
 必须自己回答的设计问题
 ----------------------
 1. ``MergeDump`` 的字段是"一个 GPU kernel 能写回 global memory 的东西"。
-   逐节点四个 uint32（m_v、w_a、w_b、l_v）够不够重建全部分析量？
+   逐节点六个 uint32（m_v、Delta_a、Delta_b、w_a、w_b、l_v）里，
+   两个 Delta 在 CPU 上是可以由 ``fp32_sub`` 重算的——那为什么还要 dump？
+   （提示：重算只告诉你 Delta *应该*是多少；CPU 没有设备的 expf。）
    哪些量**不能**放进 dump，为什么？（提示：残差是有理数，GPU 算不出来）
 2. 合同 §5 说每次 merge 至多一个乘法残差。那么 ``node_residual`` 里的
    ``mu_a + mu_b`` 实际上恒有一项为零。写实现时你要不要显式利用这一点？
@@ -39,7 +41,7 @@ from fractions import Fraction
 from typing import Callable
 
 from .fp32_signed import is_stored_fp32, round_to_fp32
-from .schedules import Schedule
+from .schedules import Schedule, check_schedule
 
 ExpImpl = Callable[[Fraction], Fraction]
 
@@ -54,18 +56,26 @@ class MergeDump:
     frozen-weight reference are all *derived* on the CPU from these fields plus the
     schedule, and must never be added to the dump.
 
-    Per internal node a kernel writes four words: ``node_max``, ``weight_left``,
-    ``weight_right``, ``node_ell``. The subtraction ``m_a (-) m_v`` and the products
+    Per internal node a kernel writes six words: ``node_max``, ``gap_left``,
+    ``gap_right``, ``weight_left``, ``weight_right``, ``node_ell``. The products
     ``l (*) w`` are not dumped because FP32 add, sub, mul and fma are correctly rounded
     on NVIDIA hardware and therefore reproducible on the CPU from what is dumped; the
     exp implementation is the one operation that is not, which is precisely why its
     output is frozen here as data.
+
+    The gaps are dumped even though ``fp32_sub`` could recompute them, because that
+    recomputation only tells you what the gap *should* have been. Since the CPU does not
+    have the device's ``expf``, a wrong weight cannot otherwise be localised: dumping the
+    gap separates "the subtraction was wrong" from "the exponential was wrong", which is
+    exactly the split step 1a's measured ULP profile needs.
     """
 
     schedule: Schedule
     leaf_max: tuple[Fraction, ...]
     leaf_ell: tuple[Fraction, ...]
     node_max: tuple[Fraction, ...]
+    gap_left: tuple[Fraction, ...]
+    gap_right: tuple[Fraction, ...]
     weight_left: tuple[Fraction, ...]
     weight_right: tuple[Fraction, ...]
     node_ell: tuple[Fraction, ...]
@@ -86,19 +96,38 @@ class MergeDump:
         k = node - self.schedule.leaf_count
         return self.weight_left[k], self.weight_right[k]
 
+    def gaps_at(self, node: int) -> tuple[Fraction, Fraction]:
+        """``(Delta_a, Delta_b)`` of internal node ``node``, in the shared index space."""
+        k = node - self.schedule.leaf_count
+        return self.gap_left[k], self.gap_right[k]
+
     def is_well_formed(self) -> bool:
-        """Every dumped field must be a stored FP32 value."""
+        """The dump must match its schedule in shape and hold stored FP32 values only.
+
+        Representability alone is not enough: ``all()`` over an empty tuple is true, so a
+        dump whose arrays were never filled would otherwise pass. Anything arriving from
+        a device parser has to clear the shape check before its numbers mean anything.
+        """
+        try:
+            check_schedule(self.schedule)
+        except ValueError:
+            return False
+        leaves, nodes = self.schedule.leaf_count, len(self.schedule.nodes)
+        per_leaf = (self.leaf_max, self.leaf_ell)
+        per_node = (
+            self.node_max,
+            self.gap_left,
+            self.gap_right,
+            self.weight_left,
+            self.weight_right,
+            self.node_ell,
+        )
+        if any(len(group) != leaves for group in per_leaf):
+            return False
+        if any(len(group) != nodes for group in per_node):
+            return False
         return all(
-            is_stored_fp32(value)
-            for group in (
-                self.leaf_max,
-                self.leaf_ell,
-                self.node_max,
-                self.weight_left,
-                self.weight_right,
-                self.node_ell,
-            )
-            for value in group
+            is_stored_fp32(value) for group in per_leaf + per_node for value in group
         )
 
 
@@ -127,7 +156,7 @@ def merge_reduce(
 
     合同 §2 的五步，逐节点：
       1. ``m_v = max(m_a, m_b)``  —— 选择操作，无舍入，不产生残差；
-      2. ``Delta = m (-) m_v``    —— 有符号减法，用 ``fp32_sub``；
+      2. ``Delta = m (-) m_v``    —— 有符号减法，用 ``fp32_sub``；两个 Delta 都要进 dump；
       3. ``w = exp_impl(Delta)``  —— 结果必须是 stored FP32；
       4. ``p = l (*) w``          —— 用 ``fp32_mul``；
       5. ``l_v = p_a (+) p_b``    —— 用 ``fp32_add``。
@@ -160,7 +189,7 @@ def weighted_residuals(dump: MergeDump) -> tuple[Fraction, ...]:
     fused 时是那一次 fma 的残差），``W_v`` 是从 v 到根路径上**计算权重**之积。
 
     这两个都要从 dump 重算，不能在 :func:`merge_reduce` 里顺手存下来——因为 GPU 那边
-    只会给你 dump 里的四个字段，如果这里依赖了别的东西，同一份分析就跑不到硬件数据上。
+    只会给你 dump 里的那几个字段，如果这里依赖了别的东西，同一份分析就跑不到硬件数据上。
 
     合同 §4 的恒等式因此是：
 

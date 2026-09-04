@@ -103,14 +103,19 @@ def balanced_pairwise(leaf_count: int) -> Schedule:
 
 
 def warp_shfl_xor(lane_count: int) -> Schedule:
-    """Butterfly reduction via ``__shfl_xor_sync``.
+    """Butterfly reduction via ``__shfl_xor_sync`` with **ascending** masks 1, 2, 4, ...
 
-    Worth stating explicitly: as a *reduction tree* this is exactly
-    :func:`balanced_pairwise`. The butterfly is about data movement (every lane ends
-    holding the full result), not about which leaves get summed together. Only the
-    ``shfl_down`` variant below actually changes the pairing.
+    The mask order is part of the contract, not an implementation detail. On four lanes:
+
+    - ascending ``1 -> 2`` pairs ``(0,1)`` and ``(2,3)``;
+    - descending ``2 -> 1`` pairs ``(0,2)`` and ``(1,3)``.
+
+    This function is the ascending order, and in that order the reduction *tree* is
+    exactly :func:`balanced_pairwise`: the butterfly is about data movement (every lane
+    ends holding the full result), not about which leaves get summed. The descending
+    order is a different tree, and it coincides with :func:`warp_shfl_down`.
     """
-    _require_power_of_two(lane_count)
+    _require_warp_lanes(lane_count)
     base = balanced_pairwise(lane_count)
     return Schedule(leaf_count=base.leaf_count, nodes=base.nodes, kind="warp_shfl_xor")
 
@@ -118,12 +123,13 @@ def warp_shfl_xor(lane_count: int) -> Schedule:
 def warp_shfl_down(lane_count: int) -> Schedule:
     """Reduction via ``__shfl_down_sync`` with halving offsets.
 
-    Same depth as the xor butterfly but a different leaf pairing: the first step joins
-    lane ``i`` with lane ``i + lanes/2``, so the leaves that end up summed together are
-    strided rather than adjacent. On skewed data the two are not interchangeable, which
-    is a distinction the frozen line's random trees could not express.
+    Same depth as the ascending xor butterfly but a different leaf pairing: the first
+    step joins lane ``i`` with lane ``i + lanes/2``, so the leaves that end up summed
+    together are strided rather than adjacent. On skewed data the two are not
+    interchangeable, which is a distinction the frozen line's random trees could not
+    express. This is also the tree a *descending*-mask xor butterfly produces.
     """
-    _require_power_of_two(lane_count)
+    _require_warp_lanes(lane_count)
     nodes: list[tuple[int, int]] = []
     current = list(range(lane_count))
     offset = lane_count // 2
@@ -165,6 +171,12 @@ def split_k(leaf_count: int, splits: int) -> Schedule:
     return _finish(leaf_count, nodes, f"split_k_{splits}")
 
 
-def _require_power_of_two(value: int) -> None:
-    if value < 1 or value & (value - 1):
-        raise ValueError("Warp-shuffle schedules need a power-of-two lane count.")
+WARP_SIZE = 32
+
+
+def _require_warp_lanes(value: int) -> None:
+    """A shuffle reduction lives inside one warp, so 1, 2, 4, 8, 16 or 32 lanes only."""
+    if value < 1 or value > WARP_SIZE or value & (value - 1):
+        raise ValueError(
+            f"Warp-shuffle schedules need a power-of-two lane count up to {WARP_SIZE}."
+        )

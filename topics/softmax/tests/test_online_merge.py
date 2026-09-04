@@ -113,11 +113,12 @@ class MergeDumpTests(unittest.TestCase):
             for k, (left, right) in enumerate(schedule.nodes):
                 self.assertEqual(dump.node_max[k], max(dump.max_at(left), dump.max_at(right)))
 
-    def test_weights_are_the_exponential_of_the_rounded_gap(self) -> None:
-        """Pins contract steps 2 and 3: Delta goes through FP32 subtraction, not exactly.
+    def test_gaps_are_the_rounded_difference(self) -> None:
+        """Pins contract step 2 on its own: Delta goes through FP32 subtraction.
 
-        The weighted identity cannot check this. Its residual is *defined* as
-        ``l_v - exact``, so it holds for any weights the dump happens to carry.
+        Kept separate from the weight check so that a device dump can say which of the
+        two channels drifted. The weighted identity cannot check either one: its residual
+        is *defined* as ``l_v - exact``, so it holds for whatever the dump carries.
         """
         for spread in SPREADS:
             for schedule in _schedule_family(LEAVES):
@@ -126,12 +127,28 @@ class MergeDumpTests(unittest.TestCase):
                 for k, (left, right) in enumerate(schedule.nodes):
                     node_max = dump.node_max[k]
                     with self.subTest(kind=schedule.kind, spread=spread, node=k):
-                        for child, weight in (
-                            (left, dump.weight_left[k]),
-                            (right, dump.weight_right[k]),
+                        for child, gap in (
+                            (left, dump.gap_left[k]),
+                            (right, dump.gap_right[k]),
                         ):
-                            gap, _ = fp32_sub(dump.max_at(child), node_max)
-                            self.assertEqual(weight, provisional_fp32_exp(gap))
+                            self.assertEqual(gap, fp32_sub(dump.max_at(child), node_max)[0])
+                        winner = 0 if dump.max_at(left) >= dump.max_at(right) else 1
+                        self.assertEqual(dump.gaps_at(schedule.leaf_count + k)[winner], 0)
+
+    def test_weights_are_the_exponential_of_the_dumped_gap(self) -> None:
+        """Pins contract step 3 against the gap the dump actually carries."""
+        for spread in SPREADS:
+            for schedule in _schedule_family(LEAVES):
+                maxima, ells = _leaves(self.rng, LEAVES, spread)
+                dump = merge_reduce(maxima, ells, schedule)
+                for k in range(len(schedule.nodes)):
+                    with self.subTest(kind=schedule.kind, spread=spread, node=k):
+                        self.assertEqual(
+                            dump.weight_left[k], provisional_fp32_exp(dump.gap_left[k])
+                        )
+                        self.assertEqual(
+                            dump.weight_right[k], provisional_fp32_exp(dump.gap_right[k])
+                        )
 
     def test_node_ell_is_the_rounded_merge_of_its_children(self) -> None:
         """Pins contract steps 4 and 5, including that fused really rounds once."""
@@ -216,13 +233,20 @@ class IdentityTests(unittest.TestCase):
         self.assertGreater(max(deviations), 0, "analytic weights reproduced the identity")
 
     def test_reference_uses_no_rounding(self) -> None:
-        """Two exact leaves with equal maxima: the reference is the plain exact sum."""
+        """A case where the FP32 sum and the exact sum genuinely differ.
+
+        ``1 + 2**-23`` is the FP32 value just above one, so the exact sum is
+        ``2 + 2**-23``. That sits exactly halfway between 2 and the next FP32 value, and
+        ties-to-even sends it back to 2. A reference that rounded anywhere would report
+        2 and the test would not notice; 1 + 2 would not separate them at all.
+        """
         schedule = schedules.balanced_pairwise(2)
         maxima = (Fraction(3), Fraction(3))
-        ells = (Fraction(1), Fraction(2))
+        ells = (Fraction(1), Fraction(1) + Fraction(1, 2**23))
         dump = merge_reduce(maxima, ells, schedule)
-        self.assertEqual(frozen_weight_reference(dump), Fraction(3))
-        self.assertEqual(sum(weighted_residuals(dump)), 0)
+        self.assertEqual(dump.node_ell[0], Fraction(2))
+        self.assertEqual(frozen_weight_reference(dump), Fraction(2) + Fraction(1, 2**23))
+        self.assertEqual(sum(weighted_residuals(dump)), -Fraction(1, 2**23))
 
 
 class AbsorptionTests(unittest.TestCase):

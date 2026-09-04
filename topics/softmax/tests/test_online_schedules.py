@@ -58,8 +58,9 @@ class WellFormednessTests(unittest.TestCase):
             with self.subTest(case=name), self.assertRaises(ValueError):
                 schedules.check_schedule(schedule)
 
-    def test_power_of_two_is_required_for_warp_shuffles(self) -> None:
-        for size in (0, 3, 6, 33):
+    def test_warp_shuffles_are_confined_to_one_warp(self) -> None:
+        """A shuffle reduction cannot span warps, so 64 lanes is not expressible."""
+        for size in (0, 3, 6, 33, 64, 128):
             with self.subTest(size=size):
                 with self.assertRaises(ValueError):
                     schedules.warp_shfl_xor(size)
@@ -79,8 +80,8 @@ class ShapeTests(unittest.TestCase):
             self.assertEqual(schedules.warp_shfl_xor(size).depth, expected)
             self.assertEqual(schedules.warp_shfl_down(size).depth, expected)
 
-    def test_xor_butterfly_is_the_balanced_tree(self) -> None:
-        """The butterfly moves data; it does not change which leaves are summed."""
+    def test_ascending_xor_butterfly_is_the_balanced_tree(self) -> None:
+        """With ascending masks the butterfly moves data without changing the pairing."""
         for size in (2, 4, 8, 32):
             self.assertEqual(
                 schedules.warp_shfl_xor(size).nodes, schedules.balanced_pairwise(size).nodes

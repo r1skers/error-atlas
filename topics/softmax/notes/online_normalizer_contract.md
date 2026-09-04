@@ -29,12 +29,17 @@ FTZ / gradual underflow 是**合同参数**，不是实现细节。
 | 名称 | 参考值 | 量的性质 | 可精确核对 |
 | --- | --- | --- | --- |
 | **frozen-weight** | 冻结实际算出的 $\hat w$，用同样权重做**无中间舍入**的递推 | 全部二进制有理数 | **是**（Fraction 逐位） |
-| **specified-exp** | 指定 $\mathrm{Exp}$ 为高精度正确舍入 FP32 exp | 含超越数 | 否，只能高精度核到 N 位 |
+| **specified-exp** | 指定 $\mathrm{Exp}$ 为高精度正确舍入的 FP32 exp | 参考值本身是 FP32，故有理 | 比较是精确的；但**判定**哪个 FP32 才是正确舍入需要高精度 |
 | **real-exp** | 参考 $\sum_i e^{x_i-m}$ 的实数值 | 含超越数 | 否，需 MPFR/区间 |
 
-关键区分：**只有 frozen-weight 能保住旧线"Fraction 意义下逐位精确"这一方法论资产。**
-一旦参考里含真实 $\exp$，$\mathrm{Exp}$ 节点的残差 $\hat w-\exp(\hat\Delta)$ 就是无理数，
-恒等式不再能在 Fraction 里核对。
+**specified-exp 与 real-exp 常被混掉，但性质不同。** 前者比较的是两个 **FP32 值**
+（实际 $\mathrm{Exp}$ 的输出 vs 正确舍入的输出），差以 ULP 计、有理、可精确核对；
+高精度只用在离线**确定**正确舍入的那个值，不进入比较本身。后者比较的是一个 FP32 值与
+一个超越实数，$\hat w-\exp(\hat\Delta)$ 无理，只能高精度核到 N 位。
+
+关键区分仍在：**只有 frozen-weight 能在不额外确定任何超越量的前提下，保住旧线
+"Fraction 意义下逐位精确"这一方法论资产。** specified-exp 要先付出确定正确舍入的代价，
+real-exp 则连比较本身都不再是精确的。
 
 specified-exp 与 real-exp 之差 = $\mathrm{Exp}$ 实现自身的误差，是一个**可测量**
 （实测 ULP 分布），不是一套新的验证机械。三种 reference，两个测量问题。
@@ -65,7 +70,11 @@ $$
 $$
 
 **必须用 $W_v=\prod\hat w$，不能用解析的 $e^{m_v-m_{\rm root}}$。** 后者靠指数相加 telescoping，
-而浮点乘积每层再舍一次；两者相差每层若干 ULP。恒等式的负控制（§9）就是验证解析权重版本逐位失败。
+而实际权重逐层各自舍入过；两者相差每层若干 ULP。恒等式的负控制（§9）就是验证解析权重版本逐位失败。
+
+$W_v$ 里的连乘本身是**精确有理乘积**，不是逐层再舍一次的浮点积。被冻结的是每一个因子
+$\hat w_e$（它们各自是 FP32），而把它们乘起来这一步属于 CPU 侧的分析，不对应 kernel 里的
+任何运算——**没有任何硬件会计算 $W_v$**。
 
 $\eta$ 与 $\mathrm{Exp}$ 的实现误差**不出现在此式中**——它们已被吸收进冻结的 $\hat w$。
 这既是该 reference 的局限，也正是它的可移植性来源（§6）。
@@ -82,9 +91,13 @@ $\eta$ 与 $\mathrm{Exp}$ 的实现误差**不出现在此式中**——它们�
 - **吸收是连续的，不是二值的**：$\hat\ell_v\neq p_a$ 但已丢失 $p_b$ 大部分时，
   事后判据 $\mathrm{fl}(x+y)=x$ 为假而损失已发生。因此机制量只能是连续的 $W_v\alpha_v$，
   事件计数不足以充当机制量。
-- **FP32 下 stagnation 可达**：完全吸收需 $\hat w_b\hat\ell_b/\hat\ell_a<2^{-24}$，
-  即 $\Delta m\gtrsim24\ln2\approx16.6$。注意分块下 $m$ 是块内最大值，
-  $\Delta m$ 是**块间** max 之差，小于全局 logit 间距——故"块间 max 差的分布"是必须先测的量。
+- **FP32 下 stagnation 可达**：精确条件是 $\hat w_b\hat\ell_b<\tfrac12\,\mathrm{ulp}(\hat\ell_a)$。
+  由于 $\mathrm{ulp}(\hat\ell_a)/\hat\ell_a$ 随 $\hat\ell_a$ 在 binade 内的位置在
+  $[2^{-24},2^{-23}]$ 之间变动，比值阈值落在 $2^{-25}$ 到 $2^{-24}$ 之间。
+  **只有再假定 $\hat\ell_a\approx\hat\ell_b$**，才能把它换算成
+  $\Delta m\gtrsim24\ln2\approx16.6$——这个数是量级参考，不是判据。
+  另注意分块下 $m$ 是块内最大值，$\Delta m$ 是**块间** max 之差，小于全局 logit 间距，
+  故"块间 max 差的分布"是必须先测的量。
 
 ## 6. 硬件可移植性
 
