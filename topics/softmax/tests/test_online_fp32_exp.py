@@ -11,9 +11,10 @@ import struct
 import unittest
 from decimal import ROUND_UP, DefaultContext, FloatOperation, Inexact, localcontext
 from fractions import Fraction
+from unittest.mock import patch
 
 from online import fp32_exp
-from online.fp32_signed import round_to_fp32
+from online.fp32_signed import MAX_FINITE, round_to_fp32
 
 SEED = 20260905
 SAMPLES = 3_000
@@ -207,14 +208,33 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
     def test_the_zero_shortcut_stays_below_the_real_transition(self) -> None:
         """MIN_USEFUL_ARGUMENT lets the implementation skip the decimal path entirely,
         which is not optional: without it _decimal_exp builds a seven-million-bit
-        denominator at x = -5e6 and takes half a second, and logit gaps are unbounded
-        FP32 values. The shortcut is only sound while it sits below the argument where
+        denominator at x = -5e6 and takes half a second, and finite FP32 gaps can have
+        much larger magnitudes. The shortcut is only sound below the argument where
         exp actually stops rounding to zero.
         """
         last_nonzero = Fraction(float.fromhex(_LAST_NONZERO))
         self.assertGreater(fp32_exp.correctly_rounded_exp(last_nonzero), 0)
         self.assertLess(fp32_exp.MIN_USEFUL_ARGUMENT, last_nonzero)
         self.assertEqual(fp32_exp.correctly_rounded_exp(fp32_exp.MIN_USEFUL_ARGUMENT), 0)
+
+    def test_extreme_negative_inputs_skip_high_precision_computation(self) -> None:
+        """Guard the shortcut itself without a machine-dependent timing threshold."""
+        with patch.object(
+            fp32_exp, "_decimal_exp", side_effect=AssertionError("unexpected high-precision call")
+        ) as decimal_exp:
+            for argument in (
+                fp32_exp.MIN_USEFUL_ARGUMENT, Fraction(-105), Fraction(-(2**30)), -MAX_FINITE
+            ):
+                with self.subTest(argument=argument):
+                    self.assertEqual(fp32_exp.correctly_rounded_exp(argument), 0)
+            decimal_exp.assert_not_called()
+
+    def test_invalid_precision_is_rejected_before_any_shortcut(self) -> None:
+        for argument in (Fraction(-105), Fraction(-1), Fraction(0)):
+            for precision in (0, -1, True, False, 3.5, "60", None, Fraction(3)):
+                with self.subTest(argument=argument, precision=precision):
+                    with self.assertRaises(ValueError):
+                        fp32_exp.correctly_rounded_exp(argument, precision=precision)
 
     def test_the_precision_budget_is_actually_honoured(self) -> None:
         """The prescribed three-digit intervals cannot decide these nonzero cases.
@@ -228,8 +248,10 @@ class CorrectlyRoundedExpTests(unittest.TestCase):
                     fp32_exp.correctly_rounded_exp(argument, precision=3)
 
     def test_non_stored_arguments_are_rejected(self) -> None:
-        with self.assertRaises(ValueError):
-            fp32_exp.correctly_rounded_exp(Fraction(1, 3))
+        for argument in (Fraction(1, 3), Fraction(-313, 3)):
+            with self.subTest(argument=argument):
+                with self.assertRaises(ValueError):
+                    fp32_exp.correctly_rounded_exp(argument)
 
     def test_limited_precision_never_returns_a_wrong_value(self) -> None:
         """Every returned value must match the independent route, at each fixed budget.

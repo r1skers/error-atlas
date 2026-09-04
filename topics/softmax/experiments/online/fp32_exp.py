@@ -78,8 +78,7 @@ from collections import Counter
 from decimal import ROUND_HALF_EVEN, Context, Decimal, DivisionByZero, InvalidOperation, Overflow
 from fractions import Fraction
 
-from .fp32_signed import is_stored_fp32
-from .fp32_signed import round_to_fp32  
+from .fp32_signed import is_stored_fp32, round_to_fp32
 
 DEFAULT_PRECISION = 60
 DECIMAL_SLACK_DIGITS = 2
@@ -94,7 +93,7 @@ def correctly_rounded_exp(
     """USER-WRITTEN CORE. ``exp(argument)`` rounded to the nearest FP32, with a proof.
 
     步骤：
-      1. 拒收非 stored-FP32 的输入；
+      1. 校验 precision 是正整数（不接受 bool），并拒收非 stored-FP32 的输入；
       2. 调用 ``_decimal_exp(argument, precision)``，在指定精度下算出近似值；
       3. 用 Fraction 精确地加减一个误差上界，得到包住真值的区间；
       4. 区间两端各自舍到 FP32；两端相同才算证明成功，返回那个值；
@@ -108,8 +107,10 @@ def correctly_rounded_exp(
     此时可用 ``abs(approx) * Fraction(10) ** (DECIMAL_SLACK_DIGITS - precision)``
     作误差上界；它至少是半个十进制末位单位的 20 倍。Fraction 的幂也支持负指数。
 
-    第 4 步要用 ``round_to_fp32``，本模块没有导入它，自己从 ``.fp32_signed`` 加一行。
+    第 4 步使用 ``fp32_signed.round_to_fp32``。
     """
+    if isinstance(precision, bool) or not isinstance(precision, int) or precision <= 0:
+        raise ValueError("precision must be a positive integer.")
     if not is_stored_fp32(argument):
         raise ValueError("correctly_rounded_exp only accepts stored FP32 inputs.")
     if argument <= MIN_USEFUL_ARGUMENT:
@@ -124,7 +125,6 @@ def correctly_rounded_exp(
         return lower_fp32
     else:
         raise ValueError("Failed to compute correctly rounded exponential.")
-
 
 
 def ulp_distance(value: Fraction, reference: Fraction) -> int:
