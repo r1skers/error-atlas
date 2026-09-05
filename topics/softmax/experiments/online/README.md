@@ -15,6 +15,7 @@
 | 1c | [schedules.py](schedules.py)：CUDA 可表达的 schedule 族 | 结构性质自检 | agent 脚手架，已通过 |
 | 1b | [merge.py](merge.py)：(m, ℓ) 递推、`MergeDump`、frozen-weight 恒等式 | 独立重算的残差；解析权重负控制 | 通过（2026-09-05） |
 | 1a | [fp32_exp.py](fp32_exp.py)：正确舍入的 FP32 exp，即 specified-exp reference | 独立区间参照；ULP 分布 | 已实现并通过测试；学习记录待回填 |
+| pilot | [pilot.py](pilot.py)：块族、实数 exp 参照、相对误差指标 | 与 decimal 路线交叉核对；保守性抽样 | 骨架已建 |
 | 2a | dump 传输层与硬件 provenance | — | 未开始 |
 
 ## 为什么需要第 3 步
