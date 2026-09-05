@@ -254,7 +254,7 @@ class RelativeErrorTests(unittest.TestCase):
 
 
 class MeasurementIntervalTests(unittest.TestCase):
-    """Scaffolding checks independent of the two unfinished core functions."""
+    """Scaffolding checks independent of the two metric core functions."""
 
     def measurement(self, computed, low, high, family=None):
         return pilot.Measurement(
@@ -300,7 +300,7 @@ class MeasurementIntervalTests(unittest.TestCase):
 
 
 class RoundingEventTests(unittest.TestCase):
-    """Classify real merge dumps without requiring the unfinished metric core."""
+    """Classify real merge dumps independently of the metric core."""
 
     def test_exp_underflow_is_not_addition_absorption(self) -> None:
         for fused in (False, True):
@@ -359,6 +359,34 @@ class MeasureTests(unittest.TestCase):
         self.assertEqual(result.computed, 256)
         self.assertEqual(result.error_high, 0)
         self.assertEqual(result.absorbed_merges, 0)
+
+    def test_absorption_counts_do_not_determine_final_error(self) -> None:
+        """A reproducible counterexample, not a population-level efficacy claim."""
+        family = pilot.max_at_position(32, 32, Fraction(20), 0)
+        variants = (schedules.sequential_chain(32), schedules.balanced_pairwise(32),
+                    schedules.warp_shfl_down(32), schedules.split_k(32, 4))
+        measurements = [pilot.measure(family, schedule) for schedule in variants]
+        self.assertEqual([m.absorbed_merges for m in measurements], [31, 5, 5, 10])
+        for result in measurements:
+            self.assertEqual(result.computed, 32)
+            self.assertEqual(result.error_order(measurements[0]), 0)
+            self.assertEqual((result.error_low, result.error_high),
+                             (measurements[0].error_low, measurements[0].error_high))
+
+    def test_sub_ulp_errors_can_be_separated_with_only_32_blocks(self) -> None:
+        family = pilot.max_at_position(32, 32, Fraction(20), 31)
+        chain = pilot.measure(family, schedules.sequential_chain(32))
+        balanced = pilot.measure(family, schedules.balanced_pairwise(32))
+        reference_low, reference_high = pilot.denominator_interval(family)
+        quantum = Fraction(1, 2**18)  # upward FP32 spacing at 32
+        self.assertEqual(balanced.computed, 32)
+        self.assertEqual(chain.computed, 32 + quantum)
+        self.assertEqual(round_to_fp32(reference_low), chain.computed)
+        self.assertEqual(round_to_fp32(reference_high), chain.computed)
+        self.assertLess(chain.error_high, quantum / reference_high)
+        self.assertLess(balanced.error_high, quantum / reference_high)
+        self.assertLess(chain.error_difference_interval(balanced)[1], 0)
+        self.assertEqual(chain.error_order(balanced), -1)
 
 
 if __name__ == "__main__":

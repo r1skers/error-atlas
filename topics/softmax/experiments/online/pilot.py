@@ -24,7 +24,7 @@ Explain-back
 3. ``l_*`` 只能算到一个区间。那么 ``A_T`` 也只能是区间。
    什么时候两个 schedule 的 ``A`` 区间重叠、因而分不出高下？这一步该怎么报告？
 
-Prediction record（跑之后回填）
+Prediction record（下一轮运行前填写；已完成试跑的解释另记为事后观察）
 ------------------------------
 Direction：
 Scale：

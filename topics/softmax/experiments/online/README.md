@@ -15,7 +15,7 @@
 | 1c | [schedules.py](schedules.py)：CUDA 可表达的 schedule 族 | 结构性质自检 | agent 脚手架，已通过 |
 | 1b | [merge.py](merge.py)：(m, ℓ) 递推、`MergeDump`、frozen-weight 恒等式 | 独立重算的残差；解析权重负控制 | 通过（2026-09-05） |
 | 1a | [fp32_exp.py](fp32_exp.py)：正确舍入的 FP32 exp，即 specified-exp reference | 独立区间参照；ULP 分布 | 已实现并通过测试；学习记录待回填 |
-| pilot | [pilot.py](pilot.py)：块族、实数 exp 参照、相对误差指标 | 与 decimal 路线交叉核对；保守性抽样 | 骨架已建 |
+| pilot | [pilot.py](pilot.py)：块族、实数 exp 参照、相对误差指标 | 与 decimal 路线交叉核对；保守性抽样 | 核心已实现，探索性算例可运行 |
 | 2a | dump 传输层与硬件 provenance | — | 未开始 |
 
 ## 为什么需要第 3 步
@@ -32,11 +32,13 @@ python tools/run_tests.py --suite softmax -p test_online_fp32_signed.py -v
 
 核心未实现时测试自动 skip；实现后必须与参照逐值精确一致。
 
-## Pilot 骨架的使用边界
+## Pilot 的使用边界
 
-接下来由用户填写 `pilot.py` 中的 `denominator_interval` 与 `relative_error`；两者仍为
-`NotImplementedError`。运行 `python tools/run_tests.py --suite softmax -p test_online_pilot.py -v`
-时，要分别看实际通过数和 skip 数，不能把尚未实现的核心计作通过。
+`pilot.py` 中的 `denominator_interval` 与 `relative_error` 已实现。
+运行 `python tools/run_tests.py --suite softmax -p test_online_pilot.py -v` 核对实现与确定性算例。
+首轮 scratch 的解读修正见[合同 §12](../../notes/online_normalizer_contract.md#12-pilot-首轮设计已定)：
+输出的 FP32 间距不能当作高精度参照的测量分辨率，32 块也能分出不同 schedule 的误差。
+Explain-back 可补充当前理解；已有测量只能记为事后观察，下一轮 prediction record 必须在运行前写。
 
 - real-exp 区间除了 FP32 舍入交叉核对，还会对照独立的 320 位 Decimal 区间。
   该参照直接用有向十进制除法包住有理指数，不经过 binary float；核对的是实数区间包含性。
