@@ -6,11 +6,16 @@ either way. Nothing here produces or reads an artifact.
 
 import random
 import unittest
+from decimal import (
+    Context, Decimal, DivisionByZero, InvalidOperation, Overflow,
+    ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN,
+)
 from fractions import Fraction
 
 from online import pilot, schedules
 from online.fp32_exp import correctly_rounded_exp
 from online.fp32_signed import fp32_sub, round_to_fp32
+from online.merge import merge_reduce
 
 SEED = 20260905
 
@@ -26,6 +31,30 @@ def _flat_family(count: int = 4, mass: int = 32) -> pilot.BlockFamily:
     return pilot.BlockFamily(tuple(Fraction(0) for _ in range(count)), tuple([mass] * count))
 
 
+def _decimal_real_exp_interval(argument: Fraction) -> tuple[Fraction, Fraction]:
+    """Independent real-exp bracket for these test cases, without binary float conversion.
+
+    Directed division brackets even nonterminating rational arguments. Monotonic exp
+    maps that bracket; Decimal.exp is correctly rounded to nearest, so the adjacent
+    decimal values enclose its rounding error. The precision resolves our sampled
+    Taylor brackets; this helper is not a general-purpose arbitrary-argument oracle.
+    """
+    if argument == 0:
+        return Fraction(1), Fraction(1)
+    context = Context(
+        prec=320, rounding=ROUND_HALF_EVEN, Emin=-999_999, Emax=999_999,
+        capitals=1, clamp=0, flags=[], traps=[DivisionByZero, InvalidOperation, Overflow],
+    )
+    down, up = context.copy(), context.copy()
+    down.rounding, up.rounding = ROUND_FLOOR, ROUND_CEILING
+    numerator, denominator = Decimal(argument.numerator), Decimal(argument.denominator)
+    argument_low = down.divide(numerator, denominator)
+    argument_high = up.divide(numerator, denominator)
+    low = context.next_minus(context.exp(argument_low))
+    high = context.next_plus(context.exp(argument_high))
+    return Fraction(low), Fraction(high)
+
+
 class BlockFamilyTests(unittest.TestCase):
     """Scaffolding, so these do not skip."""
 
@@ -37,6 +66,8 @@ class BlockFamilyTests(unittest.TestCase):
 
     def test_malformed_families_are_rejected(self) -> None:
         with self.assertRaises(ValueError):
+            pilot.BlockFamily((), ())
+        with self.assertRaises(ValueError):
             pilot.BlockFamily((Fraction(0),), (1, 2))
         with self.assertRaises(ValueError):
             pilot.BlockFamily((Fraction(1, 3),), (1,))
@@ -44,6 +75,14 @@ class BlockFamilyTests(unittest.TestCase):
             pilot.BlockFamily((Fraction(0),), (0,))
         with self.assertRaises(ValueError):
             pilot.BlockFamily((Fraction(0),), (2**24 + 1,))
+
+    def test_masses_must_be_integer_element_counts(self) -> None:
+        for mass in (True, False, 1.5, 2.0, Fraction(3, 2), Fraction(2)):
+            with self.subTest(mass=mass):
+                with self.assertRaises(TypeError):
+                    pilot.BlockFamily((Fraction(0),), (mass,))
+        self.assertEqual(pilot.BlockFamily((Fraction(0),), (2**24,)).leaf_ell,
+                         (Fraction(2**24),))
 
     def test_the_block_mass_really_does_accumulate_exactly(self) -> None:
         """The design of contract section 12 rests on this, so it is checked, not assumed."""
@@ -80,7 +119,7 @@ class RealExpIntervalTests(unittest.TestCase):
             self.assertGreater(high, 0)
 
     def test_agrees_with_the_decimal_route_on_fp32_arguments(self) -> None:
-        """Two independent routes to the same reference: Taylor here, decimal there."""
+        """FP32 agreement only; real containment is checked separately below."""
         rng = random.Random(SEED + 1)
         for _ in range(150):
             argument = round_to_fp32(Fraction(rng.uniform(-100.0, 0.0)))
@@ -89,6 +128,20 @@ class RealExpIntervalTests(unittest.TestCase):
             with self.subTest(argument=float(argument)):
                 self.assertEqual(round_to_fp32(low), expected)
                 self.assertEqual(round_to_fp32(high), expected)
+
+    def test_contains_an_independent_high_precision_real_exp_bracket(self) -> None:
+        rng = random.Random(SEED + 4)
+        exact_gap = round_to_fp32(Fraction(-10)) - round_to_fp32(Fraction(1, 3))
+        arguments = [Fraction(0), Fraction(-1), Fraction(-1, 3), exact_gap,
+                     Fraction(-95), Fraction(-200), Fraction(-1000)]
+        arguments.extend(Fraction(rng.uniform(-90.0, -0.125)).limit_denominator(10**6)
+                         for _ in range(20))
+        for argument in arguments:
+            with self.subTest(argument=argument):
+                low, high = pilot.real_exp_interval(argument)
+                reference_low, reference_high = _decimal_real_exp_interval(argument)
+                self.assertLessEqual(low, reference_low)
+                self.assertGreaterEqual(high, reference_high)
 
     def test_accepts_rationals_that_are_not_fp32_values(self) -> None:
         """The exponent is an exact difference of two logits, which need not be FP32."""
@@ -146,8 +199,8 @@ class DenominatorTests(unittest.TestCase):
         """A gap that FP32 subtraction would round must not be rounded here.
 
         The choice of numbers matters. With a maximum of one third and a block ten below
-        it, the exact gap needs bits FP32 cannot hold, and fp32_sub moves it by 3.3e-7
-        relative. That shifts the block's term by the same relative amount, which is
+        it, the exact gap needs bits FP32 cannot hold, and fp32_sub moves it by about
+        3.3e-7 in absolute terms. That shifts exp(gap) by about 3.3e-7 relative, which is
         1e127 times wider than the reference bracket, so the two routes are separable.
         A far more negative gap would not work: the term would be negligible beside the
         maximum block and either route would pass.
@@ -200,6 +253,87 @@ class RelativeErrorTests(unittest.TestCase):
         self.assertEqual(low, 0)
 
 
+class MeasurementIntervalTests(unittest.TestCase):
+    """Scaffolding checks independent of the two unfinished core functions."""
+
+    def measurement(self, computed, low, high, family=None):
+        return pilot.Measurement(
+            kind="test", fused=False, computed=Fraction(computed),
+            error_low=Fraction(low), error_high=Fraction(high), absorbed_merges=0,
+            exp_underflow_edges=0, product_underflow_edges=0,
+            family=family if family is not None else _flat_family(2, 10),
+        )
+
+    def test_wide_or_touching_intervals_remain_unresolved(self) -> None:
+        first = self.measurement(19, 0, 1)
+        second = self.measurement(18, 0, 1)
+        self.assertTrue(first.has_valid_error_interval)
+        self.assertIsNone(first.error_order(second))
+        first = self.measurement(19, 0, Fraction(1, 10))
+        second = self.measurement(18, Fraction(1, 10), Fraction(1, 5))
+        self.assertIsNone(first.error_order(second))
+
+    def test_disjoint_intervals_determine_the_paired_sign(self) -> None:
+        first = self.measurement(19, Fraction(4, 100), Fraction(6, 100))
+        second = self.measurement(18, Fraction(9, 100), Fraction(11, 100))
+        self.assertEqual(first.error_difference_interval(second),
+                         (Fraction(-7, 100), Fraction(-3, 100)))
+        self.assertEqual(first.error_order(second), -1)
+        self.assertEqual(second.error_order(first), 1)
+
+    def test_equal_outputs_share_exactly_the_same_error(self) -> None:
+        first = self.measurement(19, 0, 1)
+        second = self.measurement(19, Fraction(4, 100), Fraction(6, 100))
+        self.assertEqual(first.error_difference_interval(second), (0, 0))
+        self.assertEqual(first.error_order(second), 0)
+
+    def test_invalid_intervals_and_unpaired_families_are_rejected(self) -> None:
+        valid = self.measurement(19, 0, 1)
+        for low, high in ((-1, 1), (2, 1)):
+            invalid = self.measurement(18, low, high)
+            self.assertFalse(invalid.has_valid_error_interval)
+            with self.assertRaises(ValueError):
+                valid.error_order(invalid)
+        unpaired = self.measurement(19, 0, 1, _flat_family(2, 11))
+        with self.assertRaisesRegex(ValueError, "same block family"):
+            valid.error_order(unpaired)
+
+
+class RoundingEventTests(unittest.TestCase):
+    """Classify real merge dumps without requiring the unfinished metric core."""
+
+    def test_exp_underflow_is_not_addition_absorption(self) -> None:
+        for fused in (False, True):
+            dump = merge_reduce((Fraction(0), Fraction(-200)), (Fraction(1), Fraction(1)),
+                                schedules.sequential_chain(2), fused=fused)
+            self.assertEqual(pilot._rounding_event_counts(dump), (0, 1, 0))
+
+    def test_product_underflow_exists_only_in_the_separate_arm(self) -> None:
+        # Synthetic merge state, outside constant-logit pilot blocks (whose ell >= 1).
+        # A separate multiply loses the nonzero term; FMA loses it only at final rounding.
+        maxima, ells = (Fraction(0), Fraction(-1)), (Fraction(1), Fraction(1, 2**149))
+        for fused, expected in ((False, (0, 0, 1)), (True, (1, 0, 0))):
+            dump = merge_reduce(maxima, ells, schedules.sequential_chain(2), fused=fused)
+            self.assertEqual(pilot._rounding_event_counts(dump), expected)
+
+    def test_fma_changes_absorption_for_integer_mass_blocks(self) -> None:
+        for reverse in (False, True):
+            maxima = (Fraction(0), Fraction(-16323477, 8388608))
+            masses = (2**24, 7)
+            if reverse:
+                maxima, masses = maxima[::-1], masses[::-1]
+            family = pilot.BlockFamily(maxima, masses)
+            for fused, expected_count, expected_output in (
+                (False, 1, 2**24), (True, 0, 2**24 + 2),
+            ):
+                with self.subTest(reverse=reverse, fused=fused):
+                    dump = merge_reduce(family.leaf_max, family.leaf_ell,
+                                        schedules.sequential_chain(2), fused=fused)
+                    self.assertEqual(dump.node_ell[0], expected_output)
+                    self.assertEqual(pilot._rounding_event_counts(dump),
+                                     (expected_count, 0, 0))
+
+
 class MeasureTests(unittest.TestCase):
     def setUp(self) -> None:
         _skip_unless_implemented(self, lambda: pilot.denominator_interval(_flat_family()))
@@ -210,7 +344,8 @@ class MeasureTests(unittest.TestCase):
             for fused in (False, True):
                 result = pilot.measure(family, schedule, fused=fused)
                 with self.subTest(kind=schedule.kind, fused=fused):
-                    self.assertTrue(result.separated)
+                    self.assertTrue(result.has_valid_error_interval)
+                    self.assertEqual(result.family, family)
                     self.assertGreaterEqual(result.error_low, 0)
                     self.assertLessEqual(result.error_high, 1)
                     self.assertEqual(result.kind, schedule.kind)

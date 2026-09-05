@@ -31,3 +31,22 @@ python tools/run_tests.py --suite softmax -p test_online_fp32_signed.py -v
 ```
 
 核心未实现时测试自动 skip；实现后必须与参照逐值精确一致。
+
+## Pilot 骨架的使用边界
+
+接下来由用户填写 `pilot.py` 中的 `denominator_interval` 与 `relative_error`；两者仍为
+`NotImplementedError`。运行 `python tools/run_tests.py --suite softmax -p test_online_pilot.py -v`
+时，要分别看实际通过数和 skip 数，不能把尚未实现的核心计作通过。
+
+- real-exp 区间除了 FP32 舍入交叉核对，还会对照独立的 320 位 Decimal 区间。
+  该参照直接用有向十进制除法包住有理指数，不经过 binary float；核对的是实数区间包含性。
+- `Measurement.has_valid_error_interval` 只表示区间合法。同一 `BlockFamily` 的结果可用
+  `error_difference_interval(other)` 取保守配对差，`error_order(other)` 返回 -1／1／0
+  分别表示误差更低／更高／已证明相等；区间不足以判定时返回 `None`。
+  区间相减可能比利用共同参照的联合分析更宽；相同计算输出的误差则必然相等。
+- `absorbed_merges` 只计非零贡献的完全吸收；`exp_underflow_edges` 和
+  `product_underflow_edges` 单列。FMA 没有独立乘法舍入，因此后一计数恒为零；用于
+  判断吸收的单项舍入值只是反事实对照，不是 FMA 实际执行的中间步骤。
+- 块族必须非空，块大小必须是非 bool 的整数，满足 `1 <= n_b <= 2**24`。
+
+这些是维护测试和诊断口径，不是新的 pilot 效应或确认结果。

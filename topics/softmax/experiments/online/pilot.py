@@ -38,8 +38,8 @@ import random
 from dataclasses import dataclass
 from fractions import Fraction
 
-from .fp32_signed import fp32_add, fp32_mul, is_stored_fp32, round_to_fp32
-from .merge import merge_reduce
+from .fp32_signed import fp32_add, is_stored_fp32, round_to_fp32
+from .merge import MergeDump, merge_reduce
 from .schedules import Schedule
 
 TAYLOR_TERMS = 80
@@ -52,7 +52,7 @@ class BlockFamily:
 
     Block ``b`` holds ``masses[b]`` copies of the single logit ``maxima[b]``. Then
     ``m_b = maxima[b]`` and ``l_b = sum of exp(0) = masses[b]``, and FP32 accumulates that
-    many ones bit-exactly while the count stays below 2**24. Contract section 12: with no
+    many ones bit-exactly while the count stays at most 2**24. Contract section 12: with no
     intra-block rounding, a comparison across schedules on the same family isolates the
     merge order.
 
@@ -65,10 +65,14 @@ class BlockFamily:
     masses: tuple[int, ...]
 
     def __post_init__(self) -> None:
+        if not self.maxima:
+            raise ValueError("A family must contain at least one block.")
         if len(self.maxima) != len(self.masses):
             raise ValueError("Every block needs a maximum and a mass.")
         if not all(is_stored_fp32(m) for m in self.maxima):
             raise ValueError("Block maxima must be stored FP32 logits.")
+        if any(isinstance(n, bool) or not isinstance(n, int) for n in self.masses):
+            raise TypeError("Block masses must be integers, not bools or fractional counts.")
         if not all(1 <= n <= 2**24 for n in self.masses):
             raise ValueError("Block mass must stay where FP32 counts ones exactly.")
 
@@ -102,7 +106,7 @@ def real_exp_interval(argument: Fraction) -> tuple[Fraction, Fraction]:
     decimal route used by ``correctly_rounded_exp``: exact Fraction Taylor after argument
     reduction, then repeated squaring, carrying the bracket throughout. The number of
     halvings adapts to the argument, so unlike the fixed-depth copy in the exp tests this
-    one accepts any rational, which it must — the exponent here is an exact difference of
+    one accepts any nonpositive rational — the exponent here is an exact difference of
     two logits, not an FP32 value.
     """
     if argument > 0:
@@ -141,7 +145,13 @@ def denominator_interval(family: BlockFamily) -> tuple[Fraction, Fraction]:
 
     返回 ``(low, high)``，满足 ``low <= l_* <= high``。
     """
-    raise NotImplementedError
+    M = family.global_max
+    low, high = Fraction(0), Fraction(0)
+    for m, n in zip(family.maxima, family.masses):
+        exp_low, exp_high = real_exp_interval(m - M)
+        low += n * exp_low
+        high += n * exp_high
+    return low, high
 
 
 def relative_error(computed: Fraction, denominator: tuple[Fraction, Fraction]) -> tuple[Fraction, Fraction]:
@@ -153,14 +163,29 @@ def relative_error(computed: Fraction, denominator: tuple[Fraction, Fraction]) -
     想清楚再写：``|computed - l_*|`` 在 ``l_*`` 扫过区间时怎么变化？
     分母 ``l_*`` 变大时 ``A`` 又怎么变？两者不同向，所以不能只算两个端点了事。
     """
-    raise NotImplementedError
+    low, high = denominator
+    if low <= 0:
+        raise ValueError("denominator interval must be strictly positive.")
+    if high < low:
+        raise ValueError("denominator interval must be ordered.")
 
+    error_at_low = abs(computed - low) / low
+    error_at_high = abs(computed - high) / high
+
+    error_low = (
+        Fraction(0)
+        if low <= computed <= high
+        else min(error_at_low, error_at_high)
+    )
+    error_high = max(error_at_low, error_at_high)
+    return error_low, error_high
 
 # --- input families (scaffolding) ------------------------------------------------------
 
 
 def max_at_position(count: int, mass: int, gap: Fraction, position: int) -> BlockFamily:
-    """One block sits ``gap`` above the rest; ``position`` says where in the order.
+    """
+    One block sits ``gap`` above the rest; ``position`` says where in the order.
 
     The sharpest axis in the stage: the same multiset of blocks, reordered. In a chain a
     late maximum lets the small blocks accumulate at their own scale before one rescale,
@@ -199,11 +224,68 @@ class Measurement:
     error_low: Fraction
     error_high: Fraction
     absorbed_merges: int
+    exp_underflow_edges: int
+    product_underflow_edges: int
+    family: BlockFamily
 
     @property
-    def separated(self) -> bool:
-        """False when the reference bracket is too wide to place the error at all."""
-        return self.error_low <= self.error_high
+    def has_valid_error_interval(self) -> bool:
+        """Check interval validity only; even a valid interval may be inconclusive."""
+        return 0 <= self.error_low <= self.error_high
+
+    def error_difference_interval(self, other: Measurement) -> tuple[Fraction, Fraction]:
+        """Conservative paired interval for self's error minus other's, on the same family.
+
+        Marginal interval subtraction can be wider than a joint analysis of the shared
+        reference. Equal computed outputs, however, have exactly equal errors.
+        """
+        if self.family != other.family:
+            raise ValueError("Paired errors require the same block family.")
+        if not (self.has_valid_error_interval and other.has_valid_error_interval):
+            raise ValueError("Cannot compare invalid error intervals.")
+        if self.computed == other.computed:
+            return Fraction(0), Fraction(0)
+        return self.error_low - other.error_high, self.error_high - other.error_low
+
+    def error_order(self, other: Measurement) -> int | None:
+        """-1: lower error; +1: higher; 0: proved equal; None: unresolved at this precision."""
+        low, high = self.error_difference_interval(other)
+        if high < 0:
+            return -1
+        if low > 0:
+            return 1
+        if low == high == 0:
+            return 0
+        return None
+
+
+def _rounding_event_counts(dump: MergeDump) -> tuple[int, int, int]:
+    """Return (absorbed merges, exp-underflow edges, product-underflow edges).
+
+    A finite gap has a positive real exponential, so a stored zero weight belongs to
+    exp underflow. A positive exact product rounded to zero belongs to multiplication
+    underflow only in the separate arm: FMA never rounds that product independently.
+    Absorption counts only nonzero contributions whose combined result equals the
+    other contribution rounded alone. For FMA those rounded-alone products are
+    counterfactual comparisons, not separately executed multiplications. Partial loss
+    is not counted; these events do not replace the residual/error analysis.
+    """
+    absorbed = exp_underflow = product_underflow = 0
+    for k, (left, right) in enumerate(dump.schedule.nodes):
+        weights = (dump.weight_left[k], dump.weight_right[k])
+        exact = (dump.ell_at(left) * weights[0], dump.ell_at(right) * weights[1])
+        products = tuple(round_to_fp32(value) for value in exact)
+        exp_underflow += sum(weight == 0 for weight in weights)
+        if dump.fused:
+            nonzero_contributions = all(value > 0 for value in exact)
+        else:
+            product_underflow += sum(
+                value > 0 and product == 0 for value, product in zip(exact, products)
+            )
+            nonzero_contributions = all(product > 0 for product in products)
+        if nonzero_contributions and dump.node_ell[k] in products:
+            absorbed += 1
+    return absorbed, exp_underflow, product_underflow
 
 
 def measure(family: BlockFamily, schedule: Schedule, *, fused: bool = False) -> Measurement:
@@ -211,15 +293,7 @@ def measure(family: BlockFamily, schedule: Schedule, *, fused: bool = False) -> 
     dump = merge_reduce(family.leaf_max, family.leaf_ell, schedule, fused=fused)
     low, high = relative_error(dump.ell_at(schedule.root), denominator_interval(family))
 
-    # A merge absorbed one side entirely when the result equals what the other side alone
-    # rounds to. Contract section 5 warns this is only the total case: partial loss leaves
-    # no such trace, so the count is a coarse companion to the error, not the mechanism.
-    absorbed = 0
-    for k, (left, right) in enumerate(schedule.nodes):
-        product_left, _ = fp32_mul(dump.ell_at(left), dump.weight_left[k])
-        product_right, _ = fp32_mul(dump.ell_at(right), dump.weight_right[k])
-        if dump.node_ell[k] in (product_left, product_right):
-            absorbed += 1
+    absorbed, exp_underflow, product_underflow = _rounding_event_counts(dump)
     return Measurement(
         kind=schedule.kind,
         fused=fused,
@@ -227,4 +301,7 @@ def measure(family: BlockFamily, schedule: Schedule, *, fused: bool = False) -> 
         error_low=low,
         error_high=high,
         absorbed_merges=absorbed,
+        exp_underflow_edges=exp_underflow,
+        product_underflow_edges=product_underflow,
+        family=family,
     )
