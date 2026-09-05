@@ -1,2 +1,4 @@
+# Frozen replay requires CPython 3.12+; verified on CPython 3.13.12.
+# Verified versions: numpy 2.4.6, matplotlib 3.10.8 (see README).
 numpy>=1.26,<3
 matplotlib>=3.8,<4

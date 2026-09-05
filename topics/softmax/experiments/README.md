@@ -34,6 +34,10 @@ subdirectory.
 
 ## Routine checks (repository root)
 
+Use CPython 3.12+ for frozen replay; the verified environment is recorded in the
+[repository README](../../../README.md). Earlier float `sum()` semantics change exact
+replay values.
+
 ```sh
 python tools/run_tests.py --suite softmax
 python tools/run_tests.py --suite softmax -p "test_predictor_fixed_k8_beam_inference.py" -v
@@ -91,6 +95,12 @@ These runners generate evidence; they are not routine smoke commands. Read the m
 
 Score-only does not mean production-cheap; cost conclusions apply only to the recorded
 Python environment.
+
+Current selector contract: at least two **strictly positive**, finite FP32 leaves.
+The historical score-only results README described inputs more broadly as nonnegative;
+the frozen macro/shadow score does not define zero-subtree behavior. The current entry
+rejects zero leaves before model loading. This narrows the API description to the tested
+domain; it introduces no new scoring rule or efficacy evidence.
 
 | Module | Role |
 | --- | --- |

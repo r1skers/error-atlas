@@ -267,6 +267,28 @@ class AbsorptionTests(unittest.TestCase):
         self.assertEqual(dump.node_ell[0], Fraction(1))  # the addend vanished entirely
         self.assertEqual(sum(weighted_residuals(dump)), -weight)
 
+    def test_half_ulp_absorption_depends_on_winner_parity(self) -> None:
+        # At this binade the upward spacing is 2. A unit addend is an exact tie.
+        for winner, expected in ((2**24, 2**24), (2**24 + 2, 2**24 + 4)):
+            for fused in (False, True):
+                with self.subTest(winner=winner, fused=fused):
+                    dump = merge_reduce(
+                        (Fraction(0), Fraction(0)), (Fraction(winner), Fraction(1)),
+                        self.schedule, fused=fused,
+                    )
+                    self.assertEqual(dump.node_ell[0], Fraction(expected))
+
+    def test_product_rounding_changes_absorption_at_the_boundary(self) -> None:
+        maxima = (Fraction(0), Fraction(-2))
+        ells = (Fraction(2**24), Fraction(7747987, 1048576))
+        separate = merge_reduce(maxima, ells, self.schedule)
+        fused = merge_reduce(maxima, ells, self.schedule, fused=True)
+        product = ells[1] * separate.weight_right[0]
+        self.assertGreater(product, 1)  # above half an upward ULP of ell_a
+        self.assertEqual(round_to_fp32(product), 1)  # separate multiplication creates a tie
+        self.assertEqual(separate.node_ell[0], ells[0])
+        self.assertEqual(fused.node_ell[0], ells[0] + 2)
+
     def test_weight_can_underflow_to_zero_without_breaking_the_identity(self) -> None:
         dump = merge_reduce((Fraction(0), Fraction(-200)), (Fraction(1), Fraction(1)),
                             self.schedule)

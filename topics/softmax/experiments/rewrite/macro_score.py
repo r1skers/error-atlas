@@ -39,8 +39,6 @@ import heapq
 from fractions import Fraction
 from typing import Sequence
 
-from sklearn import tree
-
 from .fp32_oracle import Tree
 
 

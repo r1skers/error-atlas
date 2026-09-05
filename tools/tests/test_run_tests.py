@@ -11,6 +11,15 @@ import run_tests
 
 
 class TestRunnerTests(unittest.TestCase):
+    def test_older_python_is_rejected_before_frozen_test_discovery(self):
+        for version in ((3, 10, 0), (3, 11, 9)):
+            with self.subTest(version=version):
+                with patch.object(run_tests.sys, "version_info", version):
+                    with patch.object(run_tests.unittest, "TestLoader") as loader:
+                        with self.assertRaisesRegex(ValueError, "Python 3.12"):
+                            run_tests.collect_tests(["softmax"], "test_*.py")
+                        loader.assert_not_called()
+
     def test_layout_has_source_and_test_directories(self):
         for name, (tests, source) in run_tests.SUITES.items():
             with self.subTest(suite=name):

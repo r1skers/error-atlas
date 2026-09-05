@@ -18,23 +18,24 @@ independently reproduced from a blank-slate reimplementation.
 
 ## Headline findings
 
-- **The final reduction error is dominated by the sign coherence between local
-  rounding errors, not by their magnitude.** Writing E² = A + C (local energy plus
-  pairwise cross term), the tree-to-tree spread of the error is driven by C: across
-  trees on a fixed input, the standard deviation of C is 2.5–3.6× that of A.
-- **A cheap magnitude-only score cannot rank trees reliably**, because it estimates
-  only A and is blind to the coherence term C that actually separates good trees from
-  bad ones. This is a confirmed negative result, not a tuning failure.
+- **Coherence varies more than local energy across trees in the controlled probes.**
+  Writing E² = A + C (local energy plus pairwise cross term), the measured standard
+  deviation of C across trees on each fixed input is 2.5–3.6× that of A.
+- **The tested magnitude-only Q score omits coherence.** It estimates local energy A
+  without modelling C and is outperformed by the beam in the frozen comparison below.
+  This does not establish that every magnitude-only selector is ineffective or that Q
+  cannot improve on a random tree.
 - **A coherence-aware beam narrowly beats the cheap score** on a preregistered,
   frozen synthetic distribution: paired normalized-regret improvement +0.058, 95%
   bootstrap CI [+0.019, +0.098]. The win is genuine but narrow (per-width intervals
   for widths 512 and 1024 cross zero) and its inference cost is not yet cheap enough
   for production; an offline-reuse variant failed its preregistered deployment gate,
   and an online risk certificate reached calibration only.
-- **Net:** magnitude-only tree selection is infeasible; making selection feasible
-  requires paying to observe the coherence term, and that cost is not yet low enough
-  to deploy. This motivated the shift from *ranking trees* toward *carrying a risk
-  state* alongside a single reduction.
+- **The tested beam trades extra inference cost for a narrow accuracy improvement.**
+  These experiments establish neither a general impossibility result for cheap tree
+  selection nor production feasibility for the beam. Its cost and the offline-reuse
+  no-go motivated the shift from *ranking trees* toward *carrying a risk state*
+  alongside a single reduction.
 
 ![Std. dev. of the coherence term C is 2.5-3.6x that of the local-energy term A across trees, for each controlled input](docs/figures/coherence_dominance.svg)
 
@@ -112,7 +113,12 @@ topics/<topic>/
 
 ## Reproducing the checks
 
-Requires Python 3.10+; dependencies in [requirements.txt](requirements.txt).
+Requires CPython 3.12+; dependencies in [requirements.txt](requirements.txt).
+The full regression and frozen replay suite was verified on Windows with CPython
+3.13.12, NumPy 2.4.6, and Matplotlib 3.10.8. Python 3.10/3.11 are not supported for
+exact replay: their float `sum()` algorithm differs from 3.12+, which changes frozen
+capture values. Other environments must pass the replay checks before claiming exact
+agreement; dependency ranges alone do not guarantee it.
 
 ```sh
 python -m pip install -r requirements.txt

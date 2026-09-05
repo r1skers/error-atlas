@@ -87,12 +87,20 @@ $\eta$ 与 $\mathrm{Exp}$ 的实现误差**不出现在此式中**——它们�
   **每次 merge 只剩一个残差**。FMA 收缩与否改变 $\delta$ 集合，是合同参数。
 - **$W_v\le1$**：重标定对已传播误差只衰减不放大。这是零假设，不是研究假设。
 - **stagnation 自然落在 $\alpha_v$ 上**：完全吸收即 $\hat\ell_v=p_a$，亦即 $\alpha_v=-p_b$。
-  此时 $\alpha_v$ 不是半 ULP 量，而是被降权孩子的**全部量级**，且对正数据恒为负。
+  separate 路径中，加法丢掉了舍入后加数 $p_b$ 的**全部量级**，但仍满足半 ULP 舍入界；
+  $p_b>0$ 时残差为负，乘法已将 $p_b$ 下溢为零时加法残差也为零。
 - **吸收是连续的，不是二值的**：$\hat\ell_v\neq p_a$ 但已丢失 $p_b$ 大部分时，
   事后判据 $\mathrm{fl}(x+y)=x$ 为假而损失已发生。因此机制量只能是连续的 $W_v\alpha_v$，
   事件计数不足以充当机制量。
-- **FP32 下 stagnation 可达**：精确条件是 $\hat w_b\hat\ell_b<\tfrac12\,\mathrm{ulp}(\hat\ell_a)$。
-  由于 $\mathrm{ulp}(\hat\ell_a)/\hat\ell_a$ 随 $\hat\ell_a$ 在 binade 内的位置在
+- **FP32 下 stagnation 可达**：设 $a$ 是 max 胜方、$x=\hat\ell_a>0$，使用 RN-even、
+  gradual underflow 且不溢出。令 $q=\mathrm{ulp}(x)$ 为 $x$ 向上相邻 FP32 格点的间距。
+  separate 路径取 $y=p_b=\mathrm{RN}_{32}(\hat\ell_b\hat w_b)$；FMA 路径取
+  $y=\hat\ell_b\hat w_b$ 的**精确乘积**。两者完全吸收的精确条件都是
+  $y<q/2$，或 $y=q/2$ 且整数 $x/q$ 为偶数。不能省略 tie，也不能在 separate 路径
+  中用未经舍入的乘积替代 $p_b$。
+  例如 $m_a=m_b=0$、$(\hat\ell_a,\hat\ell_b)=(2^{24},1)$ 时 $y=q/2=1$，
+  两条路径仍返回 $2^{24}$；胜方改为 $2^{24}+2$ 时有效数字为奇数，结果向上舍入。
+  当 $x$ 是正规数时，$\mathrm{ulp}(x)/x$ 随 $x$ 在 binade 内的位置在
   $[2^{-24},2^{-23}]$ 之间变动，比值阈值落在 $2^{-25}$ 到 $2^{-24}$ 之间。
   **只有再假定 $\hat\ell_a\approx\hat\ell_b$**，才能把它换算成
   $\Delta m\gtrsim24\ln2\approx16.6$——这个数是量级参考，不是判据。

@@ -8,7 +8,10 @@ This module implements only the frozen selector:
 * shortlist the four lowest-Q candidates, with graph index as the stable tie-breaker;
 * rerank the shortlist with the frozen 19-feature innovation model and a width-three cell beam.
 
-Inputs are nonnegative finite binary32 bit patterns.  Exact subtree sums are accumulated as Python
+Inputs are strictly positive finite binary32 bit patterns, with at least two leaves.
+Zero leaves are outside the frozen score/model contract, even when the total sum is positive;
+supporting them requires a separately validated scoring extension.
+Exact subtree sums are accumulated as Python
 integers on the binary32 ``2**-149`` lattice.  This avoids ``Fraction`` while preserving the frozen
 score's exact phase and ULP semantics.  No candidate FP32 trajectory, forward-error target, or
 oracle function is imported or executed.
@@ -612,14 +615,20 @@ def select_tree(
     graphs: Sequence[BinaryReductionGraphLike],
     model: InnovationModel | None = None,
 ) -> SelectionResult:
-    """Select one candidate without executing any candidate FP32 reduction tree."""
+    """Select from graphs over at least two strictly positive finite FP32 leaves.
+
+    Reject zero leaves before scoring: both macro and shadow features require positive
+    subtree sums. The bit-conversion helpers also handle zero, but this selector does not.
+    """
     if not leaf_bits:
         raise ValueError("leaf_bits must be nonempty")
     if not graphs:
         raise ValueError("graphs must be nonempty")
     leaf_units = tuple(_bits_to_units(bits) for bits in leaf_bits)
-    if sum(leaf_units) <= 0:
-        raise ValueError("the frozen score requires a positive input sum")
+    if len(leaf_units) < 2:
+        raise ValueError("the frozen selector requires at least two leaves")
+    if any(units == 0 for units in leaf_units):
+        raise ValueError("the frozen selector requires strictly positive leaves; zero is unsupported")
     for graph in graphs:
         if graph.leaf_count != len(leaf_units):
             raise ValueError("every candidate graph must match the input width")

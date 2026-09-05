@@ -69,7 +69,7 @@ class Trace:
     node_values: tuple[Fraction, ...]  # rounded result of each internal node, in evaluation order
     deltas: tuple[Fraction, ...]  # local rounding error of each internal node
     exact_sum: Fraction  # sum of the leaves in exact arithmetic
-    error: Fraction  # node_values[-1] - exact_sum
+    error: Fraction  # rounded root - exact_sum; zero for a single leaf
 
 
 def round_to_fp32(value: Fraction) -> Fraction:
@@ -163,7 +163,8 @@ def reduce_tree(values: tuple[Fraction, ...], tree: Tree) -> Trace:
         deltas.append(delta)
 
     exact_total = sum(values)
-    final_error = node_values[-1] - exact_total
+    root_value = values[0] if tree.leaf_count == 1 and not tree.nodes else node_values[-1]
+    final_error = root_value - exact_total
 
     return Trace(
         values=values,

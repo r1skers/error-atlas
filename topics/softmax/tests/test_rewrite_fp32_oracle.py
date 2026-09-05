@@ -113,6 +113,23 @@ class ReduceTreeTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     rewrite.reduce_tree(bad, tree)
 
+    def test_single_leaf_matches_legacy_without_rounding(self) -> None:
+        from rewrite.generators import random_contiguous_split_tree, random_pair_merge_tree
+
+        for builder in (random_contiguous_split_tree, random_pair_merge_tree):
+            for value in (Fraction(0), Q, Fraction(1), rewrite.MAX_FINITE):
+                with self.subTest(builder=builder.__name__, value=value):
+                    trace = rewrite.reduce_tree((value,), builder(1, seed=0))
+                    expected = legacy.predict_fp32_tree_error(
+                        (value,), legacy.balanced_reduction_graph(1)
+                    )
+                    self.assertEqual(trace.values, (value,))
+                    self.assertEqual(trace.node_values, ())
+                    self.assertEqual(trace.deltas, ())
+                    self.assertEqual(trace.exact_sum, expected.exact_input_sum)
+                    self.assertEqual(trace.error, expected.signed_error)
+                    self.assertEqual(trace.error, Fraction(0))
+
     def test_matches_legacy_oracle_on_random_trees(self) -> None:
         rng = random.Random(SEED + 1)
         for case in range(TREE_CASES):

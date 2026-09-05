@@ -20,6 +20,11 @@ SUITES = {
 
 def collect_tests(names: list[str], pattern: str) -> unittest.TestSuite:
     """Keep a separate loader per topic so unittest does not retain another root."""
+    if "softmax" in names and sys.version_info < (3, 12):
+        raise ValueError(
+            "Softmax frozen replay requires Python 3.12+ float sum semantics; "
+            "the verified environment uses CPython 3.13.12"
+        )
     suite = unittest.TestSuite()
     for name in names:
         test_dir, source_dir = SUITES[name]

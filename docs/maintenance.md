@@ -30,6 +30,9 @@ python tools/run_tests.py --suite softmax -p "test_predictor_fixed_k8_beam_infer
 ```
 
 返回码 0 表示通过，1 表示测试失败，2 表示命令/空选择错误。
+Softmax 冻结复现要求 CPython 3.12+；当前核验环境为 CPython 3.13.12、NumPy 2.4.6、
+Matplotlib 3.10.8。统一入口会在 Python 3.10/3.11 上提前拒绝该 suite：旧版 float `sum()`
+会改变冻结 capture 值。历史裸 discover 命令也受同一版本要求约束。
 模式匹配不到测试不能被报告为成功。每个 topic 使用独立 loader，
 实验 source directory 由 harness 加入 import path；不要在每个测试里复制路径设置。
 
@@ -95,6 +98,18 @@ float hex、NaN 约定、seed schedule 与输出字段。快照是维护测试�
 
 每次变更后检查 git diff、测试结果和结果目录是否仍原样。
 文档更新只维护 NEXT_SESSION 的当前状态，其他入口链接它，避免再次多处漂移。
+
+## 2026-09-05 审计修复的源码边界
+
+- `rewrite/macro_score.py` 移除未使用且未声明的 sklearn 导入；`rewrite/fp32_oracle.py`
+  补齐单叶树零误差返回。这些是复现实现的维护修复。
+- 当前 `predictor_fixed_k8_beam_inference.py` 将 selector 输入明确收窄为至少两个严格正
+  FP32 叶子，入口拒绝零值。底层位转换 helper 仍支持零；冻结评分和模型不新增零子树语义。
+  所有冻结受控输入均为正数，评分、shortlist 和 selection 的算术路径不变。
+- 该 inference 文件的源码字节已变；修复前版本可由 Git revision `3f19a4a` 恢复。
+  历史 metadata 中的 source hash 仍指向历史证据生成版本，不能改成当前 hash。
+- 算术合同补全 separate/FMA 的吸收边界；入口与复现笔记把结论限定于已测评分和受控
+  分布。没有修改预注册、results 文件、历史模型或证据等级，也没有重跑发布 runner。
 
 ## 复现分区与原实验：为什么两套都保留
 

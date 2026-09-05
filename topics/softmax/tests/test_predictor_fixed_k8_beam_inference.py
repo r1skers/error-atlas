@@ -5,6 +5,9 @@ import json
 import math
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+from summation_graph_predictor import balanced_reduction_graph
 
 from predictor_fixed_k8_beam_inference import (
     DEFAULT_MODEL_PATH,
@@ -45,6 +48,21 @@ def _heldout_graphs(width: int, group_index: int):
 
 
 class FixedK8BeamInferenceTests(unittest.TestCase):
+    def test_zero_leaves_are_rejected_before_model_loading(self) -> None:
+        graph = balanced_reduction_graph(256)
+        # Cover a zero subtree, an isolated zero and the all-zero input.
+        for bits in ([0, 0] + [0x3F800000] * 254,
+                     [0] + [0x3F800000] * 255, [0] * 256):
+            with self.subTest(zeros=bits.count(0)):
+                with patch.object(InnovationModel, "from_json") as load:
+                    with self.assertRaisesRegex(ValueError, "strictly positive leaves"):
+                        select_tree(bits, [graph])
+                    load.assert_not_called()
+
+    def test_single_leaf_is_rejected_before_scoring(self) -> None:
+        with self.assertRaisesRegex(ValueError, "at least two leaves"):
+            select_tree([0x3F800000], [balanced_reduction_graph(1)])
+
     def test_binary32_lattice_round_trip(self) -> None:
         for bits in (
             0,
