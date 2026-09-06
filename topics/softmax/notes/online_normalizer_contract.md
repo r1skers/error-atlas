@@ -4,6 +4,11 @@
 本文**不**包含预注册、不含研究假设 H1、不产生 artifact。
 上游背景见 [foundations.md](foundations.md) 与 [rewrite_replication.md](rewrite_replication.md)。
 
+2026-09-06 研究入口修正：先读[已知性筛查](online_prior_work_screening_v1.md)。
+普通求和的 gamma_(n−1)/gamma_ceil(log2 n) 界是固定贡献消融的已有基线，不能把长链劣势
+直接视作 online 新机制。当前优先[有限输出诊断](online_output_gate_v1.md)，再判断是否
+深挖重标定；本文 (m,ell) 算术定义与既有证据保持不变，不据此冒充已实现输出合同。
+
 ## 1. 范围与非目标
 
 - **范围**：只有 normalizer 状态 $(m,\ell)$。不含 $V$，不含 $O$，不含 $y=O/\ell$。

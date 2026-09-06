@@ -12,9 +12,14 @@ what can be predicted or controlled before it happens. The main line of work stu
 a softmax. Given stored FP32 inputs and an explicit addition tree, an exact rational
 oracle reproduces the hardware result bit-for-bit and attributes the final error to
 each node, enabling controlled study of how the *shape* of the reduction changes the
-error. Every stage is preregistered, its evidence is frozen and versioned, negative
-results are recorded as first-class outcomes, and the headline confirmation has been
+error. Confirmatory experiments use preregistered protocols; exploratory diagnostics
+are labelled separately, with frozen, versioned evidence. Negative results are
+recorded as first-class outcomes, and the headline confirmation has been
 independently reproduced from a blank-slate reimplementation.
+
+The current Softmax/reduction-tree research phase closed on 2026-09-07. See the
+[closeout](topics/softmax/notes/online_research_closeout_2026-09-07.md) for its findings,
+limits, and reproducible evidence; [NEXT_SESSION.md](NEXT_SESSION.md) is the current status entry.
 
 ## Headline findings
 
@@ -48,8 +53,9 @@ only A. Regenerate with `python tools/make_coherence_figure.py`.*
 - **Exact oracle.** An integer/rational (`Fraction`) implementation of round-to-nearest,
   ties-to-even reproduces hardware binary32 addition exactly, including subnormals and
   carry, verified against NumPy float32 over hundreds of thousands of cases.
-- **Preregistration and frozen evidence.** Each stage freezes its protocol, seeds, and
-  budgets before execution; artifacts are versioned CSV/JSON with SHA-256 provenance and
+- **Preregistration and frozen evidence.** Confirmation protocols are frozen before
+  execution; post-hoc diagnostics retain their exploratory status. Artifacts are
+  versioned CSV/JSON with SHA-256 provenance and
   are never silently overwritten. See the [results index](topics/softmax/experiments/results/README.md).
 - **Honest negatives.** Depth-margin screening, energy-beam v1, offline tree reuse, and
   the online certificate are all recorded with their exact evidence grade, including the
@@ -61,11 +67,13 @@ only A. Regenerate with `python tools/make_coherence_figure.py`.*
 
 ## Why it matters for systems
 
-The reduction-tree object is the kernel of online/blockwise softmax and, ultimately,
-attention accumulators: the same rounding coherence that this work isolates in plain
-FP32 summation reappears, weighted by online rescaling factors, in the (m, ℓ) state of
-FlashAttention-style kernels. The exact-oracle-plus-preregistration method is designed
-to extend to that setting.
+The online extension tracks weighted merge residuals in (m, ℓ, O), through the final
+scalar output O/ℓ. Ordinary fixed-contribution summation reproduces the main chain
+disadvantage in the saved sample. In the final diagnostic, 332 of 384 correlated
+nonconstant-V online tree pairs differ in FP32 output; none differ after FP16 or BF16
+storage casts. These controlled CPU cases demonstrate no final-storage benefit from
+switching trees and do not establish full-attention accuracy or GPU performance.
+See the [output report](topics/softmax/notes/online_scalar_output_v1.md).
 
 ## Taylor expansion (first topic, complete)
 
@@ -89,6 +97,7 @@ of the core, the same replicate-from-scratch discipline later applied to softmax
 | Fixed-K8/B3 tree ranking | Confirmed on a controlled distribution; inference cost still high |
 | Offline tree reuse | Beats a random fixed tree but fails the balanced-FP32 deployment gate (no-go) |
 | Online risk certificate | Calibration complete; statistical signal, no confirmation or deployment claim |
+| Online normalizer & scalar output | Closed after exploratory ablation and output diagnostics; no demonstrated low-precision storage benefit in the tested cases |
 
 ```text
 framework/                 research discipline and the implementation-learning protocol
@@ -109,7 +118,7 @@ topics/<topic>/
   reimplementation and its differential tests.
 - [KNOWLEDGE_MAP.md](KNOWLEDGE_MAP.md) — a standalone teaching text; learning material,
   not a source of current research status.
-- [NEXT_SESSION.md](NEXT_SESSION.md) — current status and the next research entry.
+- [NEXT_SESSION.md](NEXT_SESSION.md) — current status and archive entry.
 
 ## Reproducing the checks
 

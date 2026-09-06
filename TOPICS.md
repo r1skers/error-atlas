@@ -1,13 +1,13 @@
 # Topic Registry
 
-Updated 2026-09-02. Current research status lives in
+Updated 2026-09-07. Current research status lives in
 [NEXT_SESSION.md](NEXT_SESSION.md); this file is only the topic registry and does not
 duplicate the experiment log.
 
 | Topic | Object | Status / entry |
 | --- | --- | --- |
 | Taylor expansion | Remainder, error bounds, numerical differentiation, bias–variance | [First pass complete](topics/taylor-expansion/README.md) |
-| Softmax | Input quantization, normalization, reduction error, risk prediction | [Active: after online-certificate calibration](topics/softmax/README.md) |
+| Softmax | Input quantization, normalization, reduction error, risk prediction | [Current research phase closed and archived](topics/softmax/README.md) |
 
 ## Reading paths
 

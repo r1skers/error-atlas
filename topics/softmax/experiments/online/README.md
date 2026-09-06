@@ -1,6 +1,10 @@
 # Online normalizer 分区
 
-新研究代码，实现 [算术合同](../../notes/online_normalizer_contract.md) 的 $(m,\ell)$ 部分。
+本阶段已于 2026-09-07 结题归档，见[结题说明](../../notes/online_research_closeout_2026-09-07.md)。
+以下为实现与实验的历史索引，表中未完成项不再是当前待办。
+
+新研究代码，实现 [算术合同](../../notes/online_normalizer_contract.md) 的 $(m,\ell)$ 部分，
+并扩展到[标量 V 输出诊断](../../notes/online_output_gate_v1.md)。
 与 [rewrite/](../rewrite/) 的区别：那里是闭卷复现，不产 artifact；这里是新阶段的研究核心。
 
 按[实现学习协议](../../../../framework/implementation_learning_protocol.md)，
@@ -8,10 +12,12 @@
 当前协作约定：审计确认的缺陷由 agent 直接修复、验证并报告；新增研究核心仍由用户主写。
 本轮固定贡献消融核心例外：用户明确授权 agent 完成，后续研究核心再交回用户。
 
-当前先做[固定贡献普通求和 vs online 消融](../../notes/online_fixed_contribution_ablation_v1.md)，
-再决定是否推进[输出影响与固定分段方案](../../notes/online_output_gate_v1.md)。
+当前[固定贡献消融](../../notes/online_fixed_contribution_ablation_results_v1.md)已完成，
+先读[已知性筛查](../../notes/online_prior_work_screening_v1.md)与
+[已完成的 CPU 输出诊断](../../notes/online_scalar_output_v1.md)。本批低精度存储对照未显示输出变化，
+按预算暂停自动扩展；继续 FP32 工程方向前先明确用途和容差。
 平均 D confirmation 和统计校准支线暂停，已有实现/预检保留；实际续接状态见
-[NEXT_SESSION](../../../../NEXT_SESSION.md)。现有输出只覆盖 (m,ell)，不能当成完整 attention 结果。
+[NEXT_SESSION](../../../../NEXT_SESSION.md)。标量 V 探针不包含 QK/PV matmul，不能当成完整 attention 结果。
 
 ## 顺序与状态
 
@@ -24,6 +30,10 @@
 | pilot | [pilot.py](pilot.py)：块族、实数 exp 参照、相对误差指标 | 与 decimal 路线交叉核对；保守性抽样 | 核心已实现，探索性算例可运行 |
 | fixed ablation | [fixed_contribution_ablation.py](fixed_contribution_ablation.py)：全局贡献初始化与普通加法适配 | 独立 Decimal、整项舍入与下溢边界 | agent 按用户授权完成；6/6 变异体被杀 |
 | fixed runner | [fixed_ablation_runner.py](fixed_ablation_runner.py)：同输入同图普通/online 消融 | 原根/A/D 核对、J/S/R/W、位模式与源码保存 | [64 族结果](../../notes/online_fixed_contribution_ablation_results_v1.md)：普通求和重现长链劣势 |
+| output probe | [output_probe.py](output_probe.py)：V 模式、局部分子叶和有符号 O 传播 | 全 1/0/负值控制、实际权重复用、FMA 边界 | 用户核心经审计修正图字段与 FMA 操作数；11/11 通过 |
+| output reference | [output_reference.py](output_reference.py)：最终 RN32 除法、真实分子/输出区间 | 负系数端点、四角除法、独立 Decimal、常 V 相关性 | 用户两个区间核心均正确；13/13 通过 |
+| output measure | [output_measure.py](output_measure.py)：输出误差/反事实与存储 cast | FP16 对 NumPy、BF16 中点奇偶/下溢、带符号记账 | agent 脚手架；8/8 输出相关变异体被杀 |
+| output runner | [output_runner.py](output_runner.py)：保存输入的单轮 V 诊断 | 普通加法对照、原分母重放、逐族记录与完整重放 | 37 条输出专项测试通过；[64 族结果](../../notes/online_scalar_output_v1.md)已保存 |
 | runner | [pilot_runner.py](pilot_runner.py)：输入/图/源码快照与精确重放 | 已知确定性算例；损坏记录拒绝 | agent 脚手架，使用方法见下 |
 | summary | [pilot_summary.py](pilot_summary.py)：逐格描述性汇总 | 人工可算的合成均值、区间和分组对照 | agent 汇总脚手架，不输出统计 CI |
 | attribution | [attribution.py](attribution.py)：带符号分解、归一化与抵消 | 独立参照、已知反例、区间边界 | 用户实现通过单测与变异检查；[学习入口](../../notes/online_attribution_learning.md) |

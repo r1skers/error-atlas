@@ -205,6 +205,10 @@ in [online/README.md](online/README.md).
 | [online/calibration_runner](online/calibration_runner.py) | Synthetic preflight input/source snapshots, outer-trial accounting and exact replay; no coverage or acceptance claim |
 | [online/fixed_contribution_ablation](online/fixed_contribution_ablation.py) | Certified whole-contribution rounding and existing ordinary-add oracle adapter; agent implementation authorized by user |
 | [online/fixed_ablation_runner](online/fixed_ablation_runner.py) | Saved-input fixed versus online ablation, signed J/S/R/W, source snapshots and exact replay |
+| [online/output_probe](online/output_probe.py) | Fixed V patterns, exact local numerator leaves and user-written signed O propagation; audited and tested |
+| [online/output_reference](online/output_reference.py) | Final RN32 division and user-written signed real numerator/quotient intervals; audited and tested |
+| [online/output_measure](online/output_measure.py) | Output error/counterfactual bookkeeping and bounded FP32-to-FP16/BF16 storage casts |
+| [online/output_runner](online/output_runner.py) | Saved-input scalar V diagnostic, ordinary-add controls, source snapshots and exact replay |
 | [online/fp32_exp](online/fp32_exp.py) | Correctly-rounded FP32 exp (the specified-exp reference) and ULP profiling |
 
 ## Rules for new code

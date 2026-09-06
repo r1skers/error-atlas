@@ -6,7 +6,8 @@ representation error, and statistical predictability.
 
 ## Navigation
 
-- [Current resume point](../../NEXT_SESSION.md) — current status and the next step to freeze.
+- [Current status](../../NEXT_SESSION.md) — research phase closed on 2026-09-07; no active research tasks.
+- [Research closeout](notes/online_research_closeout_2026-09-07.md) — final evidence, scope, and archive.
 - [Foundations & exact-oracle notes](notes/foundations.md) — Jacobian, directionality, floating-point budget, P0–P5.
 - [Early experiment notes](notes/early_experiments.md) — shift resolution, summation, and failure triage.
 - [Replication notes](notes/rewrite_replication.md) — the independent blank-slate rewrite and what it verified.
@@ -24,13 +25,15 @@ representation error, and statistical predictability.
 | Calibration diagnostics | Structural features, second moment, history/phase, beam and cost exploration; not confirmation data |
 | Energy beam v1 → fixed-K8 v2 | v1 primary negative; v2 passes pooled confirmation on fresh controlled inputs |
 | Score-only → offline reuse | Oracle-free prototype still costly; offline reuse fails the balanced-FP32 gate |
-| Online risk certificate | Latest completed stage is calibration: statistical signal, but no new confirmation or deployment |
+| Online risk certificate | Calibration only: statistical signal, but no new confirmation or deployment |
+| Online normalizer / scalar output | Exploratory ablation and output diagnostics complete; research phase closed |
 
-The main finding is that the reduction error is dominated by the **sign coherence**
-between local rounding errors, so a magnitude-only score cannot rank trees; a
-coherence-aware beam wins only narrowly and not yet cheaply. The latest direction is
-sparse exactness correction rather than stacking more global topology scores. For exact
-conclusions and boundaries, defer to the artifacts linked from
+In the controlled reduction probes, coherence varies more across trees than local
+energy. The tested magnitude-only Q score omits that term; the beam wins narrowly
+on its frozen distribution and remains costly. The online extension's main chain
+disadvantage is reproduced by ordinary summation, and its final tested FP16/BF16
+storage outputs show no tree-dependent benefit. This is not a general impossibility
+or full-attention result. For exact conclusions and boundaries, defer to the artifacts linked from
 [NEXT_SESSION.md](../../NEXT_SESSION.md).
 
 ## Regression and boundaries
