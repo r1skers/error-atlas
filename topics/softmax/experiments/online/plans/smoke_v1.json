@@ -1,0 +1,12 @@
+{
+  "schema": "online-pilot-v1",
+  "stage": "smoke",
+  "prediction_record": "../../../notes/online_pilot_prediction_v1.md",
+  "exp": "online.fp32_exp.correctly_rounded_exp:default_precision",
+  "schedules": ["chain", "balanced", "shfl_down", "split_k_4"],
+  "fused": [false, true],
+  "cells": [
+    {"kind": "max_at_position", "count": 32, "mass": 32, "gap": "20", "position": 0},
+    {"kind": "max_at_position", "count": 32, "mass": 32, "gap": "20", "position": 31}
+  ]
+}

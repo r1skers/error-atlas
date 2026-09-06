@@ -1,0 +1,40 @@
+{
+  "arithmetic": {
+    "exp": "online.fp32_exp.correctly_rounded_exp:default_precision",
+    "exp_decimal_precision": 60,
+    "ftz": false,
+    "hardware": "CPU exact simulation",
+    "reference_grid_bits": 600,
+    "reference_taylor_terms": 80,
+    "rounding": "RN-even",
+    "zero": "canonical +0"
+  },
+  "completed_utc": "2026-09-05T10:57:15.344671+00:00",
+  "elapsed_seconds": 0.49442169998656027,
+  "family_count": 2,
+  "files": {
+    "graphs.json": "bd885b4795da2231718dacdf148282d946f0569db5f61abf95e5ab1fb9e8845c",
+    "inputs.json": "fd616ddbc98bb32e0e08655dafc883e83458678be6b0166fca0594141411d3d4",
+    "measurements.json": "95f7c3b4f6c85555353c1643c177ba6c1a86a4ef4970931c7deb51a2b8dd4699",
+    "paired_differences.json": "4eda2859eba769895245f37c4f358d948a213f38b8f6f700de4196b757ee8ba7",
+    "plan.json": "b471147d248f9f30a51cd610a73ee3c566c40afd7fed0a4208ff3571c1cab32a",
+    "prediction.md": "0c6c654938b710b9ab1b291956018e10c784f1a6810c5dc3122208a78aad7841",
+    "sources/online/__init__.py.txt": "dc5330ceed4683268635d29b35c369d5baf9a68b0fca922b4446e3c80c947499",
+    "sources/online/fp32_exp.py.txt": "85c64f0cc5705d0be3c344b17a753c73a656ce9b91cdbb054e6b15f02b2b8e02",
+    "sources/online/fp32_signed.py.txt": "ec2c793cd24eca2fb92ed7783207df02644b89649c61bde02f3b821bdfc7a822",
+    "sources/online/merge.py.txt": "14fe3b379ba42cab1b2a70e89bd3f5e6a816394ddf31c0806894300073976600",
+    "sources/online/pilot.py.txt": "3ef4efa880b35c8b94fa425948a1731ec18b83c64bb2a0be1c33d5bffc14ae0a",
+    "sources/online/pilot_runner.py.txt": "a3f8e01999b112bc7309afbce09b6fdfaa722ef055ff2881875abb792a55ba15",
+    "sources/online/schedules.py.txt": "21f087b8e3aaca283dbee7ba0290e5cea77d39cd3338c2c46beb732fc63de868"
+  },
+  "git_head": "0e276b89329b3a55e058725e06170ff7e9a7978b",
+  "git_status": "M NEXT_SESSION.md\n M topics/softmax/experiments/README.md\n M topics/softmax/experiments/online/README.md\n M topics/softmax/experiments/online/pilot.py\n?? topics/softmax/experiments/online/pilot_runner.py\n?? topics/softmax/experiments/online/plans/\n?? topics/softmax/notes/online_pilot_prediction_v1.md\n?? topics/softmax/tests/test_online_pilot_runner.py",
+  "measurement_count": 16,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "schema": "online-pilot-v1",
+  "stage": "smoke",
+  "started_utc": "2026-09-05T10:57:14.850953+00:00",
+  "status": "complete",
+  "summary_rule": "per-family A_schedule - A_balanced within each FMA arm; exact numerical intervals only, no statistical CI or pooled ratio"
+}

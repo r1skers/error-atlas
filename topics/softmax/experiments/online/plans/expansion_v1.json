@@ -1,0 +1,26 @@
+{
+  "schema": "online-pilot-v1",
+  "stage": "exploratory",
+  "prediction_record": "../../../notes/online_pilot_prediction_v1.md",
+  "exp": "online.fp32_exp.correctly_rounded_exp:default_precision",
+  "schedules": ["chain", "balanced"],
+  "fused": [false, true],
+  "cells": [
+    {"kind": "uniform_spread", "count": 32, "mass": 32, "spread": 8,
+     "seeds": [620001, 620002, 620003, 620004, 620005, 620006, 620007, 620008]},
+    {"kind": "uniform_spread", "count": 128, "mass": 32, "spread": 8,
+     "seeds": [620101, 620102, 620103, 620104, 620105, 620106, 620107, 620108]},
+    {"kind": "uniform_spread", "count": 512, "mass": 32, "spread": 8,
+     "seeds": [620201, 620202, 620203, 620204, 620205, 620206, 620207, 620208]},
+    {"kind": "uniform_spread", "count": 2048, "mass": 32, "spread": 8,
+     "seeds": [620301, 620302, 620303, 620304, 620305, 620306, 620307, 620308]},
+    {"kind": "uniform_spread", "count": 32, "mass": 32, "spread": 25,
+     "seeds": [620401, 620402, 620403, 620404, 620405, 620406, 620407, 620408]},
+    {"kind": "uniform_spread", "count": 128, "mass": 32, "spread": 25,
+     "seeds": [620501, 620502, 620503, 620504, 620505, 620506, 620507, 620508]},
+    {"kind": "uniform_spread", "count": 512, "mass": 32, "spread": 25,
+     "seeds": [620601, 620602, 620603, 620604, 620605, 620606, 620607, 620608]},
+    {"kind": "uniform_spread", "count": 2048, "mass": 32, "spread": 25,
+     "seeds": [620701, 620702, 620703, 620704, 620705, 620706, 620707, 620708]}
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "cells": [
+    {
+      "count": 32,
+      "gap": "20",
+      "kind": "max_at_position",
+      "mass": 32,
+      "position": 0
+    },
+    {
+      "count": 32,
+      "gap": "20",
+      "kind": "max_at_position",
+      "mass": 32,
+      "position": 31
+    }
+  ],
+  "exp": "online.fp32_exp.correctly_rounded_exp:default_precision",
+  "fused": [
+    false,
+    true
+  ],
+  "prediction_record": "../../../notes/online_pilot_prediction_v1.md",
+  "schedules": [
+    "chain",
+    "balanced",
+    "shfl_down",
+    "split_k_4"
+  ],
+  "schema": "online-pilot-v1",
+  "stage": "smoke"
+}
