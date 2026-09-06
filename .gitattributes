@@ -12,3 +12,9 @@ topics/softmax/experiments/results/wide_range_online_risk_certificate_calibratio
 *.png binary
 *.jpg binary
 *.jpeg binary
+
+# Preserve online run bundles byte-for-byte; every manifest records the SHA-256 of the
+# file as written on the measuring machine, and the runners and verifiers re-check it.
+# Python text writes emit CRLF on Windows, so eol=lf normalisation would invalidate
+# every recorded hash on checkout.
+topics/softmax/experiments/online/runs/** -text -diff
