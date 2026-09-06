@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "audit": "independent reimplementation, not a replay of the delivered code",
+  "independent_of": [
+    "online.fp32_signed.round_to_fp32",
+    "online.fp32_exp.correctly_rounded_exp",
+    "online.merge.merge_reduce",
+    "online.pilot.denominator_interval",
+    "online.pilot.relative_error",
+    "online.schedules",
+    "online.pilot.uniform_spread"
+  ],
+  "reference": "mpmath interval arithmetic at 700 bits",
+  "families_regenerated_from_seed": 64,
+  "root_bit_patterns_matched": 256,
+  "rounding_event_rows_matched": 256,
+  "error_intervals_enclosing_bracket": 256,
+  "paired_differences_matched": 128,
+  "hardware_vs_exact_fp32_operations": 260736,
+  "hardware_vs_exact_fp32_disagreements": 0,
+  "distinct_exp_arguments_certified": 85769,
+  "summary_cells_checked": 16,
+  "summary_adjacent_changes_checked": 12,
+  "bundle_manifest_sha256": "cf839af4684dfdefe8ccd44bc4214412f2969cdcab0f7c663214a3997fa90532",
+  "audit_source_sha256": "df08dc1a2be10194159df503e62f15e21f740a7ff5195787077f10db8311ae99"
+}
