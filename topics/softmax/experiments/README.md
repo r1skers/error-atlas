@@ -196,6 +196,15 @@ in [online/README.md](online/README.md).
 | [online/schedules](online/schedules.py) | Merge schedules a CUDA kernel can express: chain, balanced, warp shuffles, split-K |
 | [online/merge](online/merge.py) | The (m, l) recurrence, the GPU-fillable dump, and the frozen-weight weighted identity |
 | [online/pilot](online/pilot.py) | Exploratory pilot: block families, the real-exp reference, and the relative-error metric |
+| [online/pilot_runner](online/pilot_runner.py) | Exact input/graph/source snapshots and replay of per-family pilot measurements |
+| [online/pilot_summary](online/pilot_summary.py) | Descriptive cell means and adjacent-count changes after strict replay; no statistical CI |
+| [online/attribution](online/attribution.py) | USER-WRITTEN signed error components, normalization and cancellation; tested and mutation-audited |
+| [online/attribution_runner](online/attribution_runner.py) | Post-hoc attribution over saved inputs, with original root/error checks and normalized component summaries |
+| [online/confirmation_stats](online/confirmation_stats.py) | USER-WRITTEN scaffold for paired means and joint bootstrap mean distributions; CI method not yet selected |
+| [online/confirmation_calibration](online/confirmation_calibration.py) | Known-mean joint synthetic populations and percentile assembly; USER-WRITTEN trial scoring, tested and mutation-audited |
+| [online/calibration_runner](online/calibration_runner.py) | Synthetic preflight input/source snapshots, outer-trial accounting and exact replay; no coverage or acceptance claim |
+| [online/fixed_contribution_ablation](online/fixed_contribution_ablation.py) | Certified whole-contribution rounding and existing ordinary-add oracle adapter; agent implementation authorized by user |
+| [online/fixed_ablation_runner](online/fixed_ablation_runner.py) | Saved-input fixed versus online ablation, signed J/S/R/W, source snapshots and exact replay |
 | [online/fp32_exp](online/fp32_exp.py) | Correctly-rounded FP32 exp (the specified-exp reference) and ULP profiling |
 
 ## Rules for new code
