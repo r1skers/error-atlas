@@ -1,0 +1,112 @@
+{
+  "stage": "implementation_audit_not_research_measurement",
+  "created_utc": "2026-09-05T14:12:49.597689+00:00",
+  "source_sha256": "81cce43fac11b3be0f4e77d9dfa09999318d5e0fc006a868b5a42a109414defe",
+  "tests_sha256": "30d3e2f41b96087ebd5b451cc6635958e67137097f6c6d08251423c015cacc5c",
+  "audit_sha256": "6122450b0d43417de616f38781b0c97801601eb1ead087a6b78d6976c8b77a5a",
+  "baseline_passed": 16,
+  "mutations": [
+    {
+      "name": "M1_abs_R",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [],
+      "errored_tests": [
+        "test_online_attribution.DecompositionTests.test_known_max_position_fixtures_have_opposite_signed_rounding_errors",
+        "test_online_attribution.DecompositionTests.test_normalization_keeps_sign_and_shared_reference_dependence",
+        "test_online_attribution.DecompositionTests.test_weight_error_contains_independent_real_exp_reference_not_fp32_exp"
+      ]
+    },
+    {
+      "name": "M2_net_instead_of_budget",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.DecompositionTests.test_propagated_residuals_and_absolute_budget_in_both_arms"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M3_reverse_weight_interval",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.DecompositionTests.test_known_max_position_fixtures_have_opposite_signed_rounding_errors (position=0)",
+        "test_online_attribution.DecompositionTests.test_known_max_position_fixtures_have_opposite_signed_rounding_errors (position=31)",
+        "test_online_attribution.DecompositionTests.test_weight_error_contains_independent_real_exp_reference_not_fp32_exp"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M4_negative_R_wrong_endpoints",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.DecompositionTests.test_normalization_keeps_sign_and_shared_reference_dependence"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M5_discard_shared_reference",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.DecompositionTests.test_normalization_keeps_sign_and_shared_reference_dependence"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M6_ignore_broken_identity",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.DecompositionTests.test_broken_identity_is_rejected_not_reported_as_success"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M7_add_instead_of_cancel",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.CancellationTests.test_complete_cancellation_and_saturation",
+        "test_online_attribution.CancellationTests.test_exact_rationals_survive_without_float_or_fp32_rounding",
+        "test_online_attribution.CancellationTests.test_intervals_crossing_a_kink_and_sign_symmetry",
+        "test_online_attribution.CancellationTests.test_zero_and_same_sign_components"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M8_forget_cancellation_saturation",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.CancellationTests.test_complete_cancellation_and_saturation",
+        "test_online_attribution.CancellationTests.test_exact_rationals_survive_without_float_or_fp32_rounding",
+        "test_online_attribution.CancellationTests.test_intervals_crossing_a_kink_and_sign_symmetry"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M9_frozen_as_real_reference",
+      "killed": true,
+      "tests_run": 16,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_attribution.DecompositionTests.test_normalization_keeps_sign_and_shared_reference_dependence",
+        "test_online_attribution.DecompositionTests.test_propagated_residuals_and_absolute_budget_in_both_arms",
+        "test_online_attribution.DecompositionTests.test_weight_error_contains_independent_real_exp_reference_not_fp32_exp"
+      ],
+      "errored_tests": []
+    }
+  ],
+  "all_killed": true
+}

@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "audit": "independent serialized accounting, not numerical dump replay",
+  "measurements": 256,
+  "pairs": 128,
+  "summary_enclosures_checked": 336,
+  "FMA_weight_invariance_pairs": 128,
+  "bundle_manifest_sha256": "7a069955d10a6626508763099c06c7449cd7d335bc81dfb627b6a166bfd23c0d",
+  "audit_source_sha256": "47ace76eba22023465a427729064b69bbe09b4d1b5f6d342b71bf8599d01fa54"
+}

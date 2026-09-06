@@ -1,0 +1,8 @@
+{
+  "input_summary_sha256": "0d520717f14e7fb0e2c321e8663e0c644c31723c2d1469ac2530269c2c5e7683",
+  "script_sha256": "96023679553f6c3e21467dcd94c516ee23768d0970b994ec46116d693391e1a8",
+  "png_sha256": "3761fd5137712e9bc281c99c7924f8aaf19914adae178c4680e18e0d69868bc8",
+  "matplotlib": "3.10.8",
+  "display": "Midpoints of numerical enclosures; zero means omitted on logarithmic y-axis.",
+  "zero_means_omitted": 0
+}
