@@ -1,0 +1,329 @@
+{
+  "stage": "preflight",
+  "interpretation": "Descriptive counts, not calibrated coverage or method acceptance",
+  "total_outer_trials": 280,
+  "cells": [
+    {
+      "population": "mixed_null_positive",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 19,
+          "rejected": 1,
+          "false_positive": 1,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 19,
+          "rejected": 20,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 20
+        }
+      ],
+      "conjunction_rejected": 1,
+      "conjunction_false_positive": 1
+    },
+    {
+      "population": "mixed_null_positive",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 20,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 20
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "positive_constant",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 20,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        },
+        {
+          "covered": 20,
+          "rejected": 20,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        }
+      ],
+      "conjunction_rejected": 20,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "positive_constant",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 20,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        },
+        {
+          "covered": 20,
+          "rejected": 20,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        }
+      ],
+      "conjunction_rejected": 20,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "rare_negative",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 11,
+          "rejected": 9,
+          "false_positive": 9,
+          "constant_samples": 9,
+          "trials_without_negative": 9
+        },
+        {
+          "covered": 11,
+          "rejected": 9,
+          "false_positive": 9,
+          "constant_samples": 9,
+          "trials_without_negative": 9
+        }
+      ],
+      "conjunction_rejected": 9,
+      "conjunction_false_positive": 9
+    },
+    {
+      "population": "rare_negative",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "rare_positive",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 9,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 9,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "rare_positive",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "symmetric_corr08",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 19,
+          "rejected": 1,
+          "false_positive": 1,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "symmetric_corr08",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 19,
+          "rejected": 1,
+          "false_positive": 1,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "symmetric_identical",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "symmetric_identical",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 0,
+          "trials_without_negative": 0
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "zero_constant",
+      "count": 32,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    },
+    {
+      "population": "zero_constant",
+      "count": 128,
+      "outer_trials": 20,
+      "arms": [
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        },
+        {
+          "covered": 20,
+          "rejected": 0,
+          "false_positive": 0,
+          "constant_samples": 20,
+          "trials_without_negative": 20
+        }
+      ],
+      "conjunction_rejected": 0,
+      "conjunction_false_positive": 0
+    }
+  ]
+}

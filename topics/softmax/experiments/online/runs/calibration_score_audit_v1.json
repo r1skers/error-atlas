@@ -1,0 +1,102 @@
+{
+  "stage": "implementation_audit_not_research_measurement",
+  "source": "confirmation_calibration.py",
+  "created_utc": "2026-09-05T18:58:29.874030+00:00",
+  "source_sha256": "f502604f80d3752681d4588a20ba1f81575121df9115d4659cc1af45fb827c02",
+  "tests_sha256": {
+    "test_online_confirmation_calibration.py": "63b3f1fdcd54436f965109d2a7a72dbe04126b9e144f6f23e21b43f091f1599b"
+  },
+  "audit_sha256": "f38686a5caecdb60450d4c6c333e77adc0613910e41c4401cd45dea1b6e89e8e",
+  "baseline_passed": 10,
+  "mutations": [
+    {
+      "name": "C1_exclude_equality_from_coverage",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_positive_truth_and_endpoint_choice",
+        "test_online_confirmation_calibration.VerdictTests.test_zero_is_covered_and_not_strictly_positive"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C2_reject_zero_bound",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_zero_is_covered_and_not_strictly_positive"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C3_truth_alone_is_false_positive",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_negative_truth_noncoverage_without_positive_rejection",
+        "test_online_confirmation_calibration.VerdictTests.test_one_rejection_does_not_reject_conjunction",
+        "test_online_confirmation_calibration.VerdictTests.test_zero_is_covered_and_not_strictly_positive"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C4_noncoverage_is_false_positive",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_coverage_failure_and_false_positive_are_different",
+        "test_online_confirmation_calibration.VerdictTests.test_negative_truth_noncoverage_without_positive_rejection"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C5_any_arm_passes_conjunction",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_negative_truth_noncoverage_without_positive_rejection",
+        "test_online_confirmation_calibration.VerdictTests.test_one_rejection_does_not_reject_conjunction"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C6_require_both_null_means",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_coverage_failure_and_false_positive_are_different"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C7_use_upper_endpoint",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_negative_truth_noncoverage_without_positive_rejection",
+        "test_online_confirmation_calibration.VerdictTests.test_positive_truth_and_endpoint_choice",
+        "test_online_confirmation_calibration.VerdictTests.test_zero_is_covered_and_not_strictly_positive"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "C8_reuse_first_truth",
+      "killed": true,
+      "tests_run": 10,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_calibration.VerdictTests.test_coverage_failure_and_false_positive_are_different",
+        "test_online_confirmation_calibration.VerdictTests.test_positive_truth_and_endpoint_choice"
+      ],
+      "errored_tests": []
+    }
+  ],
+  "all_killed": true
+}

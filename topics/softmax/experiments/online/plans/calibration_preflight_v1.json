@@ -1,0 +1,15 @@
+{
+  "schema": "online-calibration-preflight-v1",
+  "stage": "preflight",
+  "method": "percentile",
+  "population_names": [
+    "symmetric_identical", "symmetric_corr08", "rare_negative", "rare_positive",
+    "zero_constant", "positive_constant", "mixed_null_positive"
+  ],
+  "counts": [32, 128],
+  "outer_trials": 20,
+  "bootstrap_repeats": 199,
+  "alpha": [1, 20],
+  "seed_namespace": "online-calibration-preflight-20260906-v1",
+  "protocol": "../../../notes/online_calibration_design_v1.md"
+}

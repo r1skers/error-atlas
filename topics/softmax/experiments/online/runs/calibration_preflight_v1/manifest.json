@@ -1,0 +1,25 @@
+{
+  "schema": "online-calibration-preflight-v1",
+  "status": "complete",
+  "started_utc": "2026-09-05T19:02:25.985846+00:00",
+  "python": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "rng": "random.Random(seed).randrange; input weighted ticket, inner original-size index draws",
+  "seed_derivation": "SHA-256 big-endian integer of canonical JSON [namespace,population,n,trial,role]",
+  "input_seconds": 0.2667522999981884,
+  "measurement_seconds": 4.316154400003143,
+  "outer_trials": 280,
+  "files": {
+    "README.md": "b5393503a2104a566138814bdda4493a8ca8b41a9594d2b432758b60f0a70506",
+    "inputs.jsonl": "3f0c14b0ceb3c43218861db9650127f9c428e2caed799485a594a7189a06b12d",
+    "plan.json": "3648074123b4014b9fcbff8aa0bf55732914ca4ed0ac6a6fd68a8b24720400b5",
+    "populations.json": "567e2ea90012e8749a6387686ffe20d3996b1e4bca22e7633f91dc59674cb641",
+    "protocol.md": "3cf61ce210a2739f89838b0975d4c28ae3d410e0d92d1edb444d5e690a85f316",
+    "sources/__init__.py.txt": "dc5330ceed4683268635d29b35c369d5baf9a68b0fca922b4446e3c80c947499",
+    "sources/calibration_runner.py.txt": "d878b030ba1954c9881b149277e6439f57258b54030299df89a857417a29bd30",
+    "sources/confirmation_calibration.py.txt": "f502604f80d3752681d4588a20ba1f81575121df9115d4659cc1af45fb827c02",
+    "sources/confirmation_stats.py.txt": "ea67b92a6dc1c0dd5c3727fa49d62b4828cf81c51875bb3fad4674a9c9eea4f2",
+    "summary.json": "e734a4b6e00cb64b5f7c7b1713cce213b7858358cf221281ee62fbb503c82070",
+    "trials.jsonl": "7d1137ab407ffbfa49800e3c40b0182f5f7269b784b64883dece6b139dd3b78c"
+  }
+}

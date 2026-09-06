@@ -1,0 +1,110 @@
+{
+  "stage": "implementation_audit_not_research_measurement",
+  "created_utc": "2026-09-05T18:07:39.728581+00:00",
+  "source_sha256": "2317c9bb7e3b4f9f44a9598ef66726cb930f57d23a4022e685890909f2904356",
+  "tests_sha256": "ad50124243164b0234f5ea1eaa385c6a66f8456af6fd1f889b37c7a945721220",
+  "audit_sha256": "9df4a6181429afd8a4f47cea30c8a6fc7467d415cd424afc6c90a78882948986",
+  "baseline_passed": 8,
+  "mutations": [
+    {
+      "name": "M1_deduplicate_draw",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M2_forget_grid_scale",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved",
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M3_discard_negative_sign",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M4_collapse_interval",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.MeanTests.test_interval_width_is_preserved_and_outputs_remain_fractions"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M5_mispair_fused_family",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved",
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M6_keep_previous_endpoint_total",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved",
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M7_reverse_replicates",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M8_ignore_draw",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M9_float_mean",
+      "killed": true,
+      "tests_run": 8,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.MeanTests.test_interval_width_is_preserved_and_outputs_remain_fractions"
+      ],
+      "errored_tests": []
+    }
+  ],
+  "all_killed": true
+}

@@ -1,0 +1,222 @@
+{
+  "stage": "implementation_audit_not_research_measurement",
+  "created_utc": "2026-09-05T18:35:38.650799+00:00",
+  "source_sha256": "ea67b92a6dc1c0dd5c3727fa49d62b4828cf81c51875bb3fad4674a9c9eea4f2",
+  "tests_sha256": {
+    "test_online_confirmation_stats.py": "ad50124243164b0234f5ea1eaa385c6a66f8456af6fd1f889b37c7a945721220",
+    "test_online_confirmation_quantiles.py": "f04dfa20024039b154179aaee9b8e038e6ab72b0c5ba0657bfbf5152b282c1f8"
+  },
+  "audit_sha256": "fd6647f90fe99f2fcf9639991cafb55d8902e5b11eb92bcfadb32c3ae8728fa1",
+  "baseline_passed": 19,
+  "mutations": [
+    {
+      "name": "M1_deduplicate_draw",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M2_forget_grid_scale",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved",
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M3_discard_negative_sign",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M4_collapse_interval",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.MeanTests.test_interval_width_is_preserved_and_outputs_remain_fractions"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M5_mispair_fused_family",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved",
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M6_keep_previous_endpoint_total",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved",
+        "test_online_confirmation_stats.MeanTests.test_negative_differences_and_repeated_indices"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M7_reverse_replicates",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M8_ignore_draw",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.BootstrapTests.test_bootstrap_matches_selected_means_on_wide_intervals",
+        "test_online_confirmation_stats.BootstrapTests.test_draw_order_multiplicity_and_pairing_are_preserved"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "M9_float_mean",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_stats.MeanTests.test_interval_width_is_preserved_and_outputs_remain_fractions"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q1_skip_sort",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_crossing_endpoint_orders_and_no_input_mutation",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns",
+        "test_online_confirmation_quantiles.QuantileTests.test_endpoints_and_singleton",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(1, 4))",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(1, 8))",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(3, 8))"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q2_deduplicate_values",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.QuantileTests.test_duplicate_values_retain_their_frequency"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q3_wrong_position",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_crossing_endpoint_orders_and_no_input_mutation",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns",
+        "test_online_confirmation_quantiles.QuantileTests.test_interpolation_keeps_sub_float_and_sub_grid_information",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(1, 4))",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(1, 8))",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(3, 8))"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q4_floor_instead_of_interpolate",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns",
+        "test_online_confirmation_quantiles.QuantileTests.test_interpolation_keeps_sub_float_and_sub_grid_information",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(1, 8))",
+        "test_online_confirmation_quantiles.QuantileTests.test_unsorted_hand_examples_and_input_unchanged (p=Fraction(3, 8))"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q5_round_interpolation_to_float",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.QuantileTests.test_interpolation_keeps_sub_float_and_sub_grid_information"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q6_take_whole_interval_row",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_crossing_endpoint_orders_and_no_input_mutation",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q7_complement_upper_probability",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q8_midpoints_discard_enclosure",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_crossing_endpoint_orders_and_no_input_mutation",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_single_interval_preserves_width_at_every_probability (p=Fraction(0, 1))",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_single_interval_preserves_width_at_every_probability (p=Fraction(1, 3))",
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_single_interval_preserves_width_at_every_probability (p=Fraction(1, 1))"
+      ],
+      "errored_tests": []
+    },
+    {
+      "name": "Q9_reverse_interpolation_weights",
+      "killed": true,
+      "tests_run": 19,
+      "skips": 0,
+      "failed_tests": [
+        "test_online_confirmation_quantiles.IntervalQuantileTests.test_interpolated_quantile_uses_same_probability_for_both_columns",
+        "test_online_confirmation_quantiles.QuantileTests.test_interpolation_keeps_sub_float_and_sub_grid_information"
+      ],
+      "errored_tests": []
+    }
+  ],
+  "all_killed": true
+}
